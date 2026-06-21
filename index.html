@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cricut IA Maker - Générateur SVG</title>
+    <title>Cricut IA & File Maker - Générateur SVG</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -13,40 +13,104 @@
             color: #334155;
         }
 
-        /* Layout deux colonnes */
+        /* ===== Barre d'outils façon Cricut Design Space ===== */
+        .app-toolbar {
+            width: 76px; background: #ffffff; border-right: 1px solid #e2e8f0;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 12px 0; gap: 2px; overflow-y: auto; flex-shrink: 0;
+        }
+        .tool-rail-btn {
+            width: 64px; background: none; border: none; cursor: pointer;
+            padding: 8px 4px; border-radius: 8px; display: flex; flex-direction: column;
+            align-items: center; gap: 3px; font-size: 10.5px; color: #334155; text-align: center;
+        }
+        .tool-rail-btn:hover { background: #f1f5f9; }
+        .tool-rail-btn.active { background: #e0e7ff; color: #3b82f6; }
+        .tool-rail-btn .icon { font-size: 20px; line-height: 1; }
+        .tool-rail-sep { width: 44px; height: 1px; background: #e2e8f0; margin: 8px 0; }
+
+        .shapes-popover {
+            position: fixed; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,.15); padding: 10px; display: none; gap: 8px; z-index: 200;
+        }
+        .shapes-popover button {
+            width: 44px; height: 44px; border: 1px solid #e2e8f0; border-radius: 8px;
+            background: #f8fafc; cursor: pointer; font-size: 22px; display: flex; align-items: center; justify-content: center;
+        }
+        .shapes-popover button:hover { background: #e0e7ff; border-color: #3b82f6; }
+        .line-mode-btn { border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; border-radius: 6px; padding: 6px; font-size: 12px; }
+        .line-mode-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+
+        /* Layout colonnes */
         .workspace {
             flex: 1; display: flex; flex-direction: column;
-            padding: 20px; box-sizing: border-box;
+            padding: 20px; box-sizing: border-box; min-width: 0;
         }
         .sidebar-chat {
             width: 380px; background: white; border-left: 1px solid #cbd5e1;
-            display: flex; flex-direction: column;
+            display: flex; flex-direction: column; flex-shrink: 0;
             box-shadow: -2px 0 10px rgba(0,0,0,0.05);
+            transition: width 0.25s ease, opacity 0.2s ease;
+            overflow: hidden;
         }
+        .sidebar-chat.closed { width: 0; opacity: 0; }
+        .sidebar-chat > * { width: 380px; }
 
-        /* Zone de travail (Aperçu) */
         h1 { margin-top: 0; color: #1e293b; font-size: 24px; display: flex; justify-content: space-between; align-items: center; }
-        .preview-container {
+
+        /* ===== Zone canvas avec règles ===== */
+        .canvas-area {
             flex: 1; background: white; border-radius: 12px; border: 1px solid #e2e8f0;
-            display: flex; align-items: center; justify-content: center;
-            position: relative; overflow: hidden;
-            background-size: 20px 20px;
-            background-image: linear-gradient(to right, #f8fafc 1px, transparent 1px), linear-gradient(to bottom, #f8fafc 1px, transparent 1px);
+            display: flex; flex-direction: column; overflow: hidden; position: relative; min-height: 0;
         }
-        .preview-container svg { max-width: 85%; max-height: 85%; object-fit: contain; }
-        .actions { margin-top: 15px; display: flex; gap: 10px; }
-        .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .ruler-row { display: flex; flex-shrink: 0; }
+        .ruler-corner { width: 26px; height: 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; flex-shrink: 0; }
+        .ruler-top { flex: 1; height: 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; overflow: hidden; position: relative; }
+        .ruler-top-inner { position: absolute; top: 0; left: 0; height: 100%; }
+        .ruler-body-row { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+        .ruler-left { width: 26px; background: #f8fafc; border-right: 1px solid #e2e8f0; overflow: hidden; position: relative; flex-shrink: 0; }
+        .ruler-left-inner { position: absolute; top: 0; left: 0; width: 100%; }
+        .canvas-viewport { flex: 1; overflow: auto; background: #fafafa; position: relative; }
+        .mat-svg { display: block; background: #ffffff; }
+
+        .zoom-controls {
+            position: absolute; bottom: 12px; right: 12px; background: #fff; border: 1px solid #e2e8f0;
+            border-radius: 20px; display: flex; align-items: center; gap: 4px; padding: 4px 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.12); font-size: 12px; z-index: 20;
+        }
+        .zoom-controls button { border: none; background: none; cursor: pointer; font-size: 16px; width: 24px; height: 24px; color: #334155; }
+        .zoom-controls button:hover { color: #3b82f6; }
+        .zoom-controls span { min-width: 38px; text-align: center; color: #64748b; }
+
+        .delete-sel-btn {
+            position: absolute; top: 12px; right: 12px; background: #fff; border: 1px solid #fca5a5;
+            color: #dc2626; border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer;
+            display: none; z-index: 20; box-shadow: 0 2px 8px rgba(0,0,0,.1);
+        }
+        .delete-sel-btn:hover { background: #fef2f2; }
+
+        .actions { margin-top: 15px; display: flex; gap: 10px; width: 100%; flex-shrink: 0; }
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; text-align: center; }
         .btn-success { background: #10b981; color: white; }
         .btn-success:disabled { background: #cbd5e1; cursor: not-allowed; }
-        
-        /* Bouton Mode d'emploi */
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
         .btn-info { background: #64748b; color: white; font-size: 14px; padding: 8px 15px; }
         .btn-info:hover { background: #475569; }
+
+        /* Zone d'importation de fichiers (cachée, déclenchée par la barre d'outils) */
+        #fileImporter { display: none; }
 
         /* Fenêtre de Chat */
         .chat-header { padding: 15px; background: #0f172a; color: white; }
         .api-box { padding: 10px 15px; background: #1e293b; border-bottom: 1px solid #334155; }
-        .api-box input { width: 100%; padding: 6px; background: #334155; border: 1px solid #475569; color: white; border-radius: 4px; box-sizing: border-box; font-size: 12px; }
+
+        .api-box input {
+            width: 100%; padding: 6px; background: #334155; border: 1px solid #475569;
+            color: white; border-radius: 4px; box-sizing: border-box; font-size: 12px;
+            -webkit-text-security: disc;
+        }
+
         .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         .message { padding: 10px 14px; border-radius: 8px; max-width: 85%; font-size: 14px; line-height: 1.4; }
         .message.user { background: #3b82f6; color: white; align-self: flex-end; }
@@ -54,9 +118,8 @@
         .chat-input-area { padding: 15px; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; }
         .chat-input-area textarea { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; resize: none; height: 40px; font-family: inherit; }
         .chat-input-area button { background: #3b82f6; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .placeholder-text { color: #94a3b8; text-align: center; }
 
-        /* Fenêtre Modale (Mode d'emploi avec système de menu) */
+        /* Fenêtre Modale */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
@@ -72,125 +135,211 @@
         .modal-header h2 { margin: 0; color: #0f172a; font-size: 20px; }
         .close-btn { font-size: 24px; cursor: pointer; color: #94a3b8; }
         .close-btn:hover { color: #475569; }
-        
-        /* Menu et Contenu Intérieur Modale */
+
         .modal-body { display: flex; flex: 1; overflow: hidden; }
-        
-        .modal-tabs {
-            width: 200px; background: #f8fafc; border-right: 1px solid #e2e8f0;
-            display: flex; flex-direction: column; padding: 15px 0; gap: 5px;
-        }
-        .tab-btn {
-            background: none; border: none; padding: 12px 20px; text-align: left;
-            font-size: 14px; font-weight: 500; color: #64748b; cursor: pointer;
-            border-left: 3px solid transparent; transition: all 0.2s;
-        }
+        .modal-tabs { width: 200px; background: #f8fafc; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; padding: 15px 0; gap: 5px; }
+        .tab-btn { background: none; border: none; padding: 12px 20px; text-align: left; font-size: 14px; font-weight: 500; color: #64748b; cursor: pointer; border-left: 3px solid transparent; transition: all 0.2s; }
         .tab-btn:hover { background: #f1f5f9; color: #1e293b; }
         .tab-btn.active { background: #e2e8f0; color: #3b82f6; border-left-color: #3b82f6; font-weight: bold; }
-        
         .modal-tab-content { flex: 1; padding: 25px; overflow-y: auto; display: none; }
         .modal-tab-content.active { display: block; }
-        
         .modal-tab-content h3 { margin-top: 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
-        .modal-tab-content ol, .modal-tab-content ul { padding-left: 20px; line-height: 1.6; }
+        .modal-tab-content ol { padding-left: 20px; line-height: 1.6; }
         .modal-tab-content li { margin-bottom: 10px; }
-        .highlight-box { background: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; margin: 15px 0; border-radius: 0 8px 8px 0; font-size: 13.5px; color: #14532d; }
-        .code-snippet { background: #1e293b; color: #f8fafc; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 13px; }
     </style>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPCEtLSBGaWwgLS0+CiAgPHBhdGggZD0iTTYgNTAgQyAxNiA0MCwgMTAgMzAsIDIyIDI2IiBmaWxsPSJub25lIiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPCEtLSBBaWd1aWxsZSAtLT4KICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSAzMCAyOCkiPgogICAgPHJlY3QgeD0iMjgiIHk9IjYiIHdpZHRoPSIzIiBoZWlnaHQ9IjM0IiByeD0iMS41IiBmaWxsPSIjOTRhM2I4Ii8+CiAgICA8cG9seWdvbiBwb2ludHM9IjI5LjUsNCAyNiwxMiAzMywxMiIgZmlsbD0iIzk0YTNiOCIvPgogICAgPGVsbGlwc2UgY3g9IjI5LjUiIGN5PSIzNCIgcng9IjIuNCIgcnk9IjMuNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjQ3NDhiIiBzdHJva2Utd2lkdGg9IjEuMiIvPgogIDwvZz4KICA8IS0tIETDqSDDoCBjb3VkcmUgKHRoaW1ibGUpIC0tPgogIDxnPgogICAgPHBhdGggZD0iTTIyIDYyIEMgMjAgNDYsIDIyIDM0LCAzMiAzMCBDIDQyIDM0LCA0NCA0NiwgNDIgNjIgWiIgZmlsbD0iI2Y1OWUwYiIgc3Ryb2tlPSIjYjQ1MzA5IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogICAgPGVsbGlwc2UgY3g9IjMyIiBjeT0iMzAiIHJ4PSIxMCIgcnk9IjQiIGZpbGw9IiNmYmJmMjQiIHN0cm9rZT0iI2I0NTMwOSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwhLS0gbW90aWZzIGFsdsOpb2xlcyAtLT4KICAgIDxjaXJjbGUgY3g9IjI2IiBjeT0iNDAiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzOCIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzOCIgY3k9IjQwIiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjI0IiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzAiIGN5PSI0NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzNiIgY3k9IjQ2IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMjIiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIyOCIgY3k9IjU1IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjM0IiBjeT0iNTUiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iNDAiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgPC9nPgo8L3N2Zz4K">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
 </head>
 <body>
 
+    <!-- ===== BARRE D'OUTILS (GAUCHE) ===== -->
+    <div class="app-toolbar">
+        <button class="tool-rail-btn" id="toolNew" title="Nouveau projet"><span class="icon">➕</span>Nouveau</button>
+        <button class="tool-rail-btn" id="toolProjects" title="Bientôt disponible"><span class="icon">🚀</span>Projets</button>
+        <div class="tool-rail-sep"></div>
+        <button class="tool-rail-btn" id="toolShapes" title="Ajouter une forme"><span class="icon">▲</span>Formes</button>
+        <button class="tool-rail-btn" id="toolEraser" title="Gomme"><span class="icon">🧹</span>Gomme</button>
+        <button class="tool-rail-btn" id="toolLine" title="Lignes et courbes"><span class="icon">✏️</span>Lignes</button>
+        <button class="tool-rail-btn" id="toolColor" title="Couleurs"><span class="icon">🎨</span>Couleurs</button>
+        <button class="tool-rail-btn" id="toolImages" title="Importer une image ou un DXF"><span class="icon">🖼️</span>Images</button>
+        <button class="tool-rail-btn" id="toolText" title="Ajouter du texte"><span class="icon">🅣</span>Texte</button>
+        <button class="tool-rail-btn" id="toolMonogram" title="Bientôt disponible"><span class="icon">▦</span>Monogramme</button>
+        <div class="tool-rail-sep"></div>
+        <button class="tool-rail-btn" id="toolLayout" title="Bientôt disponible"><span class="icon">🎁</span>Mises en page</button>
+        <button class="tool-rail-btn" id="toolDownload" title="Exporter le SVG"><span class="icon">⬇️</span>Télécharger</button>
+        <button class="tool-rail-btn" id="toolAI" title="Aller au chat IA"><span class="icon">✨</span>Créer avec l'IA</button>
+    </div>
+
+    <!-- Popover de sélection de formes -->
+    <div id="shapesPopover" class="shapes-popover" style="flex-wrap: wrap; width: 168px;">
+        <button data-shape="circle" title="Cercle">⚪</button>
+        <button data-shape="square" title="Carré (modifiable)">⬛</button>
+        <button data-shape="triangle" title="Triangle (modifiable)">🔺</button>
+        <button data-shape="pentagon" title="Pentagone (modifiable)">⬠</button>
+        <button data-shape="hexagon" title="Hexagone (modifiable)">⬡</button>
+        <button data-shape="star" title="Étoile (modifiable)">⭐</button>
+        <button data-shape="diamond" title="Losange (modifiable)">🔷</button>
+        <button data-shape="arrow" title="Flèche (modifiable)">➡️</button>
+        <button data-shape="heart" title="Cœur (modifiable)">❤️</button>
+    </div>
+
+    <!-- Popover réglage gomme -->
+    <div id="eraserPopover" class="shapes-popover" style="flex-direction: column; align-items: stretch; width: 170px;">
+        <label style="font-size: 12px; color: #334155;">Taille de la gomme : <span id="eraserSizeLabel">1.0 cm</span></label>
+        <input type="range" id="eraserSizeRange" min="0.2" max="4" step="0.1" value="1">
+        <button id="eraserOffBtn" style="margin-top: 4px; width: 100%; height: auto; padding: 6px; font-size: 12px; border-radius: 6px;">Désactiver la gomme</button>
+    </div>
+
+    <!-- Popover outil Lignes / Courbes -->
+    <div id="linePopover" class="shapes-popover" style="flex-direction: column; align-items: stretch; width: 195px;">
+        <label style="font-size: 12px; color: #334155;">Mode :</label>
+        <div style="display: flex; gap: 6px;">
+            <button id="lineModeStraightBtn" class="line-mode-btn active" style="flex: 1;">Ligne droite</button>
+            <button id="lineModeCurveBtn" class="line-mode-btn" style="flex: 1;">Courbe libre</button>
+        </div>
+        <label style="font-size: 12px; color: #334155; margin-top: 6px;">Couleur :</label>
+        <input type="color" id="lineColorPicker" value="#1e293b" style="width: 100%; height: 32px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 2px;">
+        <label style="font-size: 12px; color: #334155;">Épaisseur : <span id="lineWidthLabel">0.20 cm</span></label>
+        <input type="range" id="lineWidthRange" min="0.05" max="2" step="0.05" value="0.2">
+        <button id="lineOffBtn" style="margin-top: 4px; width: 100%; height: auto; padding: 6px; font-size: 12px; border-radius: 6px;">Désactiver l'outil</button>
+    </div>
+
+    <!-- Popover outil Couleurs -->
+    <div id="colorPopover" class="shapes-popover" style="flex-direction: column; align-items: stretch; width: 200px;">
+        <div id="colorNoSelection" style="font-size: 12px; color: #64748b;">Sélectionnez un objet sur le plan de travail pour modifier sa couleur.</div>
+        <div id="colorEditRow" style="display: none; flex-direction: column; gap: 8px;">
+            <label style="font-size: 12px; color: #334155;">Couleur de l'objet sélectionné :</label>
+            <input type="color" id="colorPicker" value="#3b82f6" style="width: 100%; height: 36px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 2px;">
+            <button id="colorResetBtn" style="display: none; width: 100%; padding: 6px; font-size: 12px; border-radius: 6px;">Couleur d'origine (image/IA)</button>
+        </div>
+    </div>
+
+    <!-- ===== ZONE DE TRAVAIL (CENTRE) ===== -->
     <div class="workspace">
         <h1>
             <span>Aperçu du Design Cricut</span>
             <button id="helpBtn" class="btn btn-info">📖 Mode d'emploi</button>
         </h1>
-        <div id="previewContainer" class="preview-container">
-            <p id="placeholder" class="placeholder-text">Demandez à l'IA de générer un dessin pour voir l'aperçu...</p>
+
+        <div class="canvas-area">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 12px; flex-shrink: 0;">
+                <span>Taille du tapis :</span>
+                <input type="number" id="matWidthInput" min="1" max="200" step="1" value="30" style="width: 55px; padding: 3px 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                <span>×</span>
+                <input type="number" id="matHeightInput" min="1" max="200" step="1" value="30" style="width: 55px; padding: 3px 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                <span>cm</span>
+                <button id="applyMatSize" class="btn" style="padding: 4px 10px; font-size: 12px; background: #3b82f6; color: #fff;">Appliquer</button>
+                <div style="margin-left: auto; display: flex; gap: 6px;">
+                    <button id="undoBtn" class="btn" style="padding: 4px 10px; font-size: 12px; background: #64748b; color: #fff;" title="Annuler (Ctrl+Z)">↩ Annuler</button>
+                    <button id="redoBtn" class="btn" style="padding: 4px 10px; font-size: 12px; background: #64748b; color: #fff;" title="Rétablir (Ctrl+Y)">↪ Rétablir</button>
+                    <button id="resetOriginalBtn" class="btn" style="padding: 4px 10px; font-size: 12px; background: #f59e0b; color: #fff;" title="Revenir au projet original">⟲ Original</button>
+                </div>
+            </div>
+            <div class="ruler-row">
+                <div class="ruler-corner"></div>
+                <div class="ruler-top"><div class="ruler-top-inner" id="rulerTopInner"></div></div>
+            </div>
+            <div class="ruler-body-row">
+                <div class="ruler-left"><div class="ruler-left-inner" id="rulerLeftInner"></div></div>
+                <div class="canvas-viewport" id="canvasViewport">
+                    <svg id="matSvg" class="mat-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+                </div>
+            </div>
+            <button id="deleteSelBtn" class="delete-sel-btn">🗑️ Supprimer la sélection</button>
+            <div class="zoom-controls">
+                <button id="zoomOutBtn">−</button>
+                <span id="zoomLabel">100%</span>
+                <button id="zoomInBtn">+</button>
+                <button id="zoomResetBtn" title="Réinitialiser">⤾</button>
+            </div>
         </div>
+
         <div class="actions">
-            <button id="downloadBtn" class="btn btn-success" disabled>Télécharger pour Cricut (SVG)</button>
+            <button id="downloadBtn" class="btn btn-success" disabled style="flex: 2;">Télécharger pour Cricut (SVG)</button>
+            <button id="resetBtn" class="btn" style="background: #64748b; color: white; flex: 1;">Nouveau projet</button>
         </div>
     </div>
 
-    <div class="sidebar-chat">
-        
-        <div style="padding: 10px; background: #ffffff; text-align: center; border-bottom: 1px solid #cbd5e1;">
-            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NTAgMjIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIj4KICA8ZyBmaWxsPSIjNDc1NTY5Ij4KICAgIDxwYXRoIGQ9Ik00NSwxMjAgQzQ1LDk1IDUzLDg3IDcwLDg3IEM4Nyw4NyA5NSw5NSA5NSwxMjAgTDkxLDE3MCBDOTExNzQgODMsMTc4LDcwLDE3OCBDNTcsMTc4IDQ5LDE3NCA0OSwxNzAgWiBNNTMsMTIwIEw4NywxMjAgTTU1LDEzNSBMODUsMTM1IE01NywxNTAgTDgzLDE1MCIgc3Ryb2tlPSIjZjFmNWY5IiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWRhc2hhcnJheT0iMiwyIi8+CiAgICA8cGF0aCBkPSJNODcsNjUgTDE4LDE3MiBDMTcsMTczIDE1LDE3MyAxNSwxNzIgQzE0LDE3MSAxNCwxNjkgMTUsMTY4IEwyOCw1NiBDMzAsNTMgMzMsNTMgMzUsNTYgQzM2LDU4IDM1LDYwIDMzLDYxIFogTTzMiw2MSBDMzMsNjAgMzMsNTkgMzIsNTggQzMxLDU3IDMwLDU4IDI5LDU5IEMyOCw2MCAyOCw2MSAyOSw2MiBDMzAsNjMgMzEsNjIgMzIsNjEgWiIvPgogIDwvZz4KICA8ZyBmaWxsPSIjZGIyNzc3Ij4KICAgIDxwYXRoIGQ9Ik0zMSw5IEMyMCw0MCAzNSwyMCA1NSwyOCBDODAsMzggNjUsOTUgOTUsMTA1IEMxMTUsMTEwIDEyMyw5NSAxNDAsOTUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2RiMjc3NyIgc3Ryb2tlLXdpZHRoPSIyLjUiLz4KICAgIDxwYXRoIGQ9Ik0xNjIsMTA0IEMxNTYsMTA0IDE1MCwxMDEgMTQ2LDk2IEMxNDIsOTEgMTQwLDg1IDE0MCw3OCBDMTQwLDY2IDE0OCw1NiAxNjAsNDggQzE3Miw0MCAxODUsMzYgMTk4LDM2IEMyMDUsMzYgMjEwLDM4IDIxMyw0MiBDMjExLDQ2IDIwNyw1MCAyMDIsNTAgQzE5Nyw1MCAxOTMsNDYgMTkzLDQyIEMxOTMsNDAgMTk1LDM4IDE5OCwzNyBDMTg2LDM5IDE3NCw0NSAxNjUsNTUgQzE1Niw2NSAxNTEsNzYgMTUxLDg3IEMxNTEsOTQgMTU1LDk5IDE2Miw5OSBDMTcyLDk5IDE4NSw5MCAxOTgsNzIgTDE5NCw3MiBDMTg2LDcyIDE4MCw3NiAxNzYsODAgTDE3Miw4MCBDMTc2LDcyIDE4NCw2NCAxOTYsNjQgTDIwNiw2NCBMMjAyLDc0IEMxOTQsOTEgMTc5LDEwNCAxNjIsMTA0IFogTTE4NCwzOCBDMTk4LDM4IDIxMiw0MSAyMjYsNDUgTDIyNCw0OSBDMjEyLDQ1IDIwMCw0MyAxODYsNDMgWiIvPgogICAgYGF0aCBkPSJNMjQ2LDg1IEMyNDEsODUgMjM2LDgzIDIzMiw3OSBDMjI4LDc1IDIyNiw2OSAyMjYsNjIgQzIyNiw1MiAyMzEsNDQgMjQxLDQ0IEMyNDksNDQgMjU0LDUwIDI1NCw1OSBDMjU0LDYxIDI1Myw2MyAyNTIsNjQgTDIzMSw2NCBDMjMxLDcxIDIzNCw3NyAyMzksNzcgQzI0NCw3NyAyNTEsNzMgMjU3LDY3IEwyNjAsNzAgQzI1Miw4MCAyNDQsODUgMjQ2LDg1IFogTTIzMiw1OSBMMjQ5LDU5IEwyNDksNTIgMjQ1LDQ4IDI0MCw0OCBDMjM1LDQ4IDIzMyw1MyAyMzIsNTkgWiBNMjUyLDM2IEwyNTksMzAgTDI2NCwzMiBMMjU2LDM4IFoiLz4KICAgIDxwYXRoIGQ9Ik0yODYsODUgQzI4MSw4NSAyNzYsODMgMjcyLDc5IEMyNjgsNzUgMjY2LDY5IDI2Niw2MiBDMjY2LDUyIDI3MSw0NCAyODEsNDQgQzI4OSw0NCAyOTQsNTAgMjk0LDU5IEMyOTQsNjEgMjkzLDYzIDI5Miw2NCBMMjcxLDY0IEwyNzEsNzEgMjc0LDc3IDI3OSw3NyBDMjg0LDc3IDI5MSw3MyAyOTcsNjcgTDMwMCw3MCBDMjkyLDgwIDI4NCw4NSAyODYsODUgWiBNMjcyLDU5IEwyODksNTkgTDI4OSw1MiAyODUsNDggMjgwLDQ4IEMyNzUsNDYgMjczLDUzIDI3Miw1OSBaIE0yOTIsMzYgTDI5OSwzMCBMMzA0LDMyIEwyOTYsMzggWiIvPgogICAgPHBhdGggZD0iTTMxMyw4NSBMMzE3LDYyIEMzMTksNTQgMzI0LDQ5IDMyOSw0OSBDMzMzLDQ5IDMzNCw1MiAzMzIsNTkgTDMyNyw4NSBMMzIxLDg1IEwzMjYsNjIgQzMyNyw1NiAzMjYsNTMgMzIyLDUzIEMzMTcsNTMgMzEyLDU4IDMA3LDY2IEwzMDMsODUgTDI5Nyw4NSBMMzEwLDQ2IEwzMTYsNDYgTDMxMyw1NyBDMzE5LDk0IDMyNSw0NCAzMzEsNDQgQzMzNyw0NCAzMzksNDcgMzM4LDU0IEMzNDQsNDYgMzUwLDQ0IDM1Niw0NCBDMzYyLDQ0IDM2NCw0OCAzNjIsNTkgTDM1Nyw4NSBMMzUxLDg1IEwzNTYsNjIgQzM1Nyw1NiAzNTYsNTMgMzUyLDUzIEMzNDcsNTMgMzQyLDU4IDMzNyw2NiBMMzMzLDg1IFoiLz4KICAgIDxwYXRoIGQ9Ik0zODYsODUgQzM4Miw4NSAzNzgsODMgMzc2LDc5IEMzNzQsNzYgMzc1LDcyIDM3Nyw2OCBDMzgyLDUzIDM5MSw0NCA0MDEsNDQgQzQwNiw0NCA0MDksNDcgNDA4LDUxIECheckDDU1IDQwNSw2MiA0MDEsNzEgTDQwMCw3NCBDMzk5LDc5IDQwMSw4MSA0MDUsODEgQzQxMCw4MSA0MTcsNzQgNDIzLDY1IEw0MjYsNjggQzQxNyw3OSA0MDksODUgMzg2LDg1IFogTTM5OSw3MCBDNDAzLDYwIDQwNCw1MyA0MDIsNDkgQzM5OSw0OSAzOTMsNTUgMzg4LDY1IEMzODYsNzAgMzg2LDc1IDM4OCw3NyBDMzkwLDc5IDM5Myw4MCAzOTYsNzcgWiIvPgogICAgPHBhdGggZD0iTTQzNiw4NSBMMTQxLDYxIEw0NDYsNDYgTDQ1Miw0NiBMMzQzLDg1IFogTTQ0OCwzNCBDNDUwLDM0IDQ1MiwzMyA0NTIsMzEgQzA1MiwyOSA0NTAsMjggNDQ4LDI4IEM0NDYsMjggNDQ0LDI5IDQ0NCwzMSBDNDQ0LDMzIDQ0NiwzNCA0NDgsMzRaIi8+CiAgICA8cGF0aCBkPSJNNDYzLDg1IEw0NjcsNjIgQzY5LDU0IDQ3NCw0OSA0NzksNDkgQzQ4Myw0OSA0ODQsNDIgNDgyLDU5IEw0NzcsODUgTCheckMSw4NSBMNDc2LDYyIEM0NzcsNTYgNDc2LDUzIDQ3Miw1MyBDNDY3LDUzIDQ2Miw1OCA0NTcsNjYgTDQ1Myw4NSBMNDQ3LDg1IEw0NjAsNDYgTDQ2Niw0NiBMNDYzLDU3IEw0NjksNDkgNDc1LDQ0IDQ4MSw0NCBDNDg3LDQ0IDQ4OSw0NyA0ODgsNTQgTDQ4Myw4NSBaIi8+CiAgICA8cGF0aCBkPSJNREw0LDkwIEw0OTQsODUgNDg4LDg1IDQ4OCw3NyBDODgsNjUgNTAzLDUwIDUyNCwzMSBDNTI2LDMwIDUyNiwyOSA1MjMsMjkgQzUxOCwyOSA0OTgsNDIgNDgxLDU2IEw0NzgsNTIgQzUwMCwzNCA1MjIsMjIgNTM1LDIyIDU0MCwyMiA1NDIsMjUgNTQyLDI5IEM1NDIsMzYgNTM1LDQ4IDUyMSw2NCBDNTQwLDY0IDU1NCw3MyA1NTQsODIgQzU1NCw4NyA1NTEsOTAgNTQ1LDkwIEw1NDEsOTAgNTM3LDg4IDUzNyw4NCBDNTM3LDgwIDU0MCw3NyA1NDUsNzcgQzU0Niw3NyA1NDcsNzcgNTQ4LDc4IEM1NDksNzMgNTQwLDY5IDUyMyw2OSBMNTE2LDc3IEM1MTAsODUgNTA4LDkwIDUwNCw5MCBaIi8+CiAgICA8cGF0aCBkPSJNNTY1LDg1 LDU3MCw2MSBMNTc1LDQ2IEw1ODEsNDYgTDU3Miw4NSBaIE01NzcsMzRDNTc5LDM0IDU4MSwzMyA1ODEsMzEgQzU4MSwyOSA1NzksMjggNTc3LDI4IEM1NzUsMjggNTczLDI5IDU3MywzMSBDNTczLDMzIDU3NSwzNCA1NzcsMzRaIi8+CiAgICA8cGF0aCBkPSJNMTAwLDg1IEw2MTEsNDYgTDYxNyw0NiBMNjA4LDg1IFoiLz4KICAgIDxwYXRoIGQ9Ik02MjIsODUgTDYyNyw2MSBMNjMyLDQ2IEw2MzgsNDYgTDYyOSw4NSBaIE02MzQsMzRDNjM2LDM0IDYzOCwzMyA2MzgsMzEgQzYzOCwyOSA2MzYsMjggNjM0LDI4IEM2MzIsMjggNjMwLDI5IDYzMCwzMSBDNjMwLDMzIDYzMiwzNCA2MzQsMzRaIi8+CiAgICA8cGF0aCBkPSJNNjUyLDg1IEM2NDgsODUgNjQ0LDgzIDY0Miw3OSBDNjQwLDYgNjQxLDcyIDY0Myw2OCBDNjQ4LDUzIDY1Nyw0NCA2NjcsNDQgQzY3Miw0NCA2NjUsNDcgNjc0LDUxIEM2NzQsNTUgNjcxLDYyIDY2Nyw3MSBMNjY2LDc0IEM2NjUsNzkgNjY3LDgxIDY3MSw4MSBDNjc2LDgxIDY4Myw3NCA2ODksNjUgTDY5Miw2OCBDNjgzLDc5IDY3NSw4NSA2NTIsODUgWiBNNjY1LDcwQzY2OSw2MCA2NzAsNTMgNjY4LDQ5IEM2NjUsNDkgNjU5LDU1IDY1NCw2NSBDNjUyLDcwIDY1Miw3NSA2NTQsNzcgQzY1Niw3OSA2NTksODAgNjYyLDc3IFoiLz4KICAgIDxjaXJjbGUgY3g9IjY3MCIgY3k9IjgyIiByPSI0Ii8+CiAgICA8Y2lyY2xlIGN4PSI2ODUiIGN5PSI4IiByPSI0Ii8+CiAgICA8Y2lyY2xlIGN4PSI3MDAiIGN5PSI4MiIgcj0iNCIvPgogIDwvZz4KPC9zdmc+" alt="Logo Fée main Lilia" style="width: 80%; height: auto; display: inline-block;">
+    <!-- ===== FENÊTRE DE DISCUSSION & OUTILS (DROITE) ===== -->
+    <div class="sidebar-chat" id="aiSidebar">
+
+        <!-- Logo Calligraphique -->
+        <div style="padding: 15px 10px 10px 10px; background: #ffffff; text-align: center; border-bottom: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPCEtLSBGaWwgLS0+CiAgPHBhdGggZD0iTTYgNTAgQyAxNiA0MCwgMTAgMzAsIDIyIDI2IiBmaWxsPSJub25lIiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPCEtLSBBaWd1aWxsZSAtLT4KICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSAzMCAyOCkiPgogICAgPHJlY3QgeD0iMjgiIHk9IjYiIHdpZHRoPSIzIiBoZWlnaHQ9IjM0IiByeD0iMS41IiBmaWxsPSIjOTRhM2I4Ii8+CiAgICA8cG9seWdvbiBwb2ludHM9IjI5LjUsNCAyNiwxMiAzMywxMiIgZmlsbD0iIzk0YTNiOCIvPgogICAgPGVsbGlwc2UgY3g9IjI5LjUiIGN5PSIzNCIgcng9IjIuNCIgcnk9IjMuNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjQ3NDhiIiBzdHJva2Utd2lkdGg9IjEuMiIvPgogIDwvZz4KICA8IS0tIETDqSDDoCBjb3VkcmUgKHRoaW1ibGUpIC0tPgogIDxnPgogICAgPHBhdGggZD0iTTIyIDYyIEMgMjAgNDYsIDIyIDM0LCAzMiAzMCBDIDQyIDM0LCA0NCA0NiwgNDIgNjIgWiIgZmlsbD0iI2Y1OWUwYiIgc3Ryb2tlPSIjYjQ1MzA5IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogICAgPGVsbGlwc2UgY3g9IjMyIiBjeT0iMzAiIHJ4PSIxMCIgcnk9IjQiIGZpbGw9IiNmYmJmMjQiIHN0cm9rZT0iI2I0NTMwOSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwhLS0gbW90aWZzIGFsdsOpb2xlcyAtLT4KICAgIDxjaXJjbGUgY3g9IjI2IiBjeT0iNDAiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzOCIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzOCIgY3k9IjQwIiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjI0IiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzAiIGN5PSI0NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzNiIgY3k9IjQ2IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMjIiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIyOCIgY3k9IjU1IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjM0IiBjeT0iNTUiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iNDAiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgPC9nPgo8L3N2Zz4K" alt="" style="width: 30px; height: 30px; flex-shrink: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 56" width="100%" height="40" style="max-width: 320px;">
+                <text x="0" y="75%" text-anchor="start" font-family="'Great Vibes', 'Georgia', serif" font-size="42" font-style="italic" fill="#000000" letter-spacing="1">Fée main Lilia...</text>
+            </svg>
         </div>
 
-        <div class="chat-header"><strong>Assistant IA Cricut</strong> (Gemini)</div>
+        <input type="file" id="fileImporter" accept=".png, .jpg, .jpeg, .bmp, .gif, .dxf">
+
+        <div class="chat-header" style="display: flex; align-items: center; gap: 10px;">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPCEtLSBGaWwgLS0+CiAgPHBhdGggZD0iTTYgNTAgQyAxNiA0MCwgMTAgMzAsIDIyIDI2IiBmaWxsPSJub25lIiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPCEtLSBBaWd1aWxsZSAtLT4KICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSAzMCAyOCkiPgogICAgPHJlY3QgeD0iMjgiIHk9IjYiIHdpZHRoPSIzIiBoZWlnaHQ9IjM0IiByeD0iMS41IiBmaWxsPSIjOTRhM2I4Ii8+CiAgICA8cG9seWdvbiBwb2ludHM9IjI5LjUsNCAyNiwxMiAzMywxMiIgZmlsbD0iIzk0YTNiOCIvPgogICAgPGVsbGlwc2UgY3g9IjI5LjUiIGN5PSIzNCIgcng9IjIuNCIgcnk9IjMuNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjQ3NDhiIiBzdHJva2Utd2lkdGg9IjEuMiIvPgogIDwvZz4KICA8IS0tIETDqSDDoCBjb3VkcmUgKHRoaW1ibGUpIC0tPgogIDxnPgogICAgPHBhdGggZD0iTTIyIDYyIEMgMjAgNDYsIDIyIDM0LCAzMiAzMCBDIDQyIDM0LCA0NCA0NiwgNDIgNjIgWiIgZmlsbD0iI2Y1OWUwYiIgc3Ryb2tlPSIjYjQ1MzA5IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogICAgPGVsbGlwc2UgY3g9IjMyIiBjeT0iMzAiIHJ4PSIxMCIgcnk9IjQiIGZpbGw9IiNmYmJmMjQiIHN0cm9rZT0iI2I0NTMwOSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwhLS0gbW90aWZzIGFsdsOpb2xlcyAtLT4KICAgIDxjaXJjbGUgY3g9IjI2IiBjeT0iNDAiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzOCIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzOCIgY3k9IjQwIiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjI0IiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzAiIGN5PSI0NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzNiIgY3k9IjQ2IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMjIiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIyOCIgY3k9IjU1IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjM0IiBjeT0iNTUiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iNDAiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgPC9nPgo8L3N2Zz4K" alt="" style="width: 24px; height: 24px; flex-shrink: 0;">
+            <span><strong>Assistant IA Cricut</strong> (Gemini)</span>
+        </div>
         <div class="api-box">
-            <input type="password" id="apiKeyInput" placeholder="Collez votre clé d'API Gemini ici...">
+            <input type="text" id="apiKeyInput" placeholder="Collez votre clé d'API Gemini ici..." autocomplete="off">
         </div>
         <div id="chatMessages" class="chat-messages">
-            <div class="message ai">Bonjour Lilia ! Quel superbe projet de découpe allons-nous concevoir aujourd'hui pour votre Cricut ?</div>
+            <div class="message ai">Bonjour Lilia ! Importez une image/DXF, ajoutez des formes ou du texte, ou demandez à l'IA — chaque élément s'ajoute sur le plan de travail et reste déplaçable/redimensionnable. Que fait-on ?</div>
         </div>
         <div class="chat-input-area">
-            <textarea id="userInput" placeholder="Écrivez votre prompt ici..."></textarea>
+            <textarea id="userInput" placeholder="Demander une modification ou un dessin à l'IA..."></textarea>
             <button id="sendBtn">Créer</button>
         </div>
     </div>
 
+    <!-- MODALE (MODE D'EMPLOI) -->
     <div id="helpModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Documentation & Mode d'emploi</h2>
+                <h2>Documentation & Import de Fichiers</h2>
                 <span id="closeModal" class="close-btn">&times;</span>
             </div>
             <div class="modal-body">
                 <div class="modal-tabs">
-                    <button class="tab-btn active" onclick="openTab(event, 'tab-config')">1. Récupérer sa Clé</button>
-                    <button class="tab-btn" onclick="openTab(event, 'tab-activation')">2. Activer l'Appli</button>
-                    <button class="tab-btn" onclick="openTab(event, 'tab-usage')">3. Utilisation de l'IA</button>
-                    <button class="tab-btn" onclick="openTab(event, 'tab-cricut')">4. Import dans Cricut</button>
+                    <button class="tab-btn active" onclick="openTab(event, 'tab-files')">Outils Fichiers</button>
+                    <button class="tab-btn" onclick="openTab(event, 'tab-config')">Clé d'API Gemini</button>
+                    <button class="tab-btn" onclick="openTab(event, 'tab-usage')">Demandes IA</button>
                 </div>
 
-                <div id="tab-config" class="modal-tab-content active">
-                    <h3>Étape 1 : Obtenir une clé d'API Google Gemini</h3>
+                <div id="tab-files" class="modal-tab-content active">
+                    <h3>Le plan de travail (façon Cricut Design Space)</h3>
                     <ol>
-                        <li>Ouvrez votre navigateur internet habituel.</li>
-                        <li>Rendez-vous sur la plateforme officielle : <a href="https://aistudio.google.com/" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: bold;">aistudio.google.com</a>.</li>
-                        <li>Connectez-vous à l'aide de votre **compte Google**.</li>
-                        <li>Sur le tableau de bord, cliquez sur le bouton bleu **"Get API key"** (Obtenir une clé d'API) situé en haut à gauche.</li>
-                        <li>Cliquez sur **"Create API key"** puis validez sur **"Create API key in new project"**.</li>
-                        <li>Une suite de caractères cryptiques s'affiche (ex: <span class="code-snippet">AIzaSy...</span>). Cliquez sur **"Copy"** pour la placer dans votre presse-papiers.</li>
+                        <li><strong>Formes / Texte / Images / IA :</strong> chaque élément ajouté apparaît comme un objet indépendant sur le plan de travail (en cm, comme un vrai tapis Cricut). Cliquez un objet pour le sélectionner, faites-le glisser pour le déplacer, et tirez les poignées d'angle pour le redimensionner.</li>
+                        <li><strong>Texte :</strong> double-cliquez un texte sur le plan de travail pour le modifier.</li>
+                        <li><strong>Formes modifiables :</strong> carré, triangle, pentagone, hexagone, étoile, losange, flèche et cœur peuvent être déformées sommet par sommet. Double-cliquez la forme pour afficher ses points verts, puis glissez-les un par un. Double-cliquez à nouveau (ou Échap) pour quitter ce mode.</li>
+                        <li><strong>Suppression :</strong> sélectionnez un objet puis touche Suppr/Retour, ou le bouton « Supprimer la sélection » en haut du plan de travail.</li>
+                        <li><strong>Zoom :</strong> utilisez les boutons +/− en bas à droite du plan de travail.</li>
+                        <li><strong>Images (PNG, JPG, BMP, GIF) :</strong> l'application les convertit instantanément en contours monochromes SVG nets, ajoutés comme objet sur le plan de travail.</li>
+                        <li><strong>Fichiers DXF :</strong> l'outil décode la géométrie CAO et l'ajoute aussi comme objet déplaçable.</li>
+                        <li><strong>Téléchargement :</strong> exporte l'intégralité du plan de travail (tous les objets, à leur taille réelle en cm) en un seul fichier SVG prêt pour Cricut Design Space.</li>
                     </ol>
                 </div>
 
-                <div id="tab-activation" class="modal-tab-content">
-                    <h3>Étape 2 : Activer l'application sur votre PC</h3>
+                <div id="tab-config" class="modal-tab-content">
+                    <h3>Étape : Obtenir une clé d'API Google Gemini</h3>
                     <ol>
-                        <li>Revenez sur cette application de création Cricut.</li>
-                        <li>Repérez le champ textuel en haut à droite (sous l'entête sombre) affichant : <em>"Collez votre clé d'API Gemini ici..."</em>.</li>
-                        <li>Faites un clic droit dans ce champ puis choisissez **Coller**, ou utilisez le raccourci clavier <kbd class="code-snippet">Ctrl + V</kbd>.</li>
+                        <li>Rendez-vous sur : <a href="https://aistudio.google.com/" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: bold;">aistudio.google.com</a> et connectez-vous avec votre compte Google.</li>
+                        <li>Lors de votre première visite, acceptez les conditions d'utilisation de l'API Generative AI si elles vous sont demandées.</li>
+                        <li>Dans le menu de gauche, cliquez sur <strong>« Get API key »</strong> (Obtenir une clé d'API).</li>
+                        <li>Cliquez sur le bouton <strong>« Create API key »</strong> (Créer une clé d'API).</li>
+                        <li>Choisissez <strong>« Create API key in new project »</strong> si vous n'avez pas encore de projet Google Cloud — Google s'occupe de tout créer automatiquement, aucune configuration cloud n'est nécessaire.</li>
+                        <li>Votre clé apparaît à l'écran, sous la forme d'une longue chaîne commençant par <code>AIzaSy...</code>. Cliquez sur l'icône de copie pour la copier.</li>
+                        <li>Collez-la directement dans le champ <strong>« Clé d'API Gemini »</strong> en haut de la fenêtre de chat de cet outil.</li>
+                        <li>Vérifiez que votre clé n'est pas marquée <strong>« Unrestricted »</strong> (non restreinte) sur la page des clés. Si c'est le cas, cliquez sur « Restrict key » puis sélectionnez « Restrict to Gemini API only » — depuis juin 2026, Google bloque les requêtes provenant de clés non restreintes.</li>
                     </ol>
-                    <div class="highlight-box">
-                        <strong>🔒 Sauvegarde automatique par PC :</strong><br>
-                        Le navigateur internet retient cette clé de façon sécurisée locale (<span style="font-family: monospace;">localStorage</span>). Vous n'aurez besoin de faire cette manipulation qu'une seule fois par poste !
-                    </div>
+                    <p style="background:#fef3c7; border:1px solid #fcd34d; border-radius:6px; padding:10px 12px; font-size:13px; color:#78350f;">
+                        ⚠️ Cette clé est personnelle, ne la partagez avec personne. Le niveau gratuit de l'API Gemini permet de tester l'outil sans frais ni carte bancaire, dans la limite des quotas journaliers (voir la page tarifs d'AI Studio).
+                    </p>
                 </div>
 
                 <div id="tab-usage" class="modal-tab-content">
-                    <h3>Étape 3 : Concevoir un motif avec l'IA</h3>
+                    <h3>Demander un motif vectoriel</h3>
                     <ol>
-                        <li>Dans le champ de texte en bas à droite, écrivez précisément le dessin à fabriquer.</li>
-                        <li>Cliquez sur le bouton **Créer** ou validez via la touche **Entrée**.</li>
-                        <li>L'IA configure les tracés et l'aperçu vectoriel apparaît en direct à gauche de votre écran.</li>
-                    </ol>
-                    <div class="highlight-box" style="background: #eff6ff; border-left-color: #3b82f6; color: #1e3a8a;">
-                        <strong>💡 Recommandations spécialisées Cricut :</strong><br>
-                        Formulez vos demandes sous forme de silhouettes, contours de formes pleines ou styles épurés (ex: <em>"Dessin de chat minimaliste"</em>). Évitez les effets d'ombrages ou de micro-détails fins impossibles à couper pour la lame.
-                    </div>
-                </div>
-
-                <div id="tab-cricut" class="modal-tab-content">
-                    <h3>Étape 4 : Découpe sur Cricut Design Space</h3>
-                    <ol>
-                        <li>Dès que le rendu vous convient, cliquez sur le bouton vert **Télécharger pour Cricut (SVG)**.</li>
-                        <li>Démarrez votre logiciel officiel **Cricut Design Space**.</li>
-                        <li>Ouvrez un nouveau canevas, cliquez sur **Télécharger** (Upload) > **Télécharger l'image** et chargez votre fichier `.svg`.</li>
-                        <li>Le fichier sépare automatiquement les éléments graphiques sur différents tapis selon leurs calques de couleurs d'origine.</li>
+                        <li>Décrivez précisément votre idée (ex: *Silhouette de tortue marine épurée*). Le résultat est ajouté comme nouvel objet sur le plan de travail, déplaçable et redimensionnable comme les autres.</li>
                     </ol>
                 </div>
             </div>
@@ -198,66 +347,977 @@
     </div>
 
 <script>
+    // ===================== Références DOM =====================
     const apiKeyInput = document.getElementById('apiKeyInput');
     const chatMessages = document.getElementById('chatMessages');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
-    const previewContainer = document.getElementById('previewContainer');
     const downloadBtn = document.getElementById('downloadBtn');
-    
+    const resetBtn = document.getElementById('resetBtn');
+    const fileImporter = document.getElementById('fileImporter');
+
     const helpBtn = document.getElementById('helpBtn');
     const helpModal = document.getElementById('helpModal');
     const closeModal = document.getElementById('closeModal');
 
-    let currentSvgCode = '';
+    const matSvg = document.getElementById('matSvg');
+    const canvasViewport = document.getElementById('canvasViewport');
+    const rulerTopInner = document.getElementById('rulerTopInner');
+    const rulerLeftInner = document.getElementById('rulerLeftInner');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const zoomResetBtn = document.getElementById('zoomResetBtn');
+    const zoomLabel = document.getElementById('zoomLabel');
+    const deleteSelBtn = document.getElementById('deleteSelBtn');
+    const shapesPopover = document.getElementById('shapesPopover');
+    const eraserPopover = document.getElementById('eraserPopover');
+    const eraserSizeRange = document.getElementById('eraserSizeRange');
+    const eraserSizeLabel = document.getElementById('eraserSizeLabel');
+    const eraserOffBtn = document.getElementById('eraserOffBtn');
+    const linePopover = document.getElementById('linePopover');
+    const lineModeStraightBtn = document.getElementById('lineModeStraightBtn');
+    const lineModeCurveBtn = document.getElementById('lineModeCurveBtn');
+    const lineColorPicker = document.getElementById('lineColorPicker');
+    const lineWidthRange = document.getElementById('lineWidthRange');
+    const lineWidthLabel = document.getElementById('lineWidthLabel');
+    const lineOffBtn = document.getElementById('lineOffBtn');
+    const colorPopover = document.getElementById('colorPopover');
+    const colorNoSelection = document.getElementById('colorNoSelection');
+    const colorEditRow = document.getElementById('colorEditRow');
+    const colorPicker = document.getElementById('colorPicker');
+    const colorResetBtn = document.getElementById('colorResetBtn');
+    const matWidthInput = document.getElementById('matWidthInput');
+    const matHeightInput = document.getElementById('matHeightInput');
+    const applyMatSize = document.getElementById('applyMatSize');
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
+    const resetOriginalBtn = document.getElementById('resetOriginalBtn');
 
-    // Gestion de la modale d'aide
-    helpBtn.onclick = () => helpModal.style.display = "flex";
-    closeModal.onclick = () => helpModal.style.display = "none";
-    window.onclick = (e) => { if (e.target == helpModal) helpModal.style.display = "none"; }
+    const toolNew = document.getElementById('toolNew');
+    const toolProjects = document.getElementById('toolProjects');
+    const toolShapes = document.getElementById('toolShapes');
+    const toolEraser = document.getElementById('toolEraser');
+    const toolLine = document.getElementById('toolLine');
+    const toolColor = document.getElementById('toolColor');
+    const toolImages = document.getElementById('toolImages');
+    const toolText = document.getElementById('toolText');
+    const toolMonogram = document.getElementById('toolMonogram');
+    const toolLayout = document.getElementById('toolLayout');
+    const toolDownload = document.getElementById('toolDownload');
+    const toolAI = document.getElementById('toolAI');
+    const aiSidebar = document.getElementById('aiSidebar');
 
-    // Navigation par onglet dans le mode d'emploi
-    window.openTab = function(evt, tabId) {
-        const tabContents = document.getElementsByClassName("modal-tab-content");
-        for (let i = 0; i < tabContents.length; i++) {
-            tabContents[i].classList.remove("active");
-        }
-        const tabButtons = document.getElementsByClassName("tab-btn");
-        for (let i = 0; i < tabButtons.length; i++) {
-            tabButtons[i].classList.remove("active");
-        }
-        document.getElementById(tabId).classList.add("active");
-        evt.currentTarget.classList.add("active");
+    // ===================== Modèle du plan de travail =====================
+    let MAT_W = 30; // cm
+    let MAT_H = 30; // cm
+    const PX_PER_CM_BASE = 18;
+    let zoom = 1;
+    let objects = [];
+    let nextObjId = 1;
+    let selectedId = null;
+    let dragState = null;
+    let nodeEditId = null;
+    let eraserMode = false;
+    let eraserWidth = 1;
+    let currentEraserObj = null;
+    let lineMode = false;
+    let lineStraight = true;
+    let lineColor = '#1e293b';
+    let lineWidth = 0.2;
+    let currentLineObj = null;
+    let dragMoved = false;
+    let history = [];
+    let historyIndex = -1;
+    const MAX_HISTORY = 60;
+
+    function pxPerCm() { return PX_PER_CM_BASE * zoom; }
+
+    function svgEl(name, attrs) {
+        const e = document.createElementNS('http://www.w3.org/2000/svg', name);
+        for (const k in attrs) e.setAttribute(k, attrs[k]);
+        return e;
     }
 
-    // Gestion du localStorage (Mémoire par poste)
-    if(localStorage.getItem('cricut_gemini_key')) {
+    function clientToCm(clientX, clientY) {
+        const pt = matSvg.createSVGPoint();
+        pt.x = clientX; pt.y = clientY;
+        const ctm = matSvg.getScreenCTM().inverse();
+        const loc = pt.matrixTransform(ctm);
+        return { x: loc.x, y: loc.y };
+    }
+
+    function parseSvgIntrinsic(svgString) {
+        const doc = new DOMParser().parseFromString(svgString, 'image/svg+xml');
+        const svg = doc.querySelector('svg');
+        let iw = 200, ih = 200;
+        if (svg) {
+            const vb = svg.getAttribute('viewBox');
+            if (vb) {
+                const parts = vb.trim().split(/\s+/).map(Number);
+                if (parts.length === 4 && parts[2] > 0 && parts[3] > 0) { iw = parts[2]; ih = parts[3]; }
+            } else {
+                const wAttr = parseFloat(svg.getAttribute('width'));
+                const hAttr = parseFloat(svg.getAttribute('height'));
+                if (wAttr) iw = wAttr;
+                if (hAttr) ih = hAttr;
+            }
+        }
+        const inner = svg ? svg.innerHTML : svgString;
+        return { inner, iw, ih };
+    }
+
+    function addSvgObject(svgString, forceFill) {
+        if (eraserMode) setEraserMode(false);
+        if (lineMode) setLineMode(false);
+        nodeEditId = null;
+        const parsed = parseSvgIntrinsic(svgString);
+        let inner = parsed.inner;
+        if (forceFill) inner = `<g fill="${forceFill}">${inner}</g>`;
+        const maxDim = 10; // cm
+        let w, h;
+        if (parsed.iw >= parsed.ih) { w = maxDim; h = maxDim * (parsed.ih / parsed.iw); }
+        else { h = maxDim; w = maxDim * (parsed.iw / parsed.ih); }
+        const obj = {
+            id: nextObjId++, type: 'svg',
+            x: (MAT_W - w) / 2, y: (MAT_H - h) / 2, w, h, rotation: 0,
+            innerSVG: inner, iw: parsed.iw, ih: parsed.ih
+        };
+        objects.push(obj);
+        selectedId = obj.id;
+        downloadBtn.disabled = false;
+        renderMat();
+        pushHistory();
+        return obj;
+    }
+
+    function addShape(shapeType) {
+        if (eraserMode) setEraserMode(false);
+        if (lineMode) setLineMode(false);
+        const w = 6, h = 6;
+        const obj = {
+            id: nextObjId++, type: 'shape', shapeType,
+            x: (MAT_W - w) / 2, y: (MAT_H - h) / 2, w, h, rotation: 0,
+            fill: '#3b82f6'
+        };
+        objects.push(obj);
+        selectedId = obj.id;
+        nodeEditId = null;
+        downloadBtn.disabled = false;
+        renderMat();
+        pushHistory();
+    }
+
+    // ----- Générateurs de points pour les formes modifiables -----
+    function regularPolygonPoints(cx, cy, r, sides) {
+        const pts = [];
+        const startAngle = -Math.PI / 2;
+        for (let i = 0; i < sides; i++) {
+            const a = startAngle + (i * 2 * Math.PI / sides);
+            pts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+        }
+        return pts;
+    }
+
+    function starPoints(cx, cy, outerR, innerR, spikes) {
+        const pts = [];
+        const startAngle = -Math.PI / 2;
+        for (let i = 0; i < spikes * 2; i++) {
+            const r = (i % 2 === 0) ? outerR : innerR;
+            const a = startAngle + (i * Math.PI / spikes);
+            pts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+        }
+        return pts;
+    }
+
+    function arrowPoints(cx, cy, w, h) {
+        const x0 = cx - w / 2, x1 = cx + w * 0.15, x2 = cx + w / 2;
+        const yTop = cy - h / 2, yBot = cy + h / 2, yMidTop = cy - h * 0.15, yMidBot = cy + h * 0.15;
+        return [
+            { x: x0, y: yMidTop }, { x: x1, y: yMidTop }, { x: x1, y: yTop },
+            { x: x2, y: cy }, { x: x1, y: yBot }, { x: x1, y: yMidBot }, { x: x0, y: yMidBot }
+        ];
+    }
+
+    function heartPoints(cx, cy, w, h) {
+        const pts = [];
+        const steps = 24;
+        for (let i = 0; i <= steps; i++) {
+            const t = (i / steps) * 2 * Math.PI;
+            const hx = 16 * Math.pow(Math.sin(t), 3);
+            const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+            pts.push({ x: cx + (hx / 17) * (w / 2), y: cy + (hy / 17) * (h / 2) });
+        }
+        return pts;
+    }
+
+    function addPolygonShape(shapeType) {
+        if (eraserMode) setEraserMode(false);
+        if (lineMode) setLineMode(false);
+        const cx = MAT_W / 2, cy = MAT_H / 2;
+        const size = 6;
+        const fills = { square: '#10b981', triangle: '#f59e0b', pentagon: '#8b5cf6', hexagon: '#0ea5e9', star: '#facc15', diamond: '#ec4899', arrow: '#ef4444', heart: '#f43f5e' };
+        let points = [];
+        switch (shapeType) {
+            case 'square':
+                points = [{ x: cx - size / 2, y: cy - size / 2 }, { x: cx + size / 2, y: cy - size / 2 }, { x: cx + size / 2, y: cy + size / 2 }, { x: cx - size / 2, y: cy + size / 2 }];
+                break;
+            case 'triangle':
+                points = [{ x: cx, y: cy - size / 2 }, { x: cx - size / 2, y: cy + size / 2 }, { x: cx + size / 2, y: cy + size / 2 }];
+                break;
+            case 'pentagon':
+                points = regularPolygonPoints(cx, cy, size / 2, 5);
+                break;
+            case 'hexagon':
+                points = regularPolygonPoints(cx, cy, size / 2, 6);
+                break;
+            case 'star':
+                points = starPoints(cx, cy, size / 2, size / 2 * 0.45, 5);
+                break;
+            case 'diamond':
+                points = [{ x: cx, y: cy - size / 2 }, { x: cx + size / 2, y: cy }, { x: cx, y: cy + size / 2 }, { x: cx - size / 2, y: cy }];
+                break;
+            case 'arrow':
+                points = arrowPoints(cx, cy, size, size * 0.6);
+                break;
+            case 'heart':
+                points = heartPoints(cx, cy, size, size);
+                break;
+            default:
+                points = regularPolygonPoints(cx, cy, size / 2, 6);
+        }
+        const obj = { id: nextObjId++, type: 'polygon', rotation: 0, fill: fills[shapeType] || '#3b82f6', shapeName: shapeType, points };
+        objects.push(obj);
+        selectedId = obj.id;
+        nodeEditId = null;
+        downloadBtn.disabled = false;
+        renderMat();
+        pushHistory();
+    }
+
+    function addText() {
+        if (eraserMode) setEraserMode(false);
+        if (lineMode) setLineMode(false);
+        nodeEditId = null;
+        const w = 10, h = 2.5;
+        const obj = {
+            id: nextObjId++, type: 'text',
+            x: (MAT_W - w) / 2, y: (MAT_H - h) / 2, w, h, rotation: 0,
+            text: 'Votre texte', fontSize: h * 0.7, color: '#000000'
+        };
+        objects.push(obj);
+        selectedId = obj.id;
+        downloadBtn.disabled = false;
+        renderMat();
+        pushHistory();
+        setTimeout(() => editTextObject(obj.id), 50);
+    }
+
+    function editTextObject(id) {
+        const obj = objects.find(o => o.id === id);
+        if (!obj) return;
+        const val = prompt("Texte :", obj.text);
+        if (val !== null && val.trim() !== '') { obj.text = val; renderMat(); pushHistory(); }
+    }
+
+    function getObjBBox(obj) {
+        if (obj.type === 'eraser' || obj.type === 'line') {
+            const xs = obj.points.map(p => p.x), ys = obj.points.map(p => p.y);
+            const minX = Math.min(...xs) - obj.strokeWidth / 2, maxX = Math.max(...xs) + obj.strokeWidth / 2;
+            const minY = Math.min(...ys) - obj.strokeWidth / 2, maxY = Math.max(...ys) + obj.strokeWidth / 2;
+            return { x: minX, y: minY, w: Math.max(0.01, maxX - minX), h: Math.max(0.01, maxY - minY) };
+        }
+        if (obj.type === 'polygon') {
+            const xs = obj.points.map(p => p.x), ys = obj.points.map(p => p.y);
+            const minX = Math.min(...xs), maxX = Math.max(...xs);
+            const minY = Math.min(...ys), maxY = Math.max(...ys);
+            return { x: minX, y: minY, w: Math.max(0.01, maxX - minX), h: Math.max(0.01, maxY - minY) };
+        }
+        return { x: obj.x, y: obj.y, w: obj.w, h: obj.h };
+    }
+
+    function stripFillAttrs(svgFragment) {
+        return svgFragment.replace(/\sfill="[^"]*"/gi, '').replace(/\sfill='[^']*'/gi, '');
+    }
+
+    function renderObjectGroup(obj) {
+        const bbox = getObjBBox(obj);
+        const g = svgEl('g', {
+            'data-id': obj.id,
+            'class': 'canvas-object',
+            'transform': `rotate(${obj.rotation || 0} ${bbox.x + bbox.w / 2} ${bbox.y + bbox.h / 2})`,
+            'style': 'cursor: move;'
+        });
+        if (obj.type === 'shape') {
+            if (obj.shapeType === 'circle') {
+                g.appendChild(svgEl('ellipse', { cx: obj.x + obj.w / 2, cy: obj.y + obj.h / 2, rx: obj.w / 2, ry: obj.h / 2, fill: obj.fill }));
+            } else if (obj.shapeType === 'square') {
+                g.appendChild(svgEl('rect', { x: obj.x, y: obj.y, width: obj.w, height: obj.h, fill: obj.fill }));
+            } else if (obj.shapeType === 'triangle') {
+                const pts = `${obj.x + obj.w / 2},${obj.y} ${obj.x},${obj.y + obj.h} ${obj.x + obj.w},${obj.y + obj.h}`;
+                g.appendChild(svgEl('polygon', { points: pts, fill: obj.fill }));
+            }
+        } else if (obj.type === 'text') {
+            const t = svgEl('text', {
+                x: obj.x, y: obj.y + obj.h * 0.78,
+                'font-size': obj.fontSize, 'font-family': "'Segoe UI', Arial, sans-serif", fill: obj.color || '#000000'
+            });
+            t.textContent = obj.text;
+            g.appendChild(t);
+        } else if (obj.type === 'svg') {
+            let innerContent = obj.innerSVG;
+            if (obj.colorOverride) {
+                innerContent = `<g fill="${obj.colorOverride}">${stripFillAttrs(obj.innerSVG)}</g>`;
+            }
+            const nested = svgEl('svg', {
+                x: obj.x, y: obj.y, width: obj.w, height: obj.h,
+                viewBox: `0 0 ${obj.iw} ${obj.ih}`, preserveAspectRatio: 'xMidYMid meet'
+            });
+            nested.innerHTML = innerContent;
+            g.appendChild(nested);
+        } else if (obj.type === 'eraser' || obj.type === 'line') {
+            const strokeColor = obj.type === 'eraser' ? '#ffffff' : obj.color;
+            if (obj.points.length < 2) {
+                const p = obj.points[0];
+                g.appendChild(svgEl('circle', { cx: p.x, cy: p.y, r: obj.strokeWidth / 2, fill: strokeColor }));
+            } else {
+                const d = 'M ' + obj.points.map(p => `${p.x} ${p.y}`).join(' L ');
+                g.appendChild(svgEl('path', { d, fill: 'none', stroke: strokeColor, 'stroke-width': obj.strokeWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+            }
+        } else if (obj.type === 'polygon') {
+            const d = 'M ' + obj.points.map(p => `${p.x} ${p.y}`).join(' L ') + ' Z';
+            g.appendChild(svgEl('path', { d, fill: obj.fill, 'fill-rule': 'evenodd' }));
+        }
+        return g;
+    }
+
+    function renderSelection(obj) {
+        const bbox = getObjBBox(obj);
+        const hs = 8 / pxPerCm();
+        const g = svgEl('g', { class: 'selection-overlay' });
+        g.setAttribute('transform', `rotate(${obj.rotation || 0} ${bbox.x + bbox.w / 2} ${bbox.y + bbox.h / 2})`);
+        g.appendChild(svgEl('rect', {
+            x: bbox.x, y: bbox.y, width: bbox.w, height: bbox.h, fill: 'none',
+            stroke: '#3b82f6', 'stroke-width': 1, 'stroke-dasharray': '4 3', 'vector-effect': 'non-scaling-stroke'
+        }));
+        if (obj.type === 'eraser' || obj.type === 'line') return g;
+        const corners = [[bbox.x, bbox.y, 'nw'], [bbox.x + bbox.w, bbox.y, 'ne'], [bbox.x, bbox.y + bbox.h, 'sw'], [bbox.x + bbox.w, bbox.y + bbox.h, 'se']];
+        corners.forEach(([cx, cy, pos]) => {
+            g.appendChild(svgEl('rect', {
+                x: cx - hs / 2, y: cy - hs / 2, width: hs, height: hs,
+                fill: '#fff', stroke: '#3b82f6', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke',
+                'data-handle': pos, 'data-id': obj.id, style: 'cursor: nwse-resize;'
+            }));
+        });
+        return g;
+    }
+
+    function renderNodeHandles(obj) {
+        const hs = 9 / pxPerCm();
+        const g = svgEl('g', { class: 'node-edit-overlay' });
+        const d = 'M ' + obj.points.map(p => `${p.x} ${p.y}`).join(' L ') + ' Z';
+        g.appendChild(svgEl('path', { d, fill: 'none', stroke: '#10b981', 'stroke-width': 1, 'stroke-dasharray': '3 2', 'vector-effect': 'non-scaling-stroke' }));
+        obj.points.forEach((p, idx) => {
+            g.appendChild(svgEl('circle', {
+                cx: p.x, cy: p.y, r: hs / 2,
+                fill: '#10b981', stroke: '#fff', 'stroke-width': 1.5, 'vector-effect': 'non-scaling-stroke',
+                'data-node-index': idx, 'data-id': obj.id, style: 'cursor: pointer;'
+            }));
+        });
+        return g;
+    }
+
+    function buildGridDefs() {
+        const defs = svgEl('defs', {});
+        const pattern = svgEl('pattern', { id: 'gridMinor', width: 1, height: 1, patternUnits: 'userSpaceOnUse' });
+        pattern.appendChild(svgEl('path', { d: 'M 1 0 L 0 0 0 1', fill: 'none', stroke: '#eef2f7', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
+        defs.appendChild(pattern);
+        return defs;
+    }
+
+    function renderMat() {
+        matSvg.setAttribute('viewBox', `0 0 ${MAT_W} ${MAT_H}`);
+        matSvg.style.width = (MAT_W * pxPerCm()) + 'px';
+        matSvg.style.height = (MAT_H * pxPerCm()) + 'px';
+        matSvg.innerHTML = '';
+        matSvg.appendChild(buildGridDefs());
+        matSvg.appendChild(svgEl('rect', { x: 0, y: 0, width: MAT_W, height: MAT_H, fill: 'url(#gridMinor)' }));
+        for (let i = 0; i <= MAT_W; i += 10) {
+            matSvg.appendChild(svgEl('line', { x1: i, y1: 0, x2: i, y2: MAT_H, stroke: '#cbd5e1', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
+        }
+        for (let j = 0; j <= MAT_H; j += 10) {
+            matSvg.appendChild(svgEl('line', { x1: 0, y1: j, x2: MAT_W, y2: j, stroke: '#cbd5e1', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
+        }
+        objects.forEach(o => matSvg.appendChild(renderObjectGroup(o)));
+        if (selectedId) {
+            const sel = objects.find(o => o.id === selectedId);
+            if (sel && nodeEditId !== sel.id) matSvg.appendChild(renderSelection(sel));
+        }
+        if (nodeEditId) {
+            const editObj = objects.find(o => o.id === nodeEditId);
+            if (editObj && editObj.type === 'polygon') matSvg.appendChild(renderNodeHandles(editObj));
+            else nodeEditId = null;
+        }
+        deleteSelBtn.style.display = selectedId ? 'block' : 'none';
+        renderRulers();
+        if (colorPopover.style.display === 'flex') syncColorPopover();
+    }
+
+    function renderRulers() {
+        const ppc = pxPerCm();
+        const totalW = MAT_W * ppc, totalH = MAT_H * ppc;
+        rulerTopInner.style.width = totalW + 'px';
+        rulerTopInner.innerHTML = '';
+        for (let i = 0; i <= MAT_W; i++) {
+            const major = i % 10 === 0;
+            const tick = document.createElement('div');
+            tick.style.cssText = `position:absolute; left:${i * ppc}px; top:${major ? 0 : 10}px; width:1px; height:${major ? 20 : 10}px; background:#cbd5e1;`;
+            rulerTopInner.appendChild(tick);
+            if (major) {
+                const label = document.createElement('div');
+                label.textContent = i;
+                label.style.cssText = `position:absolute; left:${i * ppc + 3}px; top:2px; font-size:10px; color:#64748b;`;
+                rulerTopInner.appendChild(label);
+            }
+        }
+        rulerLeftInner.style.height = totalH + 'px';
+        rulerLeftInner.innerHTML = '';
+        for (let j = 0; j <= MAT_H; j++) {
+            const major = j % 10 === 0;
+            const tick = document.createElement('div');
+            tick.style.cssText = `position:absolute; top:${j * ppc}px; left:${major ? 0 : 10}px; height:1px; width:${major ? 20 : 10}px; background:#cbd5e1;`;
+            rulerLeftInner.appendChild(tick);
+            if (major) {
+                const label = document.createElement('div');
+                label.textContent = j;
+                label.style.cssText = `position:absolute; top:${j * ppc + 2}px; left:2px; font-size:9px; color:#64748b;`;
+                rulerLeftInner.appendChild(label);
+            }
+        }
+    }
+
+    canvasViewport.addEventListener('scroll', () => {
+        rulerTopInner.style.transform = `translateX(${-canvasViewport.scrollLeft}px)`;
+        rulerLeftInner.style.transform = `translateY(${-canvasViewport.scrollTop}px)`;
+    });
+
+    // ===================== Historique (Annuler / Rétablir / Original) =====================
+    function snapshot() {
+        return JSON.stringify({ objects, nextObjId, matW: MAT_W, matH: MAT_H });
+    }
+
+    function pushHistory() {
+        history = history.slice(0, historyIndex + 1);
+        history.push(snapshot());
+        if (history.length > MAX_HISTORY) history.shift();
+        historyIndex = history.length - 1;
+        updateUndoRedoButtons();
+    }
+
+    function restoreSnapshot(json) {
+        const s = JSON.parse(json);
+        objects = s.objects;
+        nextObjId = s.nextObjId;
+        MAT_W = s.matW;
+        MAT_H = s.matH;
+        matWidthInput.value = MAT_W;
+        matHeightInput.value = MAT_H;
+        selectedId = null;
+        downloadBtn.disabled = objects.length === 0;
+        renderMat();
+    }
+
+    function undo() {
+        if (historyIndex <= 0) return;
+        historyIndex--;
+        restoreSnapshot(history[historyIndex]);
+        updateUndoRedoButtons();
+    }
+
+    function redo() {
+        if (historyIndex >= history.length - 1) return;
+        historyIndex++;
+        restoreSnapshot(history[historyIndex]);
+        updateUndoRedoButtons();
+    }
+
+    function resetToOriginal() {
+        restoreSnapshot(history[0]);
+        pushHistory();
+    }
+
+    function updateUndoRedoButtons() {
+        undoBtn.disabled = historyIndex <= 0;
+        redoBtn.disabled = historyIndex >= history.length - 1;
+    }
+
+    undoBtn.addEventListener('click', undo);
+    redoBtn.addEventListener('click', redo);
+    resetOriginalBtn.addEventListener('click', () => {
+        if (objects.length > 0 && !confirm("Revenir au projet original ? Vous pourrez toujours faire « Annuler » ensuite si besoin.")) return;
+        resetToOriginal();
+    });
+
+    // ===================== Interactions souris/tactile =====================
+    matSvg.addEventListener('pointerdown', e => {
+        const pt = clientToCm(e.clientX, e.clientY);
+        if (eraserMode) {
+            selectedId = null;
+            currentEraserObj = { id: nextObjId++, type: 'eraser', rotation: 0, strokeWidth: eraserWidth, points: [pt] };
+            objects.push(currentEraserObj);
+            renderMat();
+            return;
+        }
+        if (lineMode) {
+            selectedId = null;
+            currentLineObj = {
+                id: nextObjId++, type: 'line', rotation: 0, color: lineColor, strokeWidth: lineWidth,
+                curved: !lineStraight, points: lineStraight ? [pt, pt] : [pt]
+            };
+            objects.push(currentLineObj);
+            renderMat();
+            return;
+        }
+        const nodeEl = e.target.closest('[data-node-index]');
+        const handleEl = e.target.closest('[data-handle]');
+        const objEl = e.target.closest('.canvas-object');
+        if (nodeEl) {
+            const id = Number(nodeEl.dataset.id);
+            const idx = Number(nodeEl.dataset.nodeIndex);
+            selectedId = id;
+            const obj = objects.find(o => o.id === id);
+            dragState = { mode: 'node', id, nodeIndex: idx, startPt: pt, start: { points: obj.points.map(p => ({ ...p })) } };
+            dragMoved = false;
+        } else if (handleEl) {
+            const id = Number(handleEl.dataset.id);
+            selectedId = id;
+            const obj = objects.find(o => o.id === id);
+            if (obj.type === 'polygon') {
+                dragState = { mode: 'resizePoly', id, handle: handleEl.dataset.handle, startPt: pt, startBBox: getObjBBox(obj), startPoints: obj.points.map(p => ({ ...p })) };
+            } else {
+                dragState = { mode: 'resize', id, handle: handleEl.dataset.handle, startPt: pt, start: { ...obj } };
+            }
+            dragMoved = false;
+        } else if (objEl) {
+            const id = Number(objEl.dataset.id);
+            if (id !== nodeEditId) nodeEditId = null;
+            selectedId = id;
+            const obj = objects.find(o => o.id === id);
+            const start = (obj.type === 'eraser' || obj.type === 'line' || obj.type === 'polygon') ? { ...obj, points: obj.points.map(p => ({ ...p })) } : { ...obj };
+            dragState = { mode: 'move', id, startPt: pt, start };
+            dragMoved = false;
+        } else {
+            selectedId = null;
+            nodeEditId = null;
+        }
+        renderMat();
+    });
+
+    window.addEventListener('pointermove', e => {
+        if (eraserMode && currentEraserObj) {
+            const pt = clientToCm(e.clientX, e.clientY);
+            currentEraserObj.points.push(pt);
+            renderMat();
+            return;
+        }
+        if (lineMode && currentLineObj) {
+            const pt = clientToCm(e.clientX, e.clientY);
+            if (lineStraight) {
+                currentLineObj.points[1] = pt;
+            } else {
+                currentLineObj.points.push(pt);
+            }
+            renderMat();
+            return;
+        }
+        if (!dragState) return;
+        const pt = clientToCm(e.clientX, e.clientY);
+        const dx = pt.x - dragState.startPt.x;
+        const dy = pt.y - dragState.startPt.y;
+        if (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001) dragMoved = true;
+        const obj = objects.find(o => o.id === dragState.id);
+        if (!obj) return;
+        const minSize = 0.5;
+        if (dragState.mode === 'move') {
+            if (obj.type === 'eraser' || obj.type === 'line' || obj.type === 'polygon') {
+                obj.points = dragState.start.points.map(p => ({ x: p.x + dx, y: p.y + dy }));
+            } else {
+                obj.x = dragState.start.x + dx;
+                obj.y = dragState.start.y + dy;
+            }
+        } else if (dragState.mode === 'node') {
+            const orig = dragState.start.points[dragState.nodeIndex];
+            obj.points[dragState.nodeIndex] = { x: orig.x + dx, y: orig.y + dy };
+        } else if (dragState.mode === 'resizePoly') {
+            const bbox = dragState.startBBox;
+            let { x, y, w, h } = bbox;
+            if (dragState.handle.includes('e')) w = Math.max(minSize, bbox.w + dx);
+            if (dragState.handle.includes('s')) h = Math.max(minSize, bbox.h + dy);
+            if (dragState.handle.includes('w')) { w = Math.max(minSize, bbox.w - dx); x = bbox.x + (bbox.w - w); }
+            if (dragState.handle.includes('n')) { h = Math.max(minSize, bbox.h - dy); y = bbox.y + (bbox.h - h); }
+            const sx = w / bbox.w, sy = h / bbox.h;
+            obj.points = dragState.startPoints.map(p => ({
+                x: x + (p.x - bbox.x) * sx,
+                y: y + (p.y - bbox.y) * sy
+            }));
+        } else if (dragState.mode === 'resize') {
+            let { x, y, w, h } = dragState.start;
+            if (dragState.handle.includes('e')) w = Math.max(minSize, dragState.start.w + dx);
+            if (dragState.handle.includes('s')) h = Math.max(minSize, dragState.start.h + dy);
+            if (dragState.handle.includes('w')) { w = Math.max(minSize, dragState.start.w - dx); x = dragState.start.x + (dragState.start.w - w); }
+            if (dragState.handle.includes('n')) { h = Math.max(minSize, dragState.start.h - dy); y = dragState.start.y + (dragState.start.h - h); }
+            obj.x = x; obj.y = y; obj.w = w; obj.h = h;
+            if (obj.type === 'text') obj.fontSize = obj.h * 0.7;
+        }
+        renderMat();
+    });
+
+    window.addEventListener('pointerup', () => {
+        if (currentEraserObj) {
+            currentEraserObj = null;
+            downloadBtn.disabled = objects.length === 0;
+            pushHistory();
+        }
+        if (currentLineObj) {
+            currentLineObj = null;
+            downloadBtn.disabled = objects.length === 0;
+            pushHistory();
+        }
+        if (dragState) {
+            dragState = null;
+            if (dragMoved) pushHistory();
+        }
+    });
+
+    matSvg.addEventListener('dblclick', e => {
+        const objEl = e.target.closest('.canvas-object');
+        if (!objEl) return;
+        const obj = objects.find(o => o.id === Number(objEl.dataset.id));
+        if (!obj) return;
+        if (obj.type === 'text') { editTextObject(obj.id); return; }
+        if (obj.type === 'polygon') {
+            nodeEditId = (nodeEditId === obj.id) ? null : obj.id;
+            selectedId = obj.id;
+            renderMat();
+        }
+    });
+
+    window.addEventListener('keydown', e => {
+        const tag = document.activeElement ? document.activeElement.tagName : '';
+        const inField = tag === 'TEXTAREA' || tag === 'INPUT';
+        if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId && !inField) {
+            deleteSelected();
+        }
+        if (e.key === 'Escape' && nodeEditId) {
+            nodeEditId = null;
+            renderMat();
+        }
+        if ((e.ctrlKey || e.metaKey) && !inField) {
+            const k = e.key.toLowerCase();
+            if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+            else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
+        }
+    });
+
+    function deleteSelected() {
+        if (!selectedId) return;
+        objects = objects.filter(o => o.id !== selectedId);
+        if (nodeEditId === selectedId) nodeEditId = null;
+        selectedId = null;
+        if (objects.length === 0) downloadBtn.disabled = true;
+        renderMat();
+        pushHistory();
+    }
+    deleteSelBtn.addEventListener('click', deleteSelected);
+
+    // ===================== Zoom =====================
+    function setZoom(z) {
+        zoom = Math.min(3, Math.max(0.25, z));
+        zoomLabel.textContent = Math.round(zoom * 100) + '%';
+        renderMat();
+    }
+    zoomInBtn.addEventListener('click', () => setZoom(zoom + 0.1));
+    zoomOutBtn.addEventListener('click', () => setZoom(zoom - 0.1));
+    zoomResetBtn.addEventListener('click', () => setZoom(1));
+
+    // ===================== Barre d'outils =====================
+    function comingSoon(name) {
+        appendMessage(`La fonctionnalité « ${name} » arrivera dans une prochaine version.`, 'ai');
+    }
+
+    toolNew.addEventListener('click', clearProject);
+    toolProjects.addEventListener('click', () => comingSoon('Projets'));
+    toolMonogram.addEventListener('click', () => comingSoon('Monogramme'));
+    toolLayout.addEventListener('click', () => comingSoon('Mises en page'));
+    toolImages.addEventListener('click', () => fileImporter.click());
+    toolText.addEventListener('click', addText);
+    toolDownload.addEventListener('click', () => downloadBtn.click());
+    let aiPanelOpen = true;
+    function setAIPanelOpen(open) {
+        aiPanelOpen = open;
+        aiSidebar.classList.toggle('closed', !open);
+        toolAI.classList.toggle('active', open);
+        if (open) {
+            setTimeout(() => { userInput.focus(); }, 260);
+        }
+    }
+    toolAI.addEventListener('click', () => setAIPanelOpen(!aiPanelOpen));
+
+    toolShapes.addEventListener('click', (e) => {
+        const isOpen = shapesPopover.style.display === 'flex';
+        if (isOpen) { shapesPopover.style.display = 'none'; return; }
+        const rect = toolShapes.getBoundingClientRect();
+        shapesPopover.style.left = (rect.right + 6) + 'px';
+        shapesPopover.style.top = rect.top + 'px';
+        shapesPopover.style.display = 'flex';
+    });
+    shapesPopover.querySelectorAll('button[data-shape]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const t = btn.dataset.shape;
+            if (t === 'circle') addShape('circle');
+            else addPolygonShape(t);
+            shapesPopover.style.display = 'none';
+        });
+    });
+    document.addEventListener('click', (e) => {
+        if (!shapesPopover.contains(e.target) && e.target !== toolShapes && !toolShapes.contains(e.target)) {
+            shapesPopover.style.display = 'none';
+        }
+        if (!linePopover.contains(e.target) && e.target !== toolLine && !toolLine.contains(e.target)) {
+            linePopover.style.display = 'none';
+        }
+        if (!colorPopover.contains(e.target) && e.target !== toolColor && !toolColor.contains(e.target)) {
+            colorPopover.style.display = 'none';
+        }
+    });
+
+    // ===================== Gomme =====================
+    function setEraserMode(on) {
+        eraserMode = on;
+        toolEraser.classList.toggle('active', on);
+        if (on && lineMode) setLineMode(false);
+        matSvg.style.cursor = on ? 'crosshair' : '';
+        if (on) {
+            const rect = toolEraser.getBoundingClientRect();
+            eraserPopover.style.left = (rect.right + 6) + 'px';
+            eraserPopover.style.top = rect.top + 'px';
+            eraserPopover.style.display = 'flex';
+            selectedId = null;
+            renderMat();
+        } else {
+            eraserPopover.style.display = 'none';
+        }
+    }
+    toolEraser.addEventListener('click', () => setEraserMode(!eraserMode));
+    eraserOffBtn.addEventListener('click', () => setEraserMode(false));
+    eraserSizeRange.addEventListener('input', () => {
+        eraserWidth = parseFloat(eraserSizeRange.value);
+        eraserSizeLabel.textContent = eraserWidth.toFixed(1) + ' cm';
+    });
+
+    // ===================== Lignes / Courbes =====================
+    function setLineMode(on) {
+        lineMode = on;
+        toolLine.classList.toggle('active', on);
+        if (on && eraserMode) setEraserMode(false);
+        matSvg.style.cursor = on ? 'crosshair' : '';
+        if (on) {
+            const rect = toolLine.getBoundingClientRect();
+            linePopover.style.left = (rect.right + 6) + 'px';
+            linePopover.style.top = rect.top + 'px';
+            linePopover.style.display = 'flex';
+            selectedId = null;
+            renderMat();
+        } else {
+            linePopover.style.display = 'none';
+        }
+    }
+    toolLine.addEventListener('click', () => setLineMode(!lineMode));
+    lineOffBtn.addEventListener('click', () => setLineMode(false));
+    lineColorPicker.addEventListener('input', () => { lineColor = lineColorPicker.value; });
+    lineWidthRange.addEventListener('input', () => {
+        lineWidth = parseFloat(lineWidthRange.value);
+        lineWidthLabel.textContent = lineWidth.toFixed(2) + ' cm';
+    });
+    lineModeStraightBtn.addEventListener('click', () => {
+        lineStraight = true;
+        lineModeStraightBtn.classList.add('active');
+        lineModeCurveBtn.classList.remove('active');
+    });
+    lineModeCurveBtn.addEventListener('click', () => {
+        lineStraight = false;
+        lineModeCurveBtn.classList.add('active');
+        lineModeStraightBtn.classList.remove('active');
+    });
+
+    // ===================== Couleurs =====================
+    function syncColorPopover() {
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj || obj.type === 'eraser') {
+            colorNoSelection.style.display = 'block';
+            colorEditRow.style.display = 'none';
+            return;
+        }
+        colorNoSelection.style.display = 'none';
+        colorEditRow.style.display = 'flex';
+        let current = '#000000';
+        if (obj.type === 'shape' || obj.type === 'polygon') current = obj.fill;
+        else if (obj.type === 'text') current = obj.color || '#000000';
+        else if (obj.type === 'line') current = obj.color;
+        else if (obj.type === 'svg') current = obj.colorOverride || '#000000';
+        colorPicker.value = current;
+        colorResetBtn.style.display = obj.type === 'svg' ? 'block' : 'none';
+    }
+    toolColor.addEventListener('click', () => {
+        const isOpen = colorPopover.style.display === 'flex';
+        if (isOpen) { colorPopover.style.display = 'none'; return; }
+        const rect = toolColor.getBoundingClientRect();
+        colorPopover.style.left = (rect.right + 6) + 'px';
+        colorPopover.style.top = rect.top + 'px';
+        colorPopover.style.display = 'flex';
+        syncColorPopover();
+    });
+    colorPicker.addEventListener('input', () => {
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj) return;
+        const val = colorPicker.value;
+        if (obj.type === 'shape' || obj.type === 'polygon') obj.fill = val;
+        else if (obj.type === 'text') obj.color = val;
+        else if (obj.type === 'line') obj.color = val;
+        else if (obj.type === 'svg') obj.colorOverride = val;
+        renderMat();
+    });
+    colorPicker.addEventListener('change', () => pushHistory());
+    colorResetBtn.addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId);
+        if (obj && obj.type === 'svg') {
+            obj.colorOverride = null;
+            renderMat();
+            pushHistory();
+            syncColorPopover();
+        }
+    });
+
+    // ===================== Taille du tapis =====================
+    applyMatSize.addEventListener('click', () => {
+        const w = parseFloat(matWidthInput.value);
+        const h = parseFloat(matHeightInput.value);
+        if (w > 0 && h > 0) {
+            MAT_W = w;
+            MAT_H = h;
+            renderMat();
+            pushHistory();
+        }
+    });
+
+    // ===================== Modale Mode d'emploi =====================
+    helpBtn.onclick = () => helpModal.style.display = "flex";
+    closeModal.onclick = () => helpModal.style.display = "none";
+    window.addEventListener('click', (e) => { if (e.target == helpModal) helpModal.style.display = "none"; });
+
+    window.openTab = function (evt, tabId) {
+        const tabContents = document.getElementsByClassName("modal-tab-content");
+        for (let i = 0; i < tabContents.length; i++) tabContents[i].classList.remove("active");
+        const tabButtons = document.getElementsByClassName("tab-btn");
+        for (let i = 0; i < tabButtons.length; i++) tabButtons[i].classList.remove("active");
+        document.getElementById(tabId).classList.add("active");
+        evt.currentTarget.classList.add("active");
+    };
+
+    // ===================== Clé API persistée =====================
+    if (localStorage.getItem('cricut_gemini_key')) {
         apiKeyInput.value = localStorage.getItem('cricut_gemini_key');
     }
     apiKeyInput.addEventListener('input', () => {
         localStorage.setItem('cricut_gemini_key', apiKeyInput.value.trim());
     });
 
-    const SYSTEM_INSTRUCTION = `Tu es un expert en design de fichiers SVG pour machines de découpe Cricut Maker. Génère uniquement du code SVG propre, sans contours fins (stroke), utilisant des formes pleines regroupées par calques de couleur (<g id="couleur-...">) et absolument aucun texte explicatif ou bloc de balisage markdown.`;
+    // ===================== Import de fichiers =====================
+    fileImporter.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const extension = file.name.split('.').pop().toLowerCase();
+        const reader = new FileReader();
+
+        appendMessage(`Importation du fichier : ${file.name}...`, 'user');
+
+        if (['png', 'jpg', 'jpeg', 'bmp', 'gif'].includes(extension)) {
+            reader.onload = function (event) {
+                try {
+                    const options = {
+                        ltres: 1, qtres: 1, scale: 1,
+                        colorsampling: 0, numberofcolors: 2,
+                        strokewidth: 0, viewbox: true
+                    };
+                    ImageTracer.imageToSVG(event.target.result, function (rawSvg) {
+                        try {
+                            if (!rawSvg) throw new Error("Le traçage n'a retourné aucun résultat. Réessayez avec une autre image.");
+                            addSvgObject(rawSvg, '#000000');
+                            appendMessage("Image convertie et ajoutée sur le plan de travail ! Déplacez-la ou redimensionnez-la librement.", 'ai');
+                        } catch (err) {
+                            appendMessage(`Erreur lors du traçage de l'image : ${err.message}`, 'ai');
+                        }
+                    }, options);
+                } catch (err) {
+                    appendMessage(`Erreur lors du traçage de l'image : ${err.message}`, 'ai');
+                }
+            };
+            reader.readAsDataURL(file);
+        } else if (extension === 'dxf') {
+            reader.onload = function (event) {
+                try {
+                    const parser = new DxfParser();
+                    const dxf = parser.parseSync(event.target.result);
+
+                    if (dxf && dxf.entities) {
+                        let svgPaths = '';
+                        dxf.entities.forEach(entity => {
+                            if (entity.type === 'LINE') {
+                                svgPaths += `<line x1="${entity.vertices[0].x}" y1="${-entity.vertices[0].y}" x2="${entity.vertices[1].x}" y2="${-entity.vertices[1].y}" stroke="black" stroke-width="2"/>`;
+                            } else if (entity.type === 'CIRCLE' || entity.type === 'ARC') {
+                                svgPaths += `<circle cx="${entity.center.x}" cy="${-entity.center.y}" r="${entity.radius}" stroke="black" stroke-width="2" fill="none"/>`;
+                            }
+                        });
+
+                        if (svgPaths === '') throw new Error("Aucune entité linéaire exploitable.");
+
+                        const wrapped = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800"><g transform="translate(400,400)">${svgPaths}</g></svg>`;
+                        addSvgObject(wrapped);
+                        appendMessage("Fichier CAO DXF lu et ajouté sur le plan de travail !", 'ai');
+                    }
+                } catch (err) {
+                    appendMessage(`Erreur DXF : ${err.message}`, 'ai');
+                }
+            };
+            reader.readAsText(file);
+        }
+        fileImporter.value = '';
+    });
+
+    // ===================== Assistant IA Gemini =====================
+    const SYSTEM_INSTRUCTION = `Tu es un expert en design et modification de fichiers SVG pour machines de découpe Cricut Maker. Tu reçois des descriptions. Génère uniquement du code SVG propre, autonome (avec son propre viewBox), sans contours fins (stroke) si l'utilisateur demande des formes unies, en utilisant des formes pleines regroupées par calques et absolument aucun texte markdown ou explication.`;
 
     sendBtn.addEventListener('click', handleGeneration);
     userInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGeneration(); } });
 
     async function handleGeneration() {
-        const prompt = userInput.value.trim();
-        const apiKey = apiKeyInput.value.trim();
+        let prompt = userInput.value.trim();
+        let apiKey = apiKeyInput.value.trim().replaceAll("\r", "").replaceAll("\n", "").replaceAll("\t", "").replaceAll(" ", "");
+
         if (!prompt) return;
         if (!apiKey) {
-            alert("Veuillez configurer votre clé d'API Gemini dans le champ prévu à cet effet avant de lancer la génération.");
+            alert("Veuillez configurer votre clé d'API Gemini.");
             return;
         }
 
-        appendMessage(prompt, 'user');
+        appendMessage(userInput.value.trim(), 'user');
         userInput.value = '';
-        const loadingDiv = appendMessage("L'IA conçoit votre fichier SVG...", 'ai');
+        const loadingDiv = appendMessage("L'IA traite votre demande sur le modèle vectoriel...", 'ai');
 
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -267,22 +1327,23 @@
                 })
             });
 
-            const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
-            
-            let svgResponse = data.candidates[0].content.parts[0].text.trim();
-            svgResponse = svgResponse.replace(/```xml/g, '').replace(/```svg/g, '').replace(/```/g, '').trim();
+            if (!response.ok) throw new Error("Erreur réseau ou clé d'API invalide.");
 
-            if (svgResponse.startsWith('<svg')) {
-                currentSvgCode = svgResponse;
-                previewContainer.innerHTML = currentSvgCode;
-                downloadBtn.disabled = false;
-                loadingDiv.innerText = "Fichier SVG configuré avec succès ! Son rendu est visible à gauche.";
+            const data = await response.json();
+            let svgResponse = data.candidates[0].content.parts[0].text.trim();
+            svgResponse = svgResponse.replaceAll('```xml', '').replaceAll('```svg', '').replaceAll('```', '').trim();
+
+            if (svgResponse.includes('<svg')) {
+                const startIdx = svgResponse.indexOf('<svg');
+                const endIdx = svgResponse.lastIndexOf('</svg>') + 6;
+                const svgCode = svgResponse.substring(startIdx, endIdx);
+                addSvgObject(svgCode);
+                loadingDiv.innerText = "Élément vectoriel ajouté sur le plan de travail !";
             } else {
-                loadingDiv.innerText = "Le format de tracé retourné par l'IA est incorrect. Modifiez légèrement votre description.";
+                loadingDiv.innerText = "L'IA n'a pas retourné de code vectoriel valide.";
             }
         } catch (error) {
-            loadingDiv.innerText = "Erreur technique d'API : " + error.message;
+            loadingDiv.innerText = "Erreur technique : " + error.message;
         }
     }
 
@@ -295,13 +1356,44 @@
         return msgDiv;
     }
 
-    downloadBtn.addEventListener('click', function() {
-        const blob = new Blob([currentSvgCode], { type: 'image/svg+xml' });
+    // ===================== Nouveau projet / Export =====================
+    function clearProject() {
+        if (objects.length > 0 && !confirm("Voulez-vous vraiment effacer ce projet et recommencer ?")) return;
+        objects = [];
+        selectedId = null;
+        downloadBtn.disabled = true;
+        chatMessages.innerHTML = '<div class="message ai">Bonjour Lilia ! Importez une image/DXF, ajoutez des formes ou du texte, ou demandez à l\'IA — chaque élément s\'ajoute sur le plan de travail et reste déplaçable/redimensionnable. Que fait-on ?</div>';
+        userInput.value = '';
+        renderMat();
+        pushHistory();
+    }
+    resetBtn.addEventListener('click', clearProject);
+
+    function serializeObjectForExport(obj) {
+        const g = renderObjectGroup(obj);
+        g.removeAttribute('data-id');
+        g.removeAttribute('class');
+        g.removeAttribute('style');
+        return new XMLSerializer().serializeToString(g);
+    }
+
+    downloadBtn.addEventListener('click', function () {
+        if (objects.length === 0) return;
+        let body = '';
+        objects.forEach(o => { body += serializeObjectForExport(o); });
+        const finalSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${MAT_W}cm" height="${MAT_H}cm" viewBox="0 0 ${MAT_W} ${MAT_H}">${body}</svg>`;
+        const blob = new Blob([finalSvg], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = `ia_cricut_${Date.now()}.svg`;
+        a.href = url; a.download = `ia_cricut_project_${Date.now()}.svg`;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
     });
+
+    // ===================== Initialisation =====================
+    toolAI.classList.add('active');
+    setZoom(1);
+    renderMat();
+    pushHistory();
 </script>
 </body>
 </html>
