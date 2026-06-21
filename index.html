@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cricut IA Maker - Générateur SVG</title>
+    <title>Cricut IA & File Maker - Générateur SVG</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -35,11 +35,20 @@
         }
         .preview-container svg { max-width: 85%; max-height: 85%; object-fit: contain; }
         .actions { margin-top: 15px; display: flex; gap: 10px; width: 100%; }
-        .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; text-align: center; }
         .btn-success { background: #10b981; color: white; }
         .btn-success:disabled { background: #cbd5e1; cursor: not-allowed; }
         
-        /* Bouton Mode d'emploi */
+        /* Zone d'importation de fichiers */
+        .import-box {
+            background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 8px;
+            padding: 12px; margin-bottom: 10px; text-align: center; cursor: pointer;
+            transition: all 0.2s; position: relative;
+        }
+        .import-box:hover { background: #f1f5f9; border-color: #3b82f6; }
+        .import-box p { margin: 0; font-size: 13px; color: #64748b; font-weight: 500; }
+        .import-box input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
         .btn-info { background: #64748b; color: white; font-size: 14px; padding: 8px 15px; }
         .btn-info:hover { background: #475569; }
 
@@ -47,7 +56,6 @@
         .chat-header { padding: 15px; background: #0f172a; color: white; }
         .api-box { padding: 10px 15px; background: #1e293b; border-bottom: 1px solid #334155; }
         
-        /* Input clé masqué par style pour éviter les conflits des gestionnaires de mots de passe */
         .api-box input { 
             width: 100%; padding: 6px; background: #334155; border: 1px solid #475569; 
             color: white; border-radius: 4px; box-sizing: border-box; font-size: 12px;
@@ -80,7 +88,6 @@
         .close-btn { font-size: 24px; cursor: pointer; color: #94a3b8; }
         .close-btn:hover { color: #475569; }
         
-        /* Menu Modale */
         .modal-body { display: flex; flex: 1; overflow: hidden; }
         .modal-tabs { width: 200px; background: #f8fafc; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; padding: 15px 0; gap: 5px; }
         .tab-btn { background: none; border: none; padding: 12px 20px; text-align: left; font-size: 14px; font-weight: 500; color: #64748b; cursor: pointer; border-left: 3px solid transparent; transition: all 0.2s; }
@@ -94,6 +101,8 @@
         .highlight-box { background: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; margin: 15px 0; border-radius: 0 8px 8px 0; font-size: 13.5px; color: #14532d; }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/potrace@2.1.8/dist/potrace.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
 </head>
 <body>
 
@@ -103,7 +112,7 @@
             <button id="helpBtn" class="btn btn-info">📖 Mode d'emploi</button>
         </h1>
         <div id="previewContainer" class="preview-container">
-            <p id="placeholder" class="placeholder-text">Demandez à l'IA de générer un dessin pour voir l'aperçu...</p>
+            <p id="placeholder" class="placeholder-text">Importez un fichier (Image/DXF) ou demandez à l'IA pour voir le rendu...</p>
         </div>
         <div class="actions">
             <button id="downloadBtn" class="btn btn-success" disabled style="flex: 2;">Télécharger pour Cricut (SVG)</button>
@@ -119,15 +128,22 @@
             </svg>
         </div>
 
+        <div style="padding: 10px 15px; background: #f8fafc; border-bottom: 1px solid #cbd5e1;">
+            <div class="import-box">
+                <p>📁 Insérer Image (PNG, JPG, BMP, GIF) ou DXF</p>
+                <input type="file" id="fileImporter" accept=".png, .jpg, .jpeg, .bmp, .gif, .dxf">
+            </div>
+        </div>
+
         <div class="chat-header"><strong>Assistant IA Cricut</strong> (Gemini)</div>
         <div class="api-box">
             <input type="text" id="apiKeyInput" placeholder="Collez votre clé d'API Gemini ici..." autocomplete="off">
         </div>
         <div id="chatMessages" class="chat-messages">
-            <div class="message ai">Bonjour Lilia ! Votre application est prête et sécurisée sur GitHub Pages. Quel superbe projet allons-nous créer ?</div>
+            <div class="message ai">Bonjour Lilia ! Vous pouvez désormais glisser vos propres images ou fichiers DXF pour les vectoriser/modifier, ou continuer à utiliser l'IA en écrivant votre prompt ci-dessous. Que fait-on ?</div>
         </div>
         <div class="chat-input-area">
-            <textarea id="userInput" placeholder="Écrivez votre prompt ici..."></textarea>
+            <textarea id="userInput" placeholder="Demander une modification ou un dessin à l'IA..."></textarea>
             <button id="sendBtn">Créer</button>
         </div>
     </div>
@@ -135,48 +151,37 @@
     <div id="helpModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Documentation & Mode d'emploi</h2>
+                <h2>Documentation & Import de Fichiers</h2>
                 <span id="closeModal" class="close-btn">&times;</span>
             </div>
             <div class="modal-body">
                 <div class="modal-tabs">
-                    <button class="tab-btn active" onclick="openTab(event, 'tab-config')">1. Récupérer sa Clé</button>
-                    <button class="tab-btn" onclick="openTab(event, 'tab-activation')">2. Activer l'Appli</button>
-                    <button class="tab-btn" onclick="openTab(event, 'tab-usage')">3. Utilisation de l'IA</button>
-                    <button class="tab-btn" onclick="openTab(event, 'tab-cricut')">4. Import dans Cricut</button>
+                    <button class="tab-btn active" onclick="openTab(event, 'tab-files')">Outils Fichiers</button>
+                    <button class="tab-btn" onclick="openTab(event, 'tab-config')">Clé d'API Gemini</button>
+                    <button class="tab-btn" onclick="openTab(event, 'tab-usage')">Demandes IA</button>
                 </div>
 
-                <div id="tab-config" class="modal-tab-content active">
-                    <h3>Étape 1 : Obtenir une clé d'API Google Gemini</h3>
+                <div id="tab-files" class="modal-tab-content active">
+                    <h3>Importation et retouche de fichiers</h3>
+                    <ol>
+                        <li>**Images (PNG, JPG, BMP, GIF) :** Lorsque vous chargez une image, l'application exécute un algorithme d'autotracer (Potrace) pour la convertir instantanément en contours pleins SVG nets, parfaits pour la découpe vinyle.</li>
+                        <li>**Fichiers DXF :** L'outil décode l'architecture vectorielle du fichier CAO pour l'afficher à gauche et la rendre téléchargeable au format SVG compatible Cricut.</li>
+                        <li>**Modifications par IA :** Une fois le fichier chargé, vous pouvez utiliser la zone de texte en bas à droite pour ordonner à l'IA de modifier ou d'ajouter des éléments au tracé actuel.</li>
+                    </ol>
+                </div>
+
+                <div id="tab-config" class="modal-tab-content">
+                    <h3>Étape : Obtenir une clé d'API Google Gemini</h3>
                     <ol>
                         <li>Rendez-vous sur : <a href="https://aistudio.google.com/" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: bold;">aistudio.google.com</a>.</li>
-                        <li>Connectez-vous avec votre compte Google.</li>
-                        <li>Cliquez sur **"Get API key"** en haut à gauche, puis générez une clé.</li>
-                        <li>Copiez le code fourni.</li>
+                        <li>Connectez-se avec son compte Google et cliquez sur **"Get API key"**.</li>
                     </ol>
-                </div>
-
-                <div id="tab-activation" class="modal-tab-content">
-                    <h3>Étape 2 : Activer l'application</h3>
-                    <ol>
-                        <li>Collez la clé dans le champ prévu en haut à droite.</li>
-                    </ol>
-                    <div class="highlight-box">
-                        <strong>🔒 Sauvegarde automatique :</strong> La clé reste enregistrée sur ce PC. Vous n'aurez plus à la remettre lors de vos prochaines visites.
-                    </div>
                 </div>
 
                 <div id="tab-usage" class="modal-tab-content">
-                    <h3>Étape 3 : Demander un motif vectoriel</h3>
+                    <h3>Demander un motif vectoriel</h3>
                     <ol>
-                        <li>Décrivez votre idée en bas à droite (ex: <em>"Silhouette de fleur épurée"</em>) puis cliquez sur **Créer**.</li>
-                    </ol>
-                </div>
-
-                <div id="tab-cricut" class="modal-tab-content">
-                    <h3>Étape 4 : Découper</h3>
-                    <ol>
-                        <li>Une fois le rendu affiché à gauche, cliquez sur le bouton vert pour télécharger le `.svg`. Ouvrez-le directement dans **Cricut Design Space**.</li>
+                        <li>Décrivez précisément votre idée (ex: *Silhouette de tortue marine épurée*).</li>
                     </ol>
                 </div>
             </div>
@@ -191,6 +196,7 @@
     const previewContainer = document.getElementById('previewContainer');
     const downloadBtn = document.getElementById('downloadBtn');
     const resetBtn = document.getElementById('resetBtn');
+    const fileImporter = document.getElementById('fileImporter');
     
     const helpBtn = document.getElementById('helpBtn');
     const helpModal = document.getElementById('helpModal');
@@ -218,13 +224,70 @@
         localStorage.setItem('cricut_gemini_key', apiKeyInput.value.trim());
     });
 
-    const SYSTEM_INSTRUCTION = `Tu es un expert en design de fichiers SVG pour machines de découpe Cricut Maker. Génère uniquement du code SVG propre, sans contours fins (stroke), utilisant des formes pleines regroupées par calques de couleur (<g id="couleur-...">) et absolument aucun texte explicatif ou bloc de balisage markdown.`;
+    // GESTION DU CHARGEMENT DE FICHIERS (IMAGES & DXF)
+    fileImporter.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const extension = file.name.split('.').pop().toLowerCase();
+        const reader = new FileReader();
+
+        appendMessage(`Importation du fichier : ${file.name}...`, 'user');
+
+        if (['png', 'jpg', 'jpeg', 'bmp', 'gif'].includes(extension)) {
+            // Traitement Image Matricielle -> Traçage vectoriel SVG (Potrace)
+            reader.onload = function(event) {
+                Potrace.loadImage(event.target.result);
+                Potrace.process(function() {
+                    currentSvgCode = Potrace.getSVG(1.0); // Échelle 1
+                    previewContainer.innerHTML = currentSvgCode;
+                    downloadBtn.disabled = false;
+                    appendMessage("Image convertie avec succès en courbes de découpe SVG ! Vous pouvez la télécharger ou demander à l'IA de la modifier.", 'ai');
+                });
+            };
+            reader.readAsDataURL(file);
+        } else if (extension === 'dxf') {
+            // Traitement DXF -> Conversion en éléments graphiques SVG
+            reader.onload = function(event) {
+                try {
+                    const parser = new DxfParser();
+                    const dxf = parser.parseSync(event.target.result);
+                    
+                    if(dxf && dxf.entities) {
+                        let svgPaths = '';
+                        // Extraction basique des entités de lignes et cercles du DXF
+                        dxf.entities.forEach(entity => {
+                            if (entity.type === 'LINE') {
+                                svgPaths += `<line x1="${entity.vertices[0].x}" y1="${-entity.vertices[0].y}" x2="${entity.vertices[1].x}" y2="${-entity.vertices[1].y}" stroke="black" stroke-width="2"/>`;
+                            } else if (entity.type === 'CIRCLE' || entity.type === 'ARC') {
+                                svgPaths += `<circle cx="${entity.center.x}" cy="${-entity.center.y}" r="${entity.radius}" stroke="black" stroke-width="2" fill="none"/>`;
+                            }
+                        });
+
+                        if(svgPaths === '') {
+                            throw new Error("Aucune entité de découpe compatible (LINE, CIRCLE) n'a été extraite.");
+                        }
+
+                        currentSvgCode = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%"><g transform="translate(400,400)">${svgPaths}</g></svg>`;
+                        previewContainer.innerHTML = currentSvgCode;
+                        downloadBtn.disabled = false;
+                        appendMessage("Fichier CAO DXF lu et converti avec succès au format vectoriel Cricut !", 'ai');
+                    }
+                } catch (err) {
+                    appendMessage(`Erreur de lecture du DXF : ${err.message}. Assurez-vous qu'il contient des tracés simples.`, 'ai');
+                }
+            };
+            reader.readAsText(file);
+        }
+    });
+
+    const SYSTEM_INSTRUCTION = `Tu es un expert en design et modification de fichiers SVG pour machines de découpe Cricut Maker. Tu reçois des descriptions ou du code SVG existant. Génère uniquement du code SVG propre, sans contours fins (stroke) si l'utilisateur demande des formes unies, en utilisant des formes pleines regroupées par calques et absolument aucun texte markdown ou explication.`;
 
     sendBtn.addEventListener('click', handleGeneration);
     userInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGeneration(); } });
 
     async function handleGeneration() {
-        const prompt = userInput.value.trim();
+        let prompt = userInput.value.trim();
         const apiKey = apiKeyInput.value.trim().replace(/[\r\n\t\s]/g, "");
         
         if (!prompt) return;
@@ -233,9 +296,14 @@
             return;
         }
 
-        appendMessage(prompt, 'user');
+        // Si un fichier est déjà chargé, on l'envoie à l'IA pour qu'elle puisse le modifier
+        if (currentSvgCode !== '') {
+            prompt = `Voici le code SVG actuel du projet chargé : \n${currentSvgCode}\n Modifie-le ou applique la consigne suivante : ${prompt}`;
+        }
+
+        appendMessage(userInput.value.trim(), 'user');
         userInput.value = '';
-        const loadingDiv = appendMessage("L'IA conçoit votre fichier SVG...", 'ai');
+        const loadingDiv = appendMessage("L'IA traite votre demande sur le modèle vectoriel...", 'ai');
 
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
@@ -251,28 +319,23 @@
             });
 
             if (!response.ok) {
-                if (response.status === 400 || response.status === 403) {
-                    throw new Error("La clé d'API insérée semble invalide. Vérifiez votre clé Google AI Studio.");
-                }
-                throw new Error(`Erreur de connexion Google (Statut ${response.status})`);
+                throw new Error("Clé d'API invalide ou problème réseau de l'API Google.");
             }
 
             const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
-            
             let svgResponse = data.candidates[0].content.parts[0].text.trim();
             svgResponse = svgResponse.replace(/```xml/g, '').replace(/```svg/g, '').replace(/```/g, '').trim();
 
-            if (svgResponse.startsWith('<svg') || svgResponse.includes('<svg')) {
+            if (svgResponse.includes('<svg')) {
                 const startIdx = svgResponse.indexOf('<svg');
                 const endIdx = svgResponse.lastIndexOf('</svg>') + 6;
                 currentSvgCode = svgResponse.substring(startIdx, endIdx);
                 
                 previewContainer.innerHTML = currentSvgCode;
                 downloadBtn.disabled = false;
-                loadingDiv.innerText = "Fichier SVG configuré avec succès ! Son rendu est visible à gauche.";
+                loadingDiv.innerText = "Modification vectorielle appliquée avec succès !";
             } else {
-                loadingDiv.innerText = "Le tracé renvoyé par l'IA ne contient pas de balise SVG valide. Réessayez avec une description différente.";
+                loadingDiv.innerText = "L'IA n'a pas retourné de code vectoriel valide pour la modification.";
             }
         } catch (error) {
             loadingDiv.innerText = "Erreur technique : " + error.message;
@@ -288,13 +351,13 @@
         return msgDiv;
     }
 
-    // Gestion de la réinitialisation (Nouveau Projet)
     resetBtn.addEventListener('click', function() {
-        if (confirm("Voulez-vous vraiment effacer ce projet et recommencer un nouveau dessin ?")) {
+        if (confirm("Voulez-vous vraiment effacer ce projet et recommencer ?")) {
             currentSvgCode = '';
-            previewContainer.innerHTML = '<p id="placeholder" class="placeholder-text">Demandez à l\'IA de générer un dessin pour voir l\'aperçu...</p>';
+            fileImporter.value = '';
+            previewContainer.innerHTML = '<p id="placeholder" class="placeholder-text">Importez un fichier (Image/DXF) ou demandez à l\'IA pour voir le rendu...</p>';
             downloadBtn.disabled = true;
-            chatMessages.innerHTML = '<div class="message ai">Bonjour Lilia ! Votre application est prête et sécurisée sur GitHub Pages. Quel superbe projet allons-nous créer ?</div>';
+            chatMessages.innerHTML = '<div class="message ai">Bonjour Lilia ! Vous pouvez désormais glisser vos propres images ou fichiers DXF pour les vectoriser/modifier, ou continuer à utiliser l\'IA en écrivant votre prompt ci-dessous. Que fait-on ?</div>';
             userInput.value = '';
         }
     });
@@ -303,7 +366,7 @@
         const blob = new Blob([currentSvgCode], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = `ia_cricut_${Date.now()}.svg`;
+        a.href = url; a.download = `ia_cricut_project_${Date.now()}.svg`;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
     });
 </script>
