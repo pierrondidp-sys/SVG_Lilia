@@ -100,9 +100,9 @@
         .modal-tab-content li { margin-bottom: 10px; }
     </style>
     <!-- Liens CDN stables pour l'import -->
-    <link href="[https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap](https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap)" rel="stylesheet">
-    <script src="[https://cdnjs.cloudflare.com/ajax/libs/imagetracerjs/1.2.6/imagetracer_v1.2.6.js](https://cdnjs.cloudflare.com/ajax/libs/imagetracerjs/1.2.6/imagetracer_v1.2.6.js)"></script>
-    <script src="[https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js](https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js)"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/imagetracerjs/1.2.6/imagetracer_v1.2.6.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
 </head>
 <body>
 
@@ -178,7 +178,7 @@
                 <div id="tab-config" class="modal-tab-content">
                     <h3>Étape : Obtenir une clé d'API Google Gemini</h3>
                     <ol>
-                        <li>Rendez-vous sur : <a href="[https://aistudio.google.com/](https://aistudio.google.com/)" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: bold;">aistudio.google.com</a>.</li>
+                        <li>Rendez-vous sur : <a href="https://aistudio.google.com/" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: bold;">aistudio.google.com</a>.</li>
                     </ol>
                 </div>
 
@@ -318,7 +318,7 @@
         const loadingDiv = appendMessage("L'IA traite votre demande sur le modèle vectoriel...", 'ai');
 
         try {
-            const url = `[https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$](https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$){encodeURIComponent(apiKey)}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
             
             const response = await fetch(url, {
                 method: 'POST',
@@ -336,8 +336,7 @@
             let svgResponse = data.candidates[0].content.parts[0].text.trim();
             
             // NETTOYAGE SÉCURISÉ SANS REGEX (replaceAll avec de simples textes)
-            svgResponse = svgResponse.replaceAll('```xml', '').replaceAll('
-```svg', '').replaceAll('```', '').trim();
+            svgResponse = svgResponse.replaceAll('```xml', '').replaceAll('```svg', '').replaceAll('```', '').trim();
 
             if (svgResponse.includes('<svg')) {
                 const startIdx = svgResponse.indexOf('<svg');
