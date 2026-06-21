@@ -100,9 +100,9 @@
         .modal-tab-content li { margin-bottom: 10px; }
     </style>
     <!-- Liens CDN stables pour l'import -->
-    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/imagetracerjs/1.2.6/imagetracer_v1.2.6.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
+    <link href="[https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap](https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap)" rel="stylesheet">
+    <script src="[https://cdnjs.cloudflare.com/ajax/libs/imagetracerjs/1.2.6/imagetracer_v1.2.6.js](https://cdnjs.cloudflare.com/ajax/libs/imagetracerjs/1.2.6/imagetracer_v1.2.6.js)"></script>
+    <script src="[https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js](https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js)"></script>
 </head>
 <body>
 
@@ -126,7 +126,7 @@
         
         <!-- Logo Calligraphique -->
         <div style="padding: 15px 10px 10px 10px; background: #ffffff; text-align: center; border-bottom: 1px solid #cbd5e1;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 90" width="100%" height="100%">
+            <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 400 90" width="100%" height="100%">
                 <text x="50%" y="60%" text-anchor="middle" font-family="'Great Vibes', 'Georgia', serif" font-size="42" font-style="italic" fill="#000000" letter-spacing="1">Fée main Lilia...</text>
             </svg>
         </div>
@@ -178,7 +178,7 @@
                 <div id="tab-config" class="modal-tab-content">
                     <h3>Étape : Obtenir une clé d'API Google Gemini</h3>
                     <ol>
-                        <li>Rendez-vous sur : <a href="https://aistudio.google.com/" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: bold;">aistudio.google.com</a>.</li>
+                        <li>Rendez-vous sur : <a href="[https://aistudio.google.com/](https://aistudio.google.com/)" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: bold;">aistudio.google.com</a>.</li>
                     </ol>
                 </div>
 
@@ -225,6 +225,7 @@
         apiKeyInput.value = localStorage.getItem('cricut_gemini_key');
     }
     apiKeyInput.addEventListener('input', () => {
+        // Nettoyage classique des espaces sans regex problématique
         localStorage.setItem('cricut_gemini_key', apiKeyInput.value.trim());
     });
 
@@ -241,18 +242,16 @@
         if (['png', 'jpg', 'jpeg', 'bmp', 'gif'].includes(extension)) {
             reader.onload = function(event) {
                 try {
-                    // Configuration ImageTracer pour contours simplifiés monochromes
                     const options = { 
                         ltres: 1, qtres: 1, scale: 1, 
                         colorsampling: 0, numberofcolors: 2, 
                         strokewidth: 0, viewbox: true 
                     };
                     
-                    // Génération brute du SVG
                     let rawSvg = ImageTracer.imageToSVG(event.target.result, options);
                     
-                    // Injection propre d'un style CSS global pour forcer TOUS les tracés en noir uni (évite l'erreur d'expression régulière)
-                    currentSvgCode = rawSvg.replace('<svg', '<svg style="fill: #000000;"');
+                    // Remplacement par chaîne brute, sans expression régulière
+                    currentSvgCode = rawSvg.replaceAll('<svg', '<svg style="fill: #000000;"');
 
                     previewContainer.innerHTML = currentSvgCode;
                     downloadBtn.disabled = false;
@@ -280,7 +279,7 @@
 
                         if(svgPaths === '') throw new Error("Aucune entité linéaire exploitable.");
 
-                        currentSvgCode = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%"><g transform="translate(400,400)">${svgPaths}</g></svg>`;
+                        currentSvgCode = `<svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 800 800" width="100%" height="100%"><g transform="translate(400,400)">${svgPaths}</g></svg>`;
                         previewContainer.innerHTML = currentSvgCode;
                         downloadBtn.disabled = false;
                         appendMessage("Fichier CAO DXF lu et converti au format vectoriel Cricut !", 'ai');
@@ -300,7 +299,9 @@
 
     async function handleGeneration() {
         let prompt = userInput.value.trim();
-        const apiKey = apiKeyInput.value.trim().replace(/[\r\n\t\s]/g, "");
+        
+        // Nettoyage de la clé d'API sans utiliser de regex
+        let apiKey = apiKeyInput.value.trim().replaceAll("\r", "").replaceAll("\n", "").replaceAll("\t", "").replaceAll(" ", "");
         
         if (!prompt) return;
         if (!apiKey) {
@@ -317,7 +318,7 @@
         const loadingDiv = appendMessage("L'IA traite votre demande sur le modèle vectoriel...", 'ai');
 
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+            const url = `[https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$](https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$){encodeURIComponent(apiKey)}`;
             
             const response = await fetch(url, {
                 method: 'POST',
@@ -333,8 +334,10 @@
 
             const data = await response.json();
             let svgResponse = data.candidates[0].content.parts[0].text.trim();
-            svgResponse = svgResponse.replace(/```xml/g, '').replace(/
-```svg/g, '').replace(/```/g, '').trim();
+            
+            // NETTOYAGE SÉCURISÉ SANS REGEX (replaceAll avec de simples textes)
+            svgResponse = svgResponse.replaceAll('```xml', '').replaceAll('
+```svg', '').replaceAll('```', '').trim();
 
             if (svgResponse.includes('<svg')) {
                 const startIdx = svgResponse.indexOf('<svg');
