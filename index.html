@@ -99,7 +99,7 @@
         .modal-tab-content ol { padding-left: 20px; line-height: 1.6; }
         .modal-tab-content li { margin-bottom: 10px; }
     </style>
-    <!-- Liens CDN stables et vérifiés pour les bibliothèques d'import -->
+    <!-- Liens CDN stables pour l'import -->
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/imagetracerjs/1.2.6/imagetracer_v1.2.6.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
@@ -228,7 +228,7 @@
         localStorage.setItem('cricut_gemini_key', apiKeyInput.value.trim());
     });
 
-    // GESTION DU CHARGEMENT DE FICHIERS (IMAGES AVEC IMAGETRACER & DXF)
+    // GESTION DU CHARGEMENT DE FICHIERS
     fileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -241,18 +241,18 @@
         if (['png', 'jpg', 'jpeg', 'bmp', 'gif'].includes(extension)) {
             reader.onload = function(event) {
                 try {
-                    // Options d'ImageTracer adaptées pour obtenir une découpe nette et simplifiée (monochrome noir)
+                    // Configuration ImageTracer pour contours simplifiés monochromes
                     const options = { 
                         ltres: 1, qtres: 1, scale: 1, 
                         colorsampling: 0, numberofcolors: 2, 
                         strokewidth: 0, viewbox: true 
                     };
                     
-                    // Transformation directe en chaîne SVG
-                    currentSvgCode = ImageTracer.imageToSVG(event.target.result, options);
+                    // Génération brute du SVG
+                    let rawSvg = ImageTracer.imageToSVG(event.target.result, options);
                     
-                    // Forcer la couleur noire uniforme pour la découpe Cricut
-                    currentSvgCode = currentSvgCode.replace(/fill="[^"]*"/g, 'fill="#000000"');
+                    // Injection propre d'un style CSS global pour forcer TOUS les tracés en noir uni (évite l'erreur d'expression régulière)
+                    currentSvgCode = rawSvg.replace('<svg', '<svg style="fill: #000000;"');
 
                     previewContainer.innerHTML = currentSvgCode;
                     downloadBtn.disabled = false;
