@@ -173,10 +173,16 @@
     </div>
 
     <!-- Popover de sélection de formes -->
-    <div id="shapesPopover" class="shapes-popover">
+    <div id="shapesPopover" class="shapes-popover" style="flex-wrap: wrap; width: 168px;">
         <button data-shape="circle" title="Cercle">⚪</button>
-        <button data-shape="square" title="Carré">⬛</button>
-        <button data-shape="triangle" title="Triangle">🔺</button>
+        <button data-shape="square" title="Carré (modifiable)">⬛</button>
+        <button data-shape="triangle" title="Triangle (modifiable)">🔺</button>
+        <button data-shape="pentagon" title="Pentagone (modifiable)">⬠</button>
+        <button data-shape="hexagon" title="Hexagone (modifiable)">⬡</button>
+        <button data-shape="star" title="Étoile (modifiable)">⭐</button>
+        <button data-shape="diamond" title="Losange (modifiable)">🔷</button>
+        <button data-shape="arrow" title="Flèche (modifiable)">➡️</button>
+        <button data-shape="heart" title="Cœur (modifiable)">❤️</button>
     </div>
 
     <!-- Popover réglage gomme -->
@@ -304,6 +310,7 @@
                     <ol>
                         <li><strong>Formes / Texte / Images / IA :</strong> chaque élément ajouté apparaît comme un objet indépendant sur le plan de travail (en cm, comme un vrai tapis Cricut). Cliquez un objet pour le sélectionner, faites-le glisser pour le déplacer, et tirez les poignées d'angle pour le redimensionner.</li>
                         <li><strong>Texte :</strong> double-cliquez un texte sur le plan de travail pour le modifier.</li>
+                        <li><strong>Formes modifiables :</strong> carré, triangle, pentagone, hexagone, étoile, losange, flèche et cœur peuvent être déformées sommet par sommet. Double-cliquez la forme pour afficher ses points verts, puis glissez-les un par un. Double-cliquez à nouveau (ou Échap) pour quitter ce mode.</li>
                         <li><strong>Suppression :</strong> sélectionnez un objet puis touche Suppr/Retour, ou le bouton « Supprimer la sélection » en haut du plan de travail.</li>
                         <li><strong>Zoom :</strong> utilisez les boutons +/− en bas à droite du plan de travail.</li>
                         <li><strong>Images (PNG, JPG, BMP, GIF) :</strong> l'application les convertit instantanément en contours monochromes SVG nets, ajoutés comme objet sur le plan de travail.</li>
@@ -409,6 +416,7 @@
     let nextObjId = 1;
     let selectedId = null;
     let dragState = null;
+    let nodeEditId = null;
     let eraserMode = false;
     let eraserWidth = 1;
     let currentEraserObj = null;
@@ -461,6 +469,7 @@
     function addSvgObject(svgString, forceFill) {
         if (eraserMode) setEraserMode(false);
         if (lineMode) setLineMode(false);
+        nodeEditId = null;
         const parsed = parseSvgIntrinsic(svgString);
         let inner = parsed.inner;
         if (forceFill) inner = `<g fill="${forceFill}">${inner}</g>`;
@@ -485,14 +494,101 @@
         if (eraserMode) setEraserMode(false);
         if (lineMode) setLineMode(false);
         const w = 6, h = 6;
-        const fills = { circle: '#3b82f6', square: '#10b981', triangle: '#f59e0b' };
         const obj = {
             id: nextObjId++, type: 'shape', shapeType,
             x: (MAT_W - w) / 2, y: (MAT_H - h) / 2, w, h, rotation: 0,
-            fill: fills[shapeType] || '#3b82f6'
+            fill: '#3b82f6'
         };
         objects.push(obj);
         selectedId = obj.id;
+        nodeEditId = null;
+        downloadBtn.disabled = false;
+        renderMat();
+        pushHistory();
+    }
+
+    // ----- Générateurs de points pour les formes modifiables -----
+    function regularPolygonPoints(cx, cy, r, sides) {
+        const pts = [];
+        const startAngle = -Math.PI / 2;
+        for (let i = 0; i < sides; i++) {
+            const a = startAngle + (i * 2 * Math.PI / sides);
+            pts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+        }
+        return pts;
+    }
+
+    function starPoints(cx, cy, outerR, innerR, spikes) {
+        const pts = [];
+        const startAngle = -Math.PI / 2;
+        for (let i = 0; i < spikes * 2; i++) {
+            const r = (i % 2 === 0) ? outerR : innerR;
+            const a = startAngle + (i * Math.PI / spikes);
+            pts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+        }
+        return pts;
+    }
+
+    function arrowPoints(cx, cy, w, h) {
+        const x0 = cx - w / 2, x1 = cx + w * 0.15, x2 = cx + w / 2;
+        const yTop = cy - h / 2, yBot = cy + h / 2, yMidTop = cy - h * 0.15, yMidBot = cy + h * 0.15;
+        return [
+            { x: x0, y: yMidTop }, { x: x1, y: yMidTop }, { x: x1, y: yTop },
+            { x: x2, y: cy }, { x: x1, y: yBot }, { x: x1, y: yMidBot }, { x: x0, y: yMidBot }
+        ];
+    }
+
+    function heartPoints(cx, cy, w, h) {
+        const pts = [];
+        const steps = 24;
+        for (let i = 0; i <= steps; i++) {
+            const t = (i / steps) * 2 * Math.PI;
+            const hx = 16 * Math.pow(Math.sin(t), 3);
+            const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+            pts.push({ x: cx + (hx / 17) * (w / 2), y: cy + (hy / 17) * (h / 2) });
+        }
+        return pts;
+    }
+
+    function addPolygonShape(shapeType) {
+        if (eraserMode) setEraserMode(false);
+        if (lineMode) setLineMode(false);
+        const cx = MAT_W / 2, cy = MAT_H / 2;
+        const size = 6;
+        const fills = { square: '#10b981', triangle: '#f59e0b', pentagon: '#8b5cf6', hexagon: '#0ea5e9', star: '#facc15', diamond: '#ec4899', arrow: '#ef4444', heart: '#f43f5e' };
+        let points = [];
+        switch (shapeType) {
+            case 'square':
+                points = [{ x: cx - size / 2, y: cy - size / 2 }, { x: cx + size / 2, y: cy - size / 2 }, { x: cx + size / 2, y: cy + size / 2 }, { x: cx - size / 2, y: cy + size / 2 }];
+                break;
+            case 'triangle':
+                points = [{ x: cx, y: cy - size / 2 }, { x: cx - size / 2, y: cy + size / 2 }, { x: cx + size / 2, y: cy + size / 2 }];
+                break;
+            case 'pentagon':
+                points = regularPolygonPoints(cx, cy, size / 2, 5);
+                break;
+            case 'hexagon':
+                points = regularPolygonPoints(cx, cy, size / 2, 6);
+                break;
+            case 'star':
+                points = starPoints(cx, cy, size / 2, size / 2 * 0.45, 5);
+                break;
+            case 'diamond':
+                points = [{ x: cx, y: cy - size / 2 }, { x: cx + size / 2, y: cy }, { x: cx, y: cy + size / 2 }, { x: cx - size / 2, y: cy }];
+                break;
+            case 'arrow':
+                points = arrowPoints(cx, cy, size, size * 0.6);
+                break;
+            case 'heart':
+                points = heartPoints(cx, cy, size, size);
+                break;
+            default:
+                points = regularPolygonPoints(cx, cy, size / 2, 6);
+        }
+        const obj = { id: nextObjId++, type: 'polygon', rotation: 0, fill: fills[shapeType] || '#3b82f6', shapeName: shapeType, points };
+        objects.push(obj);
+        selectedId = obj.id;
+        nodeEditId = null;
         downloadBtn.disabled = false;
         renderMat();
         pushHistory();
@@ -501,6 +597,7 @@
     function addText() {
         if (eraserMode) setEraserMode(false);
         if (lineMode) setLineMode(false);
+        nodeEditId = null;
         const w = 10, h = 2.5;
         const obj = {
             id: nextObjId++, type: 'text',
@@ -527,6 +624,12 @@
             const xs = obj.points.map(p => p.x), ys = obj.points.map(p => p.y);
             const minX = Math.min(...xs) - obj.strokeWidth / 2, maxX = Math.max(...xs) + obj.strokeWidth / 2;
             const minY = Math.min(...ys) - obj.strokeWidth / 2, maxY = Math.max(...ys) + obj.strokeWidth / 2;
+            return { x: minX, y: minY, w: Math.max(0.01, maxX - minX), h: Math.max(0.01, maxY - minY) };
+        }
+        if (obj.type === 'polygon') {
+            const xs = obj.points.map(p => p.x), ys = obj.points.map(p => p.y);
+            const minX = Math.min(...xs), maxX = Math.max(...xs);
+            const minY = Math.min(...ys), maxY = Math.max(...ys);
             return { x: minX, y: minY, w: Math.max(0.01, maxX - minX), h: Math.max(0.01, maxY - minY) };
         }
         return { x: obj.x, y: obj.y, w: obj.w, h: obj.h };
@@ -580,6 +683,9 @@
                 const d = 'M ' + obj.points.map(p => `${p.x} ${p.y}`).join(' L ');
                 g.appendChild(svgEl('path', { d, fill: 'none', stroke: strokeColor, 'stroke-width': obj.strokeWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
             }
+        } else if (obj.type === 'polygon') {
+            const d = 'M ' + obj.points.map(p => `${p.x} ${p.y}`).join(' L ') + ' Z';
+            g.appendChild(svgEl('path', { d, fill: obj.fill, 'fill-rule': 'evenodd' }));
         }
         return g;
     }
@@ -600,6 +706,21 @@
                 x: cx - hs / 2, y: cy - hs / 2, width: hs, height: hs,
                 fill: '#fff', stroke: '#3b82f6', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke',
                 'data-handle': pos, 'data-id': obj.id, style: 'cursor: nwse-resize;'
+            }));
+        });
+        return g;
+    }
+
+    function renderNodeHandles(obj) {
+        const hs = 9 / pxPerCm();
+        const g = svgEl('g', { class: 'node-edit-overlay' });
+        const d = 'M ' + obj.points.map(p => `${p.x} ${p.y}`).join(' L ') + ' Z';
+        g.appendChild(svgEl('path', { d, fill: 'none', stroke: '#10b981', 'stroke-width': 1, 'stroke-dasharray': '3 2', 'vector-effect': 'non-scaling-stroke' }));
+        obj.points.forEach((p, idx) => {
+            g.appendChild(svgEl('circle', {
+                cx: p.x, cy: p.y, r: hs / 2,
+                fill: '#10b981', stroke: '#fff', 'stroke-width': 1.5, 'vector-effect': 'non-scaling-stroke',
+                'data-node-index': idx, 'data-id': obj.id, style: 'cursor: pointer;'
             }));
         });
         return g;
@@ -629,7 +750,12 @@
         objects.forEach(o => matSvg.appendChild(renderObjectGroup(o)));
         if (selectedId) {
             const sel = objects.find(o => o.id === selectedId);
-            if (sel) matSvg.appendChild(renderSelection(sel));
+            if (sel && nodeEditId !== sel.id) matSvg.appendChild(renderSelection(sel));
+        }
+        if (nodeEditId) {
+            const editObj = objects.find(o => o.id === nodeEditId);
+            if (editObj && editObj.type === 'polygon') matSvg.appendChild(renderNodeHandles(editObj));
+            else nodeEditId = null;
         }
         deleteSelBtn.style.display = selectedId ? 'block' : 'none';
         renderRulers();
@@ -751,23 +877,37 @@
             renderMat();
             return;
         }
+        const nodeEl = e.target.closest('[data-node-index]');
         const handleEl = e.target.closest('[data-handle]');
         const objEl = e.target.closest('.canvas-object');
-        if (handleEl) {
+        if (nodeEl) {
+            const id = Number(nodeEl.dataset.id);
+            const idx = Number(nodeEl.dataset.nodeIndex);
+            selectedId = id;
+            const obj = objects.find(o => o.id === id);
+            dragState = { mode: 'node', id, nodeIndex: idx, startPt: pt, start: { points: obj.points.map(p => ({ ...p })) } };
+            dragMoved = false;
+        } else if (handleEl) {
             const id = Number(handleEl.dataset.id);
             selectedId = id;
             const obj = objects.find(o => o.id === id);
-            dragState = { mode: 'resize', id, handle: handleEl.dataset.handle, startPt: pt, start: { ...obj } };
+            if (obj.type === 'polygon') {
+                dragState = { mode: 'resizePoly', id, handle: handleEl.dataset.handle, startPt: pt, startBBox: getObjBBox(obj), startPoints: obj.points.map(p => ({ ...p })) };
+            } else {
+                dragState = { mode: 'resize', id, handle: handleEl.dataset.handle, startPt: pt, start: { ...obj } };
+            }
             dragMoved = false;
         } else if (objEl) {
             const id = Number(objEl.dataset.id);
+            if (id !== nodeEditId) nodeEditId = null;
             selectedId = id;
             const obj = objects.find(o => o.id === id);
-            const start = (obj.type === 'eraser' || obj.type === 'line') ? { ...obj, points: obj.points.map(p => ({ ...p })) } : { ...obj };
+            const start = (obj.type === 'eraser' || obj.type === 'line' || obj.type === 'polygon') ? { ...obj, points: obj.points.map(p => ({ ...p })) } : { ...obj };
             dragState = { mode: 'move', id, startPt: pt, start };
             dragMoved = false;
         } else {
             selectedId = null;
+            nodeEditId = null;
         }
         renderMat();
     });
@@ -798,12 +938,27 @@
         if (!obj) return;
         const minSize = 0.5;
         if (dragState.mode === 'move') {
-            if (obj.type === 'eraser' || obj.type === 'line') {
+            if (obj.type === 'eraser' || obj.type === 'line' || obj.type === 'polygon') {
                 obj.points = dragState.start.points.map(p => ({ x: p.x + dx, y: p.y + dy }));
             } else {
                 obj.x = dragState.start.x + dx;
                 obj.y = dragState.start.y + dy;
             }
+        } else if (dragState.mode === 'node') {
+            const orig = dragState.start.points[dragState.nodeIndex];
+            obj.points[dragState.nodeIndex] = { x: orig.x + dx, y: orig.y + dy };
+        } else if (dragState.mode === 'resizePoly') {
+            const bbox = dragState.startBBox;
+            let { x, y, w, h } = bbox;
+            if (dragState.handle.includes('e')) w = Math.max(minSize, bbox.w + dx);
+            if (dragState.handle.includes('s')) h = Math.max(minSize, bbox.h + dy);
+            if (dragState.handle.includes('w')) { w = Math.max(minSize, bbox.w - dx); x = bbox.x + (bbox.w - w); }
+            if (dragState.handle.includes('n')) { h = Math.max(minSize, bbox.h - dy); y = bbox.y + (bbox.h - h); }
+            const sx = w / bbox.w, sy = h / bbox.h;
+            obj.points = dragState.startPoints.map(p => ({
+                x: x + (p.x - bbox.x) * sx,
+                y: y + (p.y - bbox.y) * sy
+            }));
         } else if (dragState.mode === 'resize') {
             let { x, y, w, h } = dragState.start;
             if (dragState.handle.includes('e')) w = Math.max(minSize, dragState.start.w + dx);
@@ -837,7 +992,13 @@
         const objEl = e.target.closest('.canvas-object');
         if (!objEl) return;
         const obj = objects.find(o => o.id === Number(objEl.dataset.id));
-        if (obj && obj.type === 'text') editTextObject(obj.id);
+        if (!obj) return;
+        if (obj.type === 'text') { editTextObject(obj.id); return; }
+        if (obj.type === 'polygon') {
+            nodeEditId = (nodeEditId === obj.id) ? null : obj.id;
+            selectedId = obj.id;
+            renderMat();
+        }
     });
 
     window.addEventListener('keydown', e => {
@@ -845,6 +1006,10 @@
         const inField = tag === 'TEXTAREA' || tag === 'INPUT';
         if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId && !inField) {
             deleteSelected();
+        }
+        if (e.key === 'Escape' && nodeEditId) {
+            nodeEditId = null;
+            renderMat();
         }
         if ((e.ctrlKey || e.metaKey) && !inField) {
             const k = e.key.toLowerCase();
@@ -856,6 +1021,7 @@
     function deleteSelected() {
         if (!selectedId) return;
         objects = objects.filter(o => o.id !== selectedId);
+        if (nodeEditId === selectedId) nodeEditId = null;
         selectedId = null;
         if (objects.length === 0) downloadBtn.disabled = true;
         renderMat();
@@ -905,7 +1071,12 @@
         shapesPopover.style.display = 'flex';
     });
     shapesPopover.querySelectorAll('button[data-shape]').forEach(btn => {
-        btn.addEventListener('click', () => { addShape(btn.dataset.shape); shapesPopover.style.display = 'none'; });
+        btn.addEventListener('click', () => {
+            const t = btn.dataset.shape;
+            if (t === 'circle') addShape('circle');
+            else addPolygonShape(t);
+            shapesPopover.style.display = 'none';
+        });
     });
     document.addEventListener('click', (e) => {
         if (!shapesPopover.contains(e.target) && e.target !== toolShapes && !toolShapes.contains(e.target)) {
@@ -989,7 +1160,7 @@
         colorNoSelection.style.display = 'none';
         colorEditRow.style.display = 'flex';
         let current = '#000000';
-        if (obj.type === 'shape') current = obj.fill;
+        if (obj.type === 'shape' || obj.type === 'polygon') current = obj.fill;
         else if (obj.type === 'text') current = obj.color || '#000000';
         else if (obj.type === 'line') current = obj.color;
         else if (obj.type === 'svg') current = obj.colorOverride || '#000000';
@@ -1009,7 +1180,7 @@
         const obj = objects.find(o => o.id === selectedId);
         if (!obj) return;
         const val = colorPicker.value;
-        if (obj.type === 'shape') obj.fill = val;
+        if (obj.type === 'shape' || obj.type === 'polygon') obj.fill = val;
         else if (obj.type === 'text') obj.color = val;
         else if (obj.type === 'line') obj.color = val;
         else if (obj.type === 'svg') obj.colorOverride = val;
