@@ -41,6 +41,23 @@
         .line-mode-btn { border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; border-radius: 6px; padding: 6px; font-size: 12px; }
         .line-mode-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
 
+        .image-search-panel {
+            position: fixed; width: 360px; max-height: 540px;
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(0,0,0,.18); z-index: 250;
+            display: none; flex-direction: column; overflow: hidden;
+        }
+        .image-search-header { display: flex; gap: 6px; padding: 12px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
+        .image-search-header input { flex: 1; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; min-width: 0; }
+        .image-search-header button { border: none; background: #3b82f6; color: #fff; border-radius: 6px; width: 36px; cursor: pointer; font-size: 14px; flex-shrink: 0; }
+        #imageSearchCloseBtn { background: #64748b; }
+        .image-search-status { font-size: 12px; color: #64748b; padding: 6px 12px; flex-shrink: 0; }
+        .image-search-results { padding: 0 12px 12px 12px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .image-search-item img { width: 100%; height: 90px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #e2e8f0; display: block; transition: border-color 0.15s, transform 0.1s; }
+        .image-search-item img:hover { border-color: #3b82f6; transform: scale(1.03); }
+        .image-search-credit { font-size: 9.5px; color: #94a3b8; margin-top: 3px; line-height: 1.3; }
+        .image-search-disclaimer { font-size: 10.5px; color: #92400e; background: #fffbeb; border-top: 1px solid #fde68a; padding: 8px 12px; flex-shrink: 0; }
+
         /* Layout colonnes */
         .workspace {
             flex: 1; display: flex; flex-direction: column;
@@ -164,6 +181,7 @@
         <button class="tool-rail-btn" id="toolLine" title="Lignes et courbes"><span class="icon">✏️</span>Lignes</button>
         <button class="tool-rail-btn" id="toolColor" title="Couleurs"><span class="icon">🎨</span>Couleurs</button>
         <button class="tool-rail-btn" id="toolImages" title="Importer une image ou un DXF"><span class="icon">🖼️</span>Images</button>
+        <button class="tool-rail-btn" id="toolSearch" title="Rechercher des images libres de droits"><span class="icon">🔍</span>Images web</button>
         <button class="tool-rail-btn" id="toolText" title="Ajouter du texte"><span class="icon">🅣</span>Texte</button>
         <button class="tool-rail-btn" id="toolMonogram" title="Bientôt disponible"><span class="icon">▦</span>Monogramme</button>
         <div class="tool-rail-sep"></div>
@@ -214,6 +232,18 @@
             <input type="color" id="colorPicker" value="#3b82f6" style="width: 100%; height: 36px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 2px;">
             <button id="colorResetBtn" style="display: none; width: 100%; padding: 6px; font-size: 12px; border-radius: 6px;">Couleur d'origine (image/IA)</button>
         </div>
+    </div>
+
+    <!-- Panneau de recherche d'images web (Openverse) -->
+    <div id="imageSearchPanel" class="image-search-panel">
+        <div class="image-search-header">
+            <input type="text" id="imageSearchInput" placeholder="Rechercher une image (ex: tortue, fleur...)">
+            <button id="imageSearchBtn" title="Rechercher">🔍</button>
+            <button id="imageSearchCloseBtn" title="Fermer">✕</button>
+        </div>
+        <div id="imageSearchStatus" class="image-search-status">Recherchez une image à insérer sur le plan de travail.</div>
+        <div id="imageSearchResults" class="image-search-results"></div>
+        <div class="image-search-disclaimer">⚠️ Images libres de droits (Creative Commons / domaine public) via Openverse. Vérifiez la licence affichée sous chaque image avant un usage commercial.</div>
     </div>
 
     <!-- ===== ZONE DE TRAVAIL (CENTRE) ===== -->
@@ -313,6 +343,7 @@
                         <li><strong>Formes modifiables :</strong> carré, triangle, pentagone, hexagone, étoile, losange, flèche et cœur peuvent être déformées sommet par sommet. Double-cliquez la forme pour afficher ses points verts, puis glissez-les un par un. Double-cliquez à nouveau (ou Échap) pour quitter ce mode.</li>
                         <li><strong>Suppression :</strong> sélectionnez un objet puis touche Suppr/Retour, ou le bouton « Supprimer la sélection » en haut du plan de travail.</li>
                         <li><strong>Zoom :</strong> utilisez les boutons +/− en bas à droite du plan de travail.</li>
+                        <li><strong>Images web :</strong> recherchez des photos libres de droits (Creative Commons / domaine public, via Openverse) directement depuis l'outil 🔍, sans clé à configurer. Cliquez un résultat pour l'ajouter au plan de travail.</li>
                         <li><strong>Images (PNG, JPG, BMP, GIF) :</strong> à chaque import, une fenêtre vous demande de choisir entre un contour noir et blanc (silhouette de découpe) ou la conservation des couleurs d'origine.</li>
                         <li><strong>Fichiers DXF :</strong> l'outil décode la géométrie CAO et l'ajoute aussi comme objet déplaçable.</li>
                         <li><strong>Téléchargement :</strong> exporte l'intégralité du plan de travail (tous les objets, à leur taille réelle en cm) en un seul fichier SVG prêt pour Cricut Design Space.</li>
@@ -403,6 +434,12 @@
     const colorEditRow = document.getElementById('colorEditRow');
     const colorPicker = document.getElementById('colorPicker');
     const colorResetBtn = document.getElementById('colorResetBtn');
+    const imageSearchPanel = document.getElementById('imageSearchPanel');
+    const imageSearchInput = document.getElementById('imageSearchInput');
+    const imageSearchBtn = document.getElementById('imageSearchBtn');
+    const imageSearchCloseBtn = document.getElementById('imageSearchCloseBtn');
+    const imageSearchStatus = document.getElementById('imageSearchStatus');
+    const imageSearchResults = document.getElementById('imageSearchResults');
     const matWidthInput = document.getElementById('matWidthInput');
     const matHeightInput = document.getElementById('matHeightInput');
     const applyMatSize = document.getElementById('applyMatSize');
@@ -416,6 +453,7 @@
     const toolEraser = document.getElementById('toolEraser');
     const toolLine = document.getElementById('toolLine');
     const toolColor = document.getElementById('toolColor');
+    const toolSearch = document.getElementById('toolSearch');
     const toolImages = document.getElementById('toolImages');
     const toolText = document.getElementById('toolText');
     const toolMonogram = document.getElementById('toolMonogram');
@@ -1105,6 +1143,9 @@
         if (!colorPopover.contains(e.target) && e.target !== toolColor && !toolColor.contains(e.target)) {
             colorPopover.style.display = 'none';
         }
+        if (!imageSearchPanel.contains(e.target) && e.target !== toolSearch && !toolSearch.contains(e.target)) {
+            imageSearchPanel.style.display = 'none';
+        }
     });
 
     // ===================== Gomme =====================
@@ -1213,6 +1254,80 @@
             syncColorPopover();
         }
     });
+
+    // ===================== Recherche d'images web (Openverse) =====================
+    toolSearch.addEventListener('click', () => {
+        const isOpen = imageSearchPanel.style.display === 'flex';
+        if (isOpen) { imageSearchPanel.style.display = 'none'; return; }
+        const rect = toolSearch.getBoundingClientRect();
+        imageSearchPanel.style.left = (rect.right + 6) + 'px';
+        imageSearchPanel.style.top = Math.max(10, rect.top - 100) + 'px';
+        imageSearchPanel.style.display = 'flex';
+        imageSearchInput.focus();
+    });
+    imageSearchCloseBtn.addEventListener('click', () => { imageSearchPanel.style.display = 'none'; });
+
+    async function runImageSearch() {
+        const q = imageSearchInput.value.trim();
+        if (!q) return;
+        imageSearchStatus.textContent = 'Recherche en cours...';
+        imageSearchResults.innerHTML = '';
+        try {
+            const url = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&page_size=12`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("Le service de recherche est momentanément indisponible.");
+            const data = await res.json();
+            if (!data.results || data.results.length === 0) {
+                imageSearchStatus.textContent = "Aucun résultat. Essayez un autre mot-clé.";
+                return;
+            }
+            imageSearchStatus.textContent = `${data.results.length} résultats — cliquez une image pour l'ajouter.`;
+            data.results.forEach(item => {
+                const wrap = document.createElement('div');
+                wrap.className = 'image-search-item';
+                const img = document.createElement('img');
+                img.src = item.thumbnail || item.url;
+                img.loading = 'lazy';
+                img.title = item.title || '';
+                img.addEventListener('click', () => insertWebImage(item));
+                wrap.appendChild(img);
+                const credit = document.createElement('div');
+                credit.className = 'image-search-credit';
+                credit.textContent = (item.creator ? item.creator + ' · ' : '') + (item.license ? item.license.toUpperCase() : '');
+                wrap.appendChild(credit);
+                imageSearchResults.appendChild(wrap);
+            });
+        } catch (err) {
+            imageSearchStatus.textContent = 'Erreur : ' + err.message;
+        }
+    }
+    imageSearchBtn.addEventListener('click', runImageSearch);
+    imageSearchInput.addEventListener('keydown', e => { if (e.key === 'Enter') runImageSearch(); });
+
+    async function insertWebImage(item) {
+        imageSearchStatus.textContent = "Ajout de l'image en cours...";
+        const imgUrl = item.url || item.thumbnail;
+        let href = imgUrl;
+        try {
+            const resp = await fetch(imgUrl, { mode: 'cors' });
+            if (resp.ok) {
+                const blob = await resp.blob();
+                href = await new Promise((resolve, reject) => {
+                    const r = new FileReader();
+                    r.onload = () => resolve(r.result);
+                    r.onerror = reject;
+                    r.readAsDataURL(blob);
+                });
+            }
+        } catch (err) {
+            // Image non accessible en CORS : on garde l'URL directe (fonctionne à l'affichage, nécessite internet à la réouverture)
+        }
+        const w = item.width || 400, h = item.height || 400;
+        const wrapped = `<svg viewBox="0 0 ${w} ${h}"><image href="${href}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice"/></svg>`;
+        addSvgObject(wrapped);
+        imageSearchStatus.textContent = "Image ajoutée sur le plan de travail !";
+        appendMessage("Image insérée depuis la recherche web. Pour la découper avec la Cricut (plutôt que l'imprimer), utilisez aussi « Images » pour la transformer en contour vectoriel.", 'ai');
+    }
 
     // ===================== Taille du tapis =====================
     applyMatSize.addEventListener('click', () => {
