@@ -248,14 +248,18 @@
                         strokewidth: 0, viewbox: true 
                     };
                     
-                    let rawSvg = ImageTracer.imageToSVG(event.target.result, options);
-                    
-                    // Remplacement par chaîne brute, sans expression régulière
-                    currentSvgCode = rawSvg.replaceAll('<svg', '<svg style="fill: #000000;"');
+                    ImageTracer.imageToSVG(event.target.result, function(rawSvg) {
+                        try {
+                            // Remplacement par chaîne brute, sans expression régulière
+                            currentSvgCode = rawSvg.replaceAll('<svg', '<svg style="fill: #000000;"');
 
-                    previewContainer.innerHTML = currentSvgCode;
-                    downloadBtn.disabled = false;
-                    appendMessage("Image convertie avec succès en courbes de découpe SVG ! Vous pouvez la télécharger ou l'ajuster via l'IA.", 'ai');
+                            previewContainer.innerHTML = currentSvgCode;
+                            downloadBtn.disabled = false;
+                            appendMessage("Image convertie avec succès en courbes de découpe SVG ! Vous pouvez la télécharger ou l'ajuster via l'IA.", 'ai');
+                        } catch (err) {
+                            appendMessage(`Erreur lors du traçage de l'image : ${err.message}`, 'ai');
+                        }
+                    }, options);
                 } catch (err) {
                     appendMessage(`Erreur lors du traçage de l'image : ${err.message}`, 'ai');
                 }
