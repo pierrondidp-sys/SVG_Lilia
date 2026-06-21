@@ -38,6 +38,8 @@
             background: #f8fafc; cursor: pointer; font-size: 22px; display: flex; align-items: center; justify-content: center;
         }
         .shapes-popover button:hover { background: #e0e7ff; border-color: #3b82f6; }
+        .line-mode-btn { border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; border-radius: 6px; padding: 6px; font-size: 12px; }
+        .line-mode-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
 
         /* Layout colonnes */
         .workspace {
@@ -48,7 +50,11 @@
             width: 380px; background: white; border-left: 1px solid #cbd5e1;
             display: flex; flex-direction: column; flex-shrink: 0;
             box-shadow: -2px 0 10px rgba(0,0,0,0.05);
+            transition: width 0.25s ease, opacity 0.2s ease;
+            overflow: hidden;
         }
+        .sidebar-chat.closed { width: 0; opacity: 0; }
+        .sidebar-chat > * { width: 380px; }
 
         h1 { margin-top: 0; color: #1e293b; font-size: 24px; display: flex; justify-content: space-between; align-items: center; }
 
@@ -155,6 +161,8 @@
         <div class="tool-rail-sep"></div>
         <button class="tool-rail-btn" id="toolShapes" title="Ajouter une forme"><span class="icon">▲</span>Formes</button>
         <button class="tool-rail-btn" id="toolEraser" title="Gomme"><span class="icon">🧹</span>Gomme</button>
+        <button class="tool-rail-btn" id="toolLine" title="Lignes et courbes"><span class="icon">✏️</span>Lignes</button>
+        <button class="tool-rail-btn" id="toolColor" title="Couleurs"><span class="icon">🎨</span>Couleurs</button>
         <button class="tool-rail-btn" id="toolImages" title="Importer une image ou un DXF"><span class="icon">🖼️</span>Images</button>
         <button class="tool-rail-btn" id="toolText" title="Ajouter du texte"><span class="icon">🅣</span>Texte</button>
         <button class="tool-rail-btn" id="toolMonogram" title="Bientôt disponible"><span class="icon">▦</span>Monogramme</button>
@@ -176,6 +184,30 @@
         <label style="font-size: 12px; color: #334155;">Taille de la gomme : <span id="eraserSizeLabel">1.0 cm</span></label>
         <input type="range" id="eraserSizeRange" min="0.2" max="4" step="0.1" value="1">
         <button id="eraserOffBtn" style="margin-top: 4px; width: 100%; height: auto; padding: 6px; font-size: 12px; border-radius: 6px;">Désactiver la gomme</button>
+    </div>
+
+    <!-- Popover outil Lignes / Courbes -->
+    <div id="linePopover" class="shapes-popover" style="flex-direction: column; align-items: stretch; width: 195px;">
+        <label style="font-size: 12px; color: #334155;">Mode :</label>
+        <div style="display: flex; gap: 6px;">
+            <button id="lineModeStraightBtn" class="line-mode-btn active" style="flex: 1;">Ligne droite</button>
+            <button id="lineModeCurveBtn" class="line-mode-btn" style="flex: 1;">Courbe libre</button>
+        </div>
+        <label style="font-size: 12px; color: #334155; margin-top: 6px;">Couleur :</label>
+        <input type="color" id="lineColorPicker" value="#1e293b" style="width: 100%; height: 32px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 2px;">
+        <label style="font-size: 12px; color: #334155;">Épaisseur : <span id="lineWidthLabel">0.20 cm</span></label>
+        <input type="range" id="lineWidthRange" min="0.05" max="2" step="0.05" value="0.2">
+        <button id="lineOffBtn" style="margin-top: 4px; width: 100%; height: auto; padding: 6px; font-size: 12px; border-radius: 6px;">Désactiver l'outil</button>
+    </div>
+
+    <!-- Popover outil Couleurs -->
+    <div id="colorPopover" class="shapes-popover" style="flex-direction: column; align-items: stretch; width: 200px;">
+        <div id="colorNoSelection" style="font-size: 12px; color: #64748b;">Sélectionnez un objet sur le plan de travail pour modifier sa couleur.</div>
+        <div id="colorEditRow" style="display: none; flex-direction: column; gap: 8px;">
+            <label style="font-size: 12px; color: #334155;">Couleur de l'objet sélectionné :</label>
+            <input type="color" id="colorPicker" value="#3b82f6" style="width: 100%; height: 36px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 2px;">
+            <button id="colorResetBtn" style="display: none; width: 100%; padding: 6px; font-size: 12px; border-radius: 6px;">Couleur d'origine (image/IA)</button>
+        </div>
     </div>
 
     <!-- ===== ZONE DE TRAVAIL (CENTRE) ===== -->
@@ -225,7 +257,7 @@
     </div>
 
     <!-- ===== FENÊTRE DE DISCUSSION & OUTILS (DROITE) ===== -->
-    <div class="sidebar-chat">
+    <div class="sidebar-chat" id="aiSidebar">
 
         <!-- Logo Calligraphique -->
         <div style="padding: 15px 10px 10px 10px; background: #ffffff; text-align: center; border-bottom: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; gap: 4px;">
@@ -335,6 +367,18 @@
     const eraserSizeRange = document.getElementById('eraserSizeRange');
     const eraserSizeLabel = document.getElementById('eraserSizeLabel');
     const eraserOffBtn = document.getElementById('eraserOffBtn');
+    const linePopover = document.getElementById('linePopover');
+    const lineModeStraightBtn = document.getElementById('lineModeStraightBtn');
+    const lineModeCurveBtn = document.getElementById('lineModeCurveBtn');
+    const lineColorPicker = document.getElementById('lineColorPicker');
+    const lineWidthRange = document.getElementById('lineWidthRange');
+    const lineWidthLabel = document.getElementById('lineWidthLabel');
+    const lineOffBtn = document.getElementById('lineOffBtn');
+    const colorPopover = document.getElementById('colorPopover');
+    const colorNoSelection = document.getElementById('colorNoSelection');
+    const colorEditRow = document.getElementById('colorEditRow');
+    const colorPicker = document.getElementById('colorPicker');
+    const colorResetBtn = document.getElementById('colorResetBtn');
     const matWidthInput = document.getElementById('matWidthInput');
     const matHeightInput = document.getElementById('matHeightInput');
     const applyMatSize = document.getElementById('applyMatSize');
@@ -346,12 +390,15 @@
     const toolProjects = document.getElementById('toolProjects');
     const toolShapes = document.getElementById('toolShapes');
     const toolEraser = document.getElementById('toolEraser');
+    const toolLine = document.getElementById('toolLine');
+    const toolColor = document.getElementById('toolColor');
     const toolImages = document.getElementById('toolImages');
     const toolText = document.getElementById('toolText');
     const toolMonogram = document.getElementById('toolMonogram');
     const toolLayout = document.getElementById('toolLayout');
     const toolDownload = document.getElementById('toolDownload');
     const toolAI = document.getElementById('toolAI');
+    const aiSidebar = document.getElementById('aiSidebar');
 
     // ===================== Modèle du plan de travail =====================
     let MAT_W = 30; // cm
@@ -365,6 +412,11 @@
     let eraserMode = false;
     let eraserWidth = 1;
     let currentEraserObj = null;
+    let lineMode = false;
+    let lineStraight = true;
+    let lineColor = '#1e293b';
+    let lineWidth = 0.2;
+    let currentLineObj = null;
     let dragMoved = false;
     let history = [];
     let historyIndex = -1;
@@ -407,6 +459,8 @@
     }
 
     function addSvgObject(svgString, forceFill) {
+        if (eraserMode) setEraserMode(false);
+        if (lineMode) setLineMode(false);
         const parsed = parseSvgIntrinsic(svgString);
         let inner = parsed.inner;
         if (forceFill) inner = `<g fill="${forceFill}">${inner}</g>`;
@@ -428,6 +482,8 @@
     }
 
     function addShape(shapeType) {
+        if (eraserMode) setEraserMode(false);
+        if (lineMode) setLineMode(false);
         const w = 6, h = 6;
         const fills = { circle: '#3b82f6', square: '#10b981', triangle: '#f59e0b' };
         const obj = {
@@ -443,11 +499,13 @@
     }
 
     function addText() {
+        if (eraserMode) setEraserMode(false);
+        if (lineMode) setLineMode(false);
         const w = 10, h = 2.5;
         const obj = {
             id: nextObjId++, type: 'text',
             x: (MAT_W - w) / 2, y: (MAT_H - h) / 2, w, h, rotation: 0,
-            text: 'Votre texte', fontSize: h * 0.7
+            text: 'Votre texte', fontSize: h * 0.7, color: '#000000'
         };
         objects.push(obj);
         selectedId = obj.id;
@@ -465,13 +523,17 @@
     }
 
     function getObjBBox(obj) {
-        if (obj.type === 'eraser') {
+        if (obj.type === 'eraser' || obj.type === 'line') {
             const xs = obj.points.map(p => p.x), ys = obj.points.map(p => p.y);
             const minX = Math.min(...xs) - obj.strokeWidth / 2, maxX = Math.max(...xs) + obj.strokeWidth / 2;
             const minY = Math.min(...ys) - obj.strokeWidth / 2, maxY = Math.max(...ys) + obj.strokeWidth / 2;
             return { x: minX, y: minY, w: Math.max(0.01, maxX - minX), h: Math.max(0.01, maxY - minY) };
         }
         return { x: obj.x, y: obj.y, w: obj.w, h: obj.h };
+    }
+
+    function stripFillAttrs(svgFragment) {
+        return svgFragment.replace(/\sfill="[^"]*"/gi, '').replace(/\sfill='[^']*'/gi, '');
     }
 
     function renderObjectGroup(obj) {
@@ -494,24 +556,29 @@
         } else if (obj.type === 'text') {
             const t = svgEl('text', {
                 x: obj.x, y: obj.y + obj.h * 0.78,
-                'font-size': obj.fontSize, 'font-family': "'Segoe UI', Arial, sans-serif", fill: '#000000'
+                'font-size': obj.fontSize, 'font-family': "'Segoe UI', Arial, sans-serif", fill: obj.color || '#000000'
             });
             t.textContent = obj.text;
             g.appendChild(t);
         } else if (obj.type === 'svg') {
+            let innerContent = obj.innerSVG;
+            if (obj.colorOverride) {
+                innerContent = `<g fill="${obj.colorOverride}">${stripFillAttrs(obj.innerSVG)}</g>`;
+            }
             const nested = svgEl('svg', {
                 x: obj.x, y: obj.y, width: obj.w, height: obj.h,
                 viewBox: `0 0 ${obj.iw} ${obj.ih}`, preserveAspectRatio: 'xMidYMid meet'
             });
-            nested.innerHTML = obj.innerSVG;
+            nested.innerHTML = innerContent;
             g.appendChild(nested);
-        } else if (obj.type === 'eraser') {
+        } else if (obj.type === 'eraser' || obj.type === 'line') {
+            const strokeColor = obj.type === 'eraser' ? '#ffffff' : obj.color;
             if (obj.points.length < 2) {
                 const p = obj.points[0];
-                g.appendChild(svgEl('circle', { cx: p.x, cy: p.y, r: obj.strokeWidth / 2, fill: '#ffffff' }));
+                g.appendChild(svgEl('circle', { cx: p.x, cy: p.y, r: obj.strokeWidth / 2, fill: strokeColor }));
             } else {
                 const d = 'M ' + obj.points.map(p => `${p.x} ${p.y}`).join(' L ');
-                g.appendChild(svgEl('path', { d, fill: 'none', stroke: '#ffffff', 'stroke-width': obj.strokeWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+                g.appendChild(svgEl('path', { d, fill: 'none', stroke: strokeColor, 'stroke-width': obj.strokeWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
             }
         }
         return g;
@@ -526,7 +593,7 @@
             x: bbox.x, y: bbox.y, width: bbox.w, height: bbox.h, fill: 'none',
             stroke: '#3b82f6', 'stroke-width': 1, 'stroke-dasharray': '4 3', 'vector-effect': 'non-scaling-stroke'
         }));
-        if (obj.type === 'eraser') return g;
+        if (obj.type === 'eraser' || obj.type === 'line') return g;
         const corners = [[bbox.x, bbox.y, 'nw'], [bbox.x + bbox.w, bbox.y, 'ne'], [bbox.x, bbox.y + bbox.h, 'sw'], [bbox.x + bbox.w, bbox.y + bbox.h, 'se']];
         corners.forEach(([cx, cy, pos]) => {
             g.appendChild(svgEl('rect', {
@@ -566,6 +633,7 @@
         }
         deleteSelBtn.style.display = selectedId ? 'block' : 'none';
         renderRulers();
+        if (colorPopover.style.display === 'flex') syncColorPopover();
     }
 
     function renderRulers() {
@@ -673,6 +741,16 @@
             renderMat();
             return;
         }
+        if (lineMode) {
+            selectedId = null;
+            currentLineObj = {
+                id: nextObjId++, type: 'line', rotation: 0, color: lineColor, strokeWidth: lineWidth,
+                curved: !lineStraight, points: lineStraight ? [pt, pt] : [pt]
+            };
+            objects.push(currentLineObj);
+            renderMat();
+            return;
+        }
         const handleEl = e.target.closest('[data-handle]');
         const objEl = e.target.closest('.canvas-object');
         if (handleEl) {
@@ -685,7 +763,7 @@
             const id = Number(objEl.dataset.id);
             selectedId = id;
             const obj = objects.find(o => o.id === id);
-            const start = obj.type === 'eraser' ? { ...obj, points: obj.points.map(p => ({ ...p })) } : { ...obj };
+            const start = (obj.type === 'eraser' || obj.type === 'line') ? { ...obj, points: obj.points.map(p => ({ ...p })) } : { ...obj };
             dragState = { mode: 'move', id, startPt: pt, start };
             dragMoved = false;
         } else {
@@ -701,6 +779,16 @@
             renderMat();
             return;
         }
+        if (lineMode && currentLineObj) {
+            const pt = clientToCm(e.clientX, e.clientY);
+            if (lineStraight) {
+                currentLineObj.points[1] = pt;
+            } else {
+                currentLineObj.points.push(pt);
+            }
+            renderMat();
+            return;
+        }
         if (!dragState) return;
         const pt = clientToCm(e.clientX, e.clientY);
         const dx = pt.x - dragState.startPt.x;
@@ -710,7 +798,7 @@
         if (!obj) return;
         const minSize = 0.5;
         if (dragState.mode === 'move') {
-            if (obj.type === 'eraser') {
+            if (obj.type === 'eraser' || obj.type === 'line') {
                 obj.points = dragState.start.points.map(p => ({ x: p.x + dx, y: p.y + dy }));
             } else {
                 obj.x = dragState.start.x + dx;
@@ -731,6 +819,11 @@
     window.addEventListener('pointerup', () => {
         if (currentEraserObj) {
             currentEraserObj = null;
+            downloadBtn.disabled = objects.length === 0;
+            pushHistory();
+        }
+        if (currentLineObj) {
+            currentLineObj = null;
             downloadBtn.disabled = objects.length === 0;
             pushHistory();
         }
@@ -792,7 +885,16 @@
     toolImages.addEventListener('click', () => fileImporter.click());
     toolText.addEventListener('click', addText);
     toolDownload.addEventListener('click', () => downloadBtn.click());
-    toolAI.addEventListener('click', () => { userInput.focus(); userInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+    let aiPanelOpen = true;
+    function setAIPanelOpen(open) {
+        aiPanelOpen = open;
+        aiSidebar.classList.toggle('closed', !open);
+        toolAI.classList.toggle('active', open);
+        if (open) {
+            setTimeout(() => { userInput.focus(); }, 260);
+        }
+    }
+    toolAI.addEventListener('click', () => setAIPanelOpen(!aiPanelOpen));
 
     toolShapes.addEventListener('click', (e) => {
         const isOpen = shapesPopover.style.display === 'flex';
@@ -809,12 +911,19 @@
         if (!shapesPopover.contains(e.target) && e.target !== toolShapes && !toolShapes.contains(e.target)) {
             shapesPopover.style.display = 'none';
         }
+        if (!linePopover.contains(e.target) && e.target !== toolLine && !toolLine.contains(e.target)) {
+            linePopover.style.display = 'none';
+        }
+        if (!colorPopover.contains(e.target) && e.target !== toolColor && !toolColor.contains(e.target)) {
+            colorPopover.style.display = 'none';
+        }
     });
 
     // ===================== Gomme =====================
     function setEraserMode(on) {
         eraserMode = on;
         toolEraser.classList.toggle('active', on);
+        if (on && lineMode) setLineMode(false);
         matSvg.style.cursor = on ? 'crosshair' : '';
         if (on) {
             const rect = toolEraser.getBoundingClientRect();
@@ -832,6 +941,89 @@
     eraserSizeRange.addEventListener('input', () => {
         eraserWidth = parseFloat(eraserSizeRange.value);
         eraserSizeLabel.textContent = eraserWidth.toFixed(1) + ' cm';
+    });
+
+    // ===================== Lignes / Courbes =====================
+    function setLineMode(on) {
+        lineMode = on;
+        toolLine.classList.toggle('active', on);
+        if (on && eraserMode) setEraserMode(false);
+        matSvg.style.cursor = on ? 'crosshair' : '';
+        if (on) {
+            const rect = toolLine.getBoundingClientRect();
+            linePopover.style.left = (rect.right + 6) + 'px';
+            linePopover.style.top = rect.top + 'px';
+            linePopover.style.display = 'flex';
+            selectedId = null;
+            renderMat();
+        } else {
+            linePopover.style.display = 'none';
+        }
+    }
+    toolLine.addEventListener('click', () => setLineMode(!lineMode));
+    lineOffBtn.addEventListener('click', () => setLineMode(false));
+    lineColorPicker.addEventListener('input', () => { lineColor = lineColorPicker.value; });
+    lineWidthRange.addEventListener('input', () => {
+        lineWidth = parseFloat(lineWidthRange.value);
+        lineWidthLabel.textContent = lineWidth.toFixed(2) + ' cm';
+    });
+    lineModeStraightBtn.addEventListener('click', () => {
+        lineStraight = true;
+        lineModeStraightBtn.classList.add('active');
+        lineModeCurveBtn.classList.remove('active');
+    });
+    lineModeCurveBtn.addEventListener('click', () => {
+        lineStraight = false;
+        lineModeCurveBtn.classList.add('active');
+        lineModeStraightBtn.classList.remove('active');
+    });
+
+    // ===================== Couleurs =====================
+    function syncColorPopover() {
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj || obj.type === 'eraser') {
+            colorNoSelection.style.display = 'block';
+            colorEditRow.style.display = 'none';
+            return;
+        }
+        colorNoSelection.style.display = 'none';
+        colorEditRow.style.display = 'flex';
+        let current = '#000000';
+        if (obj.type === 'shape') current = obj.fill;
+        else if (obj.type === 'text') current = obj.color || '#000000';
+        else if (obj.type === 'line') current = obj.color;
+        else if (obj.type === 'svg') current = obj.colorOverride || '#000000';
+        colorPicker.value = current;
+        colorResetBtn.style.display = obj.type === 'svg' ? 'block' : 'none';
+    }
+    toolColor.addEventListener('click', () => {
+        const isOpen = colorPopover.style.display === 'flex';
+        if (isOpen) { colorPopover.style.display = 'none'; return; }
+        const rect = toolColor.getBoundingClientRect();
+        colorPopover.style.left = (rect.right + 6) + 'px';
+        colorPopover.style.top = rect.top + 'px';
+        colorPopover.style.display = 'flex';
+        syncColorPopover();
+    });
+    colorPicker.addEventListener('input', () => {
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj) return;
+        const val = colorPicker.value;
+        if (obj.type === 'shape') obj.fill = val;
+        else if (obj.type === 'text') obj.color = val;
+        else if (obj.type === 'line') obj.color = val;
+        else if (obj.type === 'svg') obj.colorOverride = val;
+        renderMat();
+    });
+    colorPicker.addEventListener('change', () => pushHistory());
+    colorResetBtn.addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId);
+        if (obj && obj.type === 'svg') {
+            obj.colorOverride = null;
+            renderMat();
+            pushHistory();
+            syncColorPopover();
+        }
     });
 
     // ===================== Taille du tapis =====================
@@ -1027,6 +1219,7 @@
     });
 
     // ===================== Initialisation =====================
+    toolAI.classList.add('active');
     setZoom(1);
     renderMat();
     pushHistory();
