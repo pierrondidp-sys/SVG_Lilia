@@ -13,55 +13,97 @@
             color: #334155;
         }
 
-        /* Layout deux colonnes */
+        /* ===== Barre d'outils façon Cricut Design Space ===== */
+        .app-toolbar {
+            width: 76px; background: #ffffff; border-right: 1px solid #e2e8f0;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 12px 0; gap: 2px; overflow-y: auto; flex-shrink: 0;
+        }
+        .tool-rail-btn {
+            width: 64px; background: none; border: none; cursor: pointer;
+            padding: 8px 4px; border-radius: 8px; display: flex; flex-direction: column;
+            align-items: center; gap: 3px; font-size: 10.5px; color: #334155; text-align: center;
+        }
+        .tool-rail-btn:hover { background: #f1f5f9; }
+        .tool-rail-btn.active { background: #e0e7ff; color: #3b82f6; }
+        .tool-rail-btn .icon { font-size: 20px; line-height: 1; }
+        .tool-rail-sep { width: 44px; height: 1px; background: #e2e8f0; margin: 8px 0; }
+
+        .shapes-popover {
+            position: fixed; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,.15); padding: 10px; display: none; gap: 8px; z-index: 200;
+        }
+        .shapes-popover button {
+            width: 44px; height: 44px; border: 1px solid #e2e8f0; border-radius: 8px;
+            background: #f8fafc; cursor: pointer; font-size: 22px; display: flex; align-items: center; justify-content: center;
+        }
+        .shapes-popover button:hover { background: #e0e7ff; border-color: #3b82f6; }
+
+        /* Layout colonnes */
         .workspace {
             flex: 1; display: flex; flex-direction: column;
-            padding: 20px; box-sizing: border-box;
+            padding: 20px; box-sizing: border-box; min-width: 0;
         }
         .sidebar-chat {
             width: 380px; background: white; border-left: 1px solid #cbd5e1;
-            display: flex; flex-direction: column;
+            display: flex; flex-direction: column; flex-shrink: 0;
             box-shadow: -2px 0 10px rgba(0,0,0,0.05);
         }
 
-        /* Zone de travail (Aperçu) */
         h1 { margin-top: 0; color: #1e293b; font-size: 24px; display: flex; justify-content: space-between; align-items: center; }
-        .preview-container {
+
+        /* ===== Zone canvas avec règles ===== */
+        .canvas-area {
             flex: 1; background: white; border-radius: 12px; border: 1px solid #e2e8f0;
-            display: flex; align-items: center; justify-content: center;
-            position: relative; overflow: hidden;
-            background-size: 20px 20px;
-            background-image: linear-gradient(to right, #f8fafc 1px, transparent 1px), linear-gradient(to bottom, #f8fafc 1px, transparent 1px);
+            display: flex; flex-direction: column; overflow: hidden; position: relative; min-height: 0;
         }
-        .preview-container svg { max-width: 85%; max-height: 85%; object-fit: contain; }
-        .actions { margin-top: 15px; display: flex; gap: 10px; width: 100%; }
+        .ruler-row { display: flex; flex-shrink: 0; }
+        .ruler-corner { width: 26px; height: 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; flex-shrink: 0; }
+        .ruler-top { flex: 1; height: 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; overflow: hidden; position: relative; }
+        .ruler-top-inner { position: absolute; top: 0; left: 0; height: 100%; }
+        .ruler-body-row { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+        .ruler-left { width: 26px; background: #f8fafc; border-right: 1px solid #e2e8f0; overflow: hidden; position: relative; flex-shrink: 0; }
+        .ruler-left-inner { position: absolute; top: 0; left: 0; width: 100%; }
+        .canvas-viewport { flex: 1; overflow: auto; background: #fafafa; position: relative; }
+        .mat-svg { display: block; background: #ffffff; }
+
+        .zoom-controls {
+            position: absolute; bottom: 12px; right: 12px; background: #fff; border: 1px solid #e2e8f0;
+            border-radius: 20px; display: flex; align-items: center; gap: 4px; padding: 4px 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.12); font-size: 12px; z-index: 20;
+        }
+        .zoom-controls button { border: none; background: none; cursor: pointer; font-size: 16px; width: 24px; height: 24px; color: #334155; }
+        .zoom-controls button:hover { color: #3b82f6; }
+        .zoom-controls span { min-width: 38px; text-align: center; color: #64748b; }
+
+        .delete-sel-btn {
+            position: absolute; top: 12px; right: 12px; background: #fff; border: 1px solid #fca5a5;
+            color: #dc2626; border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer;
+            display: none; z-index: 20; box-shadow: 0 2px 8px rgba(0,0,0,.1);
+        }
+        .delete-sel-btn:hover { background: #fef2f2; }
+
+        .actions { margin-top: 15px; display: flex; gap: 10px; width: 100%; flex-shrink: 0; }
         .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; text-align: center; }
         .btn-success { background: #10b981; color: white; }
         .btn-success:disabled { background: #cbd5e1; cursor: not-allowed; }
-        
-        /* Zone d'importation de fichiers */
-        .import-box {
-            background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 8px;
-            padding: 12px; margin-bottom: 10px; text-align: center; cursor: pointer;
-            transition: all 0.2s; position: relative;
-        }
-        .import-box:hover { background: #f1f5f9; border-color: #3b82f6; }
-        .import-box p { margin: 0; font-size: 13px; color: #64748b; font-weight: 500; }
-        .import-box input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
         .btn-info { background: #64748b; color: white; font-size: 14px; padding: 8px 15px; }
         .btn-info:hover { background: #475569; }
 
+        /* Zone d'importation de fichiers (cachée, déclenchée par la barre d'outils) */
+        #fileImporter { display: none; }
+
         /* Fenêtre de Chat */
         .chat-header { padding: 15px; background: #0f172a; color: white; }
         .api-box { padding: 10px 15px; background: #1e293b; border-bottom: 1px solid #334155; }
-        
-        .api-box input { 
-            width: 100%; padding: 6px; background: #334155; border: 1px solid #475569; 
+
+        .api-box input {
+            width: 100%; padding: 6px; background: #334155; border: 1px solid #475569;
             color: white; border-radius: 4px; box-sizing: border-box; font-size: 12px;
             -webkit-text-security: disc;
         }
-        
+
         .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         .message { padding: 10px 14px; border-radius: 8px; max-width: 85%; font-size: 14px; line-height: 1.4; }
         .message.user { background: #3b82f6; color: white; align-self: flex-end; }
@@ -69,7 +111,6 @@
         .chat-input-area { padding: 15px; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; }
         .chat-input-area textarea { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; resize: none; height: 40px; font-family: inherit; }
         .chat-input-area button { background: #3b82f6; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .placeholder-text { color: #94a3b8; text-align: center; }
 
         /* Fenêtre Modale */
         .modal {
@@ -87,7 +128,7 @@
         .modal-header h2 { margin: 0; color: #0f172a; font-size: 20px; }
         .close-btn { font-size: 24px; cursor: pointer; color: #94a3b8; }
         .close-btn:hover { color: #475569; }
-        
+
         .modal-body { display: flex; flex: 1; overflow: hidden; }
         .modal-tabs { width: 200px; background: #f8fafc; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; padding: 15px 0; gap: 5px; }
         .tab-btn { background: none; border: none; padding: 12px 20px; text-align: left; font-size: 14px; font-weight: 500; color: #64748b; cursor: pointer; border-left: 3px solid transparent; transition: all 0.2s; }
@@ -99,52 +140,90 @@
         .modal-tab-content ol { padding-left: 20px; line-height: 1.6; }
         .modal-tab-content li { margin-bottom: 10px; }
     </style>
-    <!-- Liens CDN stables pour l'import -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPCEtLSBGaWwgLS0+CiAgPHBhdGggZD0iTTYgNTAgQyAxNiA0MCwgMTAgMzAsIDIyIDI2IiBmaWxsPSJub25lIiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPCEtLSBBaWd1aWxsZSAtLT4KICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSAzMCAyOCkiPgogICAgPHJlY3QgeD0iMjgiIHk9IjYiIHdpZHRoPSIzIiBoZWlnaHQ9IjM0IiByeD0iMS41IiBmaWxsPSIjOTRhM2I4Ii8+CiAgICA8cG9seWdvbiBwb2ludHM9IjI5LjUsNCAyNiwxMiAzMywxMiIgZmlsbD0iIzk0YTNiOCIvPgogICAgPGVsbGlwc2UgY3g9IjI5LjUiIGN5PSIzNCIgcng9IjIuNCIgcnk9IjMuNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjQ3NDhiIiBzdHJva2Utd2lkdGg9IjEuMiIvPgogIDwvZz4KICA8IS0tIETDqSDDoCBjb3VkcmUgKHRoaW1ibGUpIC0tPgogIDxnPgogICAgPHBhdGggZD0iTTIyIDYyIEMgMjAgNDYsIDIyIDM0LCAzMiAzMCBDIDQyIDM0LCA0NCA0NiwgNDIgNjIgWiIgZmlsbD0iI2Y1OWUwYiIgc3Ryb2tlPSIjYjQ1MzA5IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogICAgPGVsbGlwc2UgY3g9IjMyIiBjeT0iMzAiIHJ4PSIxMCIgcnk9IjQiIGZpbGw9IiNmYmJmMjQiIHN0cm9rZT0iI2I0NTMwOSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwhLS0gbW90aWZzIGFsdsOpb2xlcyAtLT4KICAgIDxjaXJjbGUgY3g9IjI2IiBjeT0iNDAiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzOCIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzOCIgY3k9IjQwIiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjI0IiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzAiIGN5PSI0NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzNiIgY3k9IjQ2IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMjIiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIyOCIgY3k9IjU1IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjM0IiBjeT0iNTUiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iNDAiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgPC9nPgo8L3N2Zz4K">
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
 </head>
 <body>
 
-    <!-- ZONE DE TRAVAIL (GAUCHE) -->
+    <!-- ===== BARRE D'OUTILS (GAUCHE) ===== -->
+    <div class="app-toolbar">
+        <button class="tool-rail-btn" id="toolNew" title="Nouveau projet"><span class="icon">➕</span>Nouveau</button>
+        <button class="tool-rail-btn" id="toolProjects" title="Bientôt disponible"><span class="icon">🚀</span>Projets</button>
+        <div class="tool-rail-sep"></div>
+        <button class="tool-rail-btn" id="toolShapes" title="Ajouter une forme"><span class="icon">▲</span>Formes</button>
+        <button class="tool-rail-btn" id="toolImages" title="Importer une image ou un DXF"><span class="icon">🖼️</span>Images</button>
+        <button class="tool-rail-btn" id="toolText" title="Ajouter du texte"><span class="icon">🅣</span>Texte</button>
+        <button class="tool-rail-btn" id="toolMonogram" title="Bientôt disponible"><span class="icon">▦</span>Monogramme</button>
+        <div class="tool-rail-sep"></div>
+        <button class="tool-rail-btn" id="toolLayout" title="Bientôt disponible"><span class="icon">🎁</span>Mises en page</button>
+        <button class="tool-rail-btn" id="toolDownload" title="Exporter le SVG"><span class="icon">⬇️</span>Télécharger</button>
+        <button class="tool-rail-btn" id="toolAI" title="Aller au chat IA"><span class="icon">✨</span>Créer avec l'IA</button>
+    </div>
+
+    <!-- Popover de sélection de formes -->
+    <div id="shapesPopover" class="shapes-popover">
+        <button data-shape="circle" title="Cercle">⚪</button>
+        <button data-shape="square" title="Carré">⬛</button>
+        <button data-shape="triangle" title="Triangle">🔺</button>
+    </div>
+
+    <!-- ===== ZONE DE TRAVAIL (CENTRE) ===== -->
     <div class="workspace">
         <h1>
             <span>Aperçu du Design Cricut</span>
             <button id="helpBtn" class="btn btn-info">📖 Mode d'emploi</button>
         </h1>
-        <div id="previewContainer" class="preview-container">
-            <p id="placeholder" class="placeholder-text">Importez un fichier (Image/DXF) ou demandez à l'IA pour voir le rendu...</p>
+
+        <div class="canvas-area">
+            <div class="ruler-row">
+                <div class="ruler-corner"></div>
+                <div class="ruler-top"><div class="ruler-top-inner" id="rulerTopInner"></div></div>
+            </div>
+            <div class="ruler-body-row">
+                <div class="ruler-left"><div class="ruler-left-inner" id="rulerLeftInner"></div></div>
+                <div class="canvas-viewport" id="canvasViewport">
+                    <svg id="matSvg" class="mat-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+                </div>
+            </div>
+            <button id="deleteSelBtn" class="delete-sel-btn">🗑️ Supprimer la sélection</button>
+            <div class="zoom-controls">
+                <button id="zoomOutBtn">−</button>
+                <span id="zoomLabel">100%</span>
+                <button id="zoomInBtn">+</button>
+                <button id="zoomResetBtn" title="Réinitialiser">⤾</button>
+            </div>
         </div>
+
         <div class="actions">
             <button id="downloadBtn" class="btn btn-success" disabled style="flex: 2;">Télécharger pour Cricut (SVG)</button>
             <button id="resetBtn" class="btn" style="background: #64748b; color: white; flex: 1;">Nouveau projet</button>
         </div>
     </div>
 
-    <!-- FENÊTRE DE DISCUSSION & OUTILS (DROITE) -->
+    <!-- ===== FENÊTRE DE DISCUSSION & OUTILS (DROITE) ===== -->
     <div class="sidebar-chat">
-        
+
         <!-- Logo Calligraphique -->
-        <div style="padding: 15px 10px 10px 10px; background: #ffffff; text-align: center; border-bottom: 1px solid #cbd5e1;">
-            <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 400 90" width="100%" height="100%">
-                <text x="50%" y="60%" text-anchor="middle" font-family="'Great Vibes', 'Georgia', serif" font-size="42" font-style="italic" fill="#000000" letter-spacing="1">Fée main Lilia...</text>
+        <div style="padding: 15px 10px 10px 10px; background: #ffffff; text-align: center; border-bottom: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPCEtLSBGaWwgLS0+CiAgPHBhdGggZD0iTTYgNTAgQyAxNiA0MCwgMTAgMzAsIDIyIDI2IiBmaWxsPSJub25lIiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPCEtLSBBaWd1aWxsZSAtLT4KICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSAzMCAyOCkiPgogICAgPHJlY3QgeD0iMjgiIHk9IjYiIHdpZHRoPSIzIiBoZWlnaHQ9IjM0IiByeD0iMS41IiBmaWxsPSIjOTRhM2I4Ii8+CiAgICA8cG9seWdvbiBwb2ludHM9IjI5LjUsNCAyNiwxMiAzMywxMiIgZmlsbD0iIzk0YTNiOCIvPgogICAgPGVsbGlwc2UgY3g9IjI5LjUiIGN5PSIzNCIgcng9IjIuNCIgcnk9IjMuNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjQ3NDhiIiBzdHJva2Utd2lkdGg9IjEuMiIvPgogIDwvZz4KICA8IS0tIETDqSDDoCBjb3VkcmUgKHRoaW1ibGUpIC0tPgogIDxnPgogICAgPHBhdGggZD0iTTIyIDYyIEMgMjAgNDYsIDIyIDM0LCAzMiAzMCBDIDQyIDM0LCA0NCA0NiwgNDIgNjIgWiIgZmlsbD0iI2Y1OWUwYiIgc3Ryb2tlPSIjYjQ1MzA5IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogICAgPGVsbGlwc2UgY3g9IjMyIiBjeT0iMzAiIHJ4PSIxMCIgcnk9IjQiIGZpbGw9IiNmYmJmMjQiIHN0cm9rZT0iI2I0NTMwOSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwhLS0gbW90aWZzIGFsdsOpb2xlcyAtLT4KICAgIDxjaXJjbGUgY3g9IjI2IiBjeT0iNDAiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzOCIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzOCIgY3k9IjQwIiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjI0IiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzAiIGN5PSI0NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzNiIgY3k9IjQ2IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMjIiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIyOCIgY3k9IjU1IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjM0IiBjeT0iNTUiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iNDAiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgPC9nPgo8L3N2Zz4K" alt="" style="width: 30px; height: 30px; flex-shrink: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 56" width="100%" height="40" style="max-width: 320px;">
+                <text x="0" y="75%" text-anchor="start" font-family="'Great Vibes', 'Georgia', serif" font-size="42" font-style="italic" fill="#000000" letter-spacing="1">Fée main Lilia...</text>
             </svg>
         </div>
 
-        <!-- ZONE INTERACTIVE D'IMPORTATION DE FICHIERS -->
-        <div style="padding: 10px 15px; background: #f8fafc; border-bottom: 1px solid #cbd5e1;">
-            <div class="import-box">
-                <p>📁 Insérer Image (PNG, JPG, BMP, GIF) ou DXF</p>
-                <input type="file" id="fileImporter" accept=".png, .jpg, .jpeg, .bmp, .gif, .dxf">
-            </div>
-        </div>
+        <input type="file" id="fileImporter" accept=".png, .jpg, .jpeg, .bmp, .gif, .dxf">
 
-        <div class="chat-header"><strong>Assistant IA Cricut</strong> (Gemini)</div>
+        <div class="chat-header" style="display: flex; align-items: center; gap: 10px;">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPCEtLSBGaWwgLS0+CiAgPHBhdGggZD0iTTYgNTAgQyAxNiA0MCwgMTAgMzAsIDIyIDI2IiBmaWxsPSJub25lIiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPCEtLSBBaWd1aWxsZSAtLT4KICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSAzMCAyOCkiPgogICAgPHJlY3QgeD0iMjgiIHk9IjYiIHdpZHRoPSIzIiBoZWlnaHQ9IjM0IiByeD0iMS41IiBmaWxsPSIjOTRhM2I4Ii8+CiAgICA8cG9seWdvbiBwb2ludHM9IjI5LjUsNCAyNiwxMiAzMywxMiIgZmlsbD0iIzk0YTNiOCIvPgogICAgPGVsbGlwc2UgY3g9IjI5LjUiIGN5PSIzNCIgcng9IjIuNCIgcnk9IjMuNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjQ3NDhiIiBzdHJva2Utd2lkdGg9IjEuMiIvPgogIDwvZz4KICA8IS0tIETDqSDDoCBjb3VkcmUgKHRoaW1ibGUpIC0tPgogIDxnPgogICAgPHBhdGggZD0iTTIyIDYyIEMgMjAgNDYsIDIyIDM0LCAzMiAzMCBDIDQyIDM0LCA0NCA0NiwgNDIgNjIgWiIgZmlsbD0iI2Y1OWUwYiIgc3Ryb2tlPSIjYjQ1MzA5IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogICAgPGVsbGlwc2UgY3g9IjMyIiBjeT0iMzAiIHJ4PSIxMCIgcnk9IjQiIGZpbGw9IiNmYmJmMjQiIHN0cm9rZT0iI2I0NTMwOSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwhLS0gbW90aWZzIGFsdsOpb2xlcyAtLT4KICAgIDxjaXJjbGUgY3g9IjI2IiBjeT0iNDAiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzOCIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzOCIgY3k9IjQwIiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjI0IiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzAiIGN5PSI0NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzNiIgY3k9IjQ2IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMjIiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIyOCIgY3k9IjU1IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjM0IiBjeT0iNTUiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iNDAiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgPC9nPgo8L3N2Zz4K" alt="" style="width: 24px; height: 24px; flex-shrink: 0;">
+            <span><strong>Assistant IA Cricut</strong> (Gemini)</span>
+        </div>
         <div class="api-box">
             <input type="text" id="apiKeyInput" placeholder="Collez votre clé d'API Gemini ici..." autocomplete="off">
         </div>
         <div id="chatMessages" class="chat-messages">
-            <div class="message ai">Bonjour Lilia ! Vous pouvez désormais glisser vos propres images ou fichiers DXF pour les vectoriser/modifier, ou continuer à utiliser l'IA en écrivant votre prompt ci-dessous. Que fait-on ?</div>
+            <div class="message ai">Bonjour Lilia ! Importez une image/DXF, ajoutez des formes ou du texte, ou demandez à l'IA — chaque élément s'ajoute sur le plan de travail et reste déplaçable/redimensionnable. Que fait-on ?</div>
         </div>
         <div class="chat-input-area">
             <textarea id="userInput" placeholder="Demander une modification ou un dessin à l'IA..."></textarea>
@@ -167,11 +246,15 @@
                 </div>
 
                 <div id="tab-files" class="modal-tab-content active">
-                    <h3>Importation et retouche de fichiers</h3>
+                    <h3>Le plan de travail (façon Cricut Design Space)</h3>
                     <ol>
-                        <li>**Images (PNG, JPG, BMP, GIF) :** Lorsque vous chargez une image, l'application la convertit instantanément en contours monochromes SVG nets, parfaits pour la découpe vinyle Cricut.</li>
-                        <li>**Fichiers DXF :** L'outil décode la géométrie CAO pour l'afficher et la rendre téléchargeable au format SVG compatible Cricut.</li>
-                        <li>**Modifications par IA :** Une fois le fichier chargé, vous pouvez utiliser le chat en bas à droite pour demander des modifications à l'IA.</li>
+                        <li><strong>Formes / Texte / Images / IA :</strong> chaque élément ajouté apparaît comme un objet indépendant sur le plan de travail (en cm, comme un vrai tapis Cricut). Cliquez un objet pour le sélectionner, faites-le glisser pour le déplacer, et tirez les poignées d'angle pour le redimensionner.</li>
+                        <li><strong>Texte :</strong> double-cliquez un texte sur le plan de travail pour le modifier.</li>
+                        <li><strong>Suppression :</strong> sélectionnez un objet puis touche Suppr/Retour, ou le bouton « Supprimer la sélection » en haut du plan de travail.</li>
+                        <li><strong>Zoom :</strong> utilisez les boutons +/− en bas à droite du plan de travail.</li>
+                        <li><strong>Images (PNG, JPG, BMP, GIF) :</strong> l'application les convertit instantanément en contours monochromes SVG nets, ajoutés comme objet sur le plan de travail.</li>
+                        <li><strong>Fichiers DXF :</strong> l'outil décode la géométrie CAO et l'ajoute aussi comme objet déplaçable.</li>
+                        <li><strong>Téléchargement :</strong> exporte l'intégralité du plan de travail (tous les objets, à leur taille réelle en cm) en un seul fichier SVG prêt pour Cricut Design Space.</li>
                     </ol>
                 </div>
 
@@ -195,7 +278,7 @@
                 <div id="tab-usage" class="modal-tab-content">
                     <h3>Demander un motif vectoriel</h3>
                     <ol>
-                        <li>Décrivez précisément votre idée (ex: *Silhouette de tortue marine épurée*).</li>
+                        <li>Décrivez précisément votre idée (ex: *Silhouette de tortue marine épurée*). Le résultat est ajouté comme nouvel objet sur le plan de travail, déplaçable et redimensionnable comme les autres.</li>
                     </ol>
                 </div>
             </div>
@@ -203,44 +286,396 @@
     </div>
 
 <script>
+    // ===================== Références DOM =====================
     const apiKeyInput = document.getElementById('apiKeyInput');
     const chatMessages = document.getElementById('chatMessages');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
-    const previewContainer = document.getElementById('previewContainer');
     const downloadBtn = document.getElementById('downloadBtn');
     const resetBtn = document.getElementById('resetBtn');
     const fileImporter = document.getElementById('fileImporter');
-    
+
     const helpBtn = document.getElementById('helpBtn');
     const helpModal = document.getElementById('helpModal');
     const closeModal = document.getElementById('closeModal');
 
-    let currentSvgCode = '';
+    const matSvg = document.getElementById('matSvg');
+    const canvasViewport = document.getElementById('canvasViewport');
+    const rulerTopInner = document.getElementById('rulerTopInner');
+    const rulerLeftInner = document.getElementById('rulerLeftInner');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const zoomResetBtn = document.getElementById('zoomResetBtn');
+    const zoomLabel = document.getElementById('zoomLabel');
+    const deleteSelBtn = document.getElementById('deleteSelBtn');
+    const shapesPopover = document.getElementById('shapesPopover');
 
+    const toolNew = document.getElementById('toolNew');
+    const toolProjects = document.getElementById('toolProjects');
+    const toolShapes = document.getElementById('toolShapes');
+    const toolImages = document.getElementById('toolImages');
+    const toolText = document.getElementById('toolText');
+    const toolMonogram = document.getElementById('toolMonogram');
+    const toolLayout = document.getElementById('toolLayout');
+    const toolDownload = document.getElementById('toolDownload');
+    const toolAI = document.getElementById('toolAI');
+
+    // ===================== Modèle du plan de travail =====================
+    const MAT_W = 30; // cm
+    const MAT_H = 30; // cm
+    const PX_PER_CM_BASE = 18;
+    let zoom = 1;
+    let objects = [];
+    let nextObjId = 1;
+    let selectedId = null;
+    let dragState = null;
+
+    function pxPerCm() { return PX_PER_CM_BASE * zoom; }
+
+    function svgEl(name, attrs) {
+        const e = document.createElementNS('http://www.w3.org/2000/svg', name);
+        for (const k in attrs) e.setAttribute(k, attrs[k]);
+        return e;
+    }
+
+    function clientToCm(clientX, clientY) {
+        const pt = matSvg.createSVGPoint();
+        pt.x = clientX; pt.y = clientY;
+        const ctm = matSvg.getScreenCTM().inverse();
+        const loc = pt.matrixTransform(ctm);
+        return { x: loc.x, y: loc.y };
+    }
+
+    function parseSvgIntrinsic(svgString) {
+        const doc = new DOMParser().parseFromString(svgString, 'image/svg+xml');
+        const svg = doc.querySelector('svg');
+        let iw = 200, ih = 200;
+        if (svg) {
+            const vb = svg.getAttribute('viewBox');
+            if (vb) {
+                const parts = vb.trim().split(/\s+/).map(Number);
+                if (parts.length === 4 && parts[2] > 0 && parts[3] > 0) { iw = parts[2]; ih = parts[3]; }
+            } else {
+                const wAttr = parseFloat(svg.getAttribute('width'));
+                const hAttr = parseFloat(svg.getAttribute('height'));
+                if (wAttr) iw = wAttr;
+                if (hAttr) ih = hAttr;
+            }
+        }
+        const inner = svg ? svg.innerHTML : svgString;
+        return { inner, iw, ih };
+    }
+
+    function addSvgObject(svgString, forceFill) {
+        const parsed = parseSvgIntrinsic(svgString);
+        let inner = parsed.inner;
+        if (forceFill) inner = `<g fill="${forceFill}">${inner}</g>`;
+        const maxDim = 10; // cm
+        let w, h;
+        if (parsed.iw >= parsed.ih) { w = maxDim; h = maxDim * (parsed.ih / parsed.iw); }
+        else { h = maxDim; w = maxDim * (parsed.iw / parsed.ih); }
+        const obj = {
+            id: nextObjId++, type: 'svg',
+            x: (MAT_W - w) / 2, y: (MAT_H - h) / 2, w, h, rotation: 0,
+            innerSVG: inner, iw: parsed.iw, ih: parsed.ih
+        };
+        objects.push(obj);
+        selectedId = obj.id;
+        downloadBtn.disabled = false;
+        renderMat();
+        return obj;
+    }
+
+    function addShape(shapeType) {
+        const w = 6, h = 6;
+        const fills = { circle: '#3b82f6', square: '#10b981', triangle: '#f59e0b' };
+        const obj = {
+            id: nextObjId++, type: 'shape', shapeType,
+            x: (MAT_W - w) / 2, y: (MAT_H - h) / 2, w, h, rotation: 0,
+            fill: fills[shapeType] || '#3b82f6'
+        };
+        objects.push(obj);
+        selectedId = obj.id;
+        downloadBtn.disabled = false;
+        renderMat();
+    }
+
+    function addText() {
+        const w = 10, h = 2.5;
+        const obj = {
+            id: nextObjId++, type: 'text',
+            x: (MAT_W - w) / 2, y: (MAT_H - h) / 2, w, h, rotation: 0,
+            text: 'Votre texte', fontSize: h * 0.7
+        };
+        objects.push(obj);
+        selectedId = obj.id;
+        downloadBtn.disabled = false;
+        renderMat();
+        setTimeout(() => editTextObject(obj.id), 50);
+    }
+
+    function editTextObject(id) {
+        const obj = objects.find(o => o.id === id);
+        if (!obj) return;
+        const val = prompt("Texte :", obj.text);
+        if (val !== null && val.trim() !== '') { obj.text = val; renderMat(); }
+    }
+
+    function renderObjectGroup(obj) {
+        const g = svgEl('g', {
+            'data-id': obj.id,
+            'class': 'canvas-object',
+            'transform': `rotate(${obj.rotation || 0} ${obj.x + obj.w / 2} ${obj.y + obj.h / 2})`,
+            'style': 'cursor: move;'
+        });
+        if (obj.type === 'shape') {
+            if (obj.shapeType === 'circle') {
+                g.appendChild(svgEl('ellipse', { cx: obj.x + obj.w / 2, cy: obj.y + obj.h / 2, rx: obj.w / 2, ry: obj.h / 2, fill: obj.fill }));
+            } else if (obj.shapeType === 'square') {
+                g.appendChild(svgEl('rect', { x: obj.x, y: obj.y, width: obj.w, height: obj.h, fill: obj.fill }));
+            } else if (obj.shapeType === 'triangle') {
+                const pts = `${obj.x + obj.w / 2},${obj.y} ${obj.x},${obj.y + obj.h} ${obj.x + obj.w},${obj.y + obj.h}`;
+                g.appendChild(svgEl('polygon', { points: pts, fill: obj.fill }));
+            }
+        } else if (obj.type === 'text') {
+            const t = svgEl('text', {
+                x: obj.x, y: obj.y + obj.h * 0.78,
+                'font-size': obj.fontSize, 'font-family': "'Segoe UI', Arial, sans-serif", fill: '#000000'
+            });
+            t.textContent = obj.text;
+            g.appendChild(t);
+        } else if (obj.type === 'svg') {
+            const nested = svgEl('svg', {
+                x: obj.x, y: obj.y, width: obj.w, height: obj.h,
+                viewBox: `0 0 ${obj.iw} ${obj.ih}`, preserveAspectRatio: 'xMidYMid meet'
+            });
+            nested.innerHTML = obj.innerSVG;
+            g.appendChild(nested);
+        }
+        return g;
+    }
+
+    function renderSelection(obj) {
+        const hs = 8 / pxPerCm();
+        const g = svgEl('g', { class: 'selection-overlay' });
+        g.setAttribute('transform', `rotate(${obj.rotation || 0} ${obj.x + obj.w / 2} ${obj.y + obj.h / 2})`);
+        g.appendChild(svgEl('rect', {
+            x: obj.x, y: obj.y, width: obj.w, height: obj.h, fill: 'none',
+            stroke: '#3b82f6', 'stroke-width': 1, 'stroke-dasharray': '4 3', 'vector-effect': 'non-scaling-stroke'
+        }));
+        const corners = [[obj.x, obj.y, 'nw'], [obj.x + obj.w, obj.y, 'ne'], [obj.x, obj.y + obj.h, 'sw'], [obj.x + obj.w, obj.y + obj.h, 'se']];
+        corners.forEach(([cx, cy, pos]) => {
+            g.appendChild(svgEl('rect', {
+                x: cx - hs / 2, y: cy - hs / 2, width: hs, height: hs,
+                fill: '#fff', stroke: '#3b82f6', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke',
+                'data-handle': pos, 'data-id': obj.id, style: 'cursor: nwse-resize;'
+            }));
+        });
+        return g;
+    }
+
+    function buildGridDefs() {
+        const defs = svgEl('defs', {});
+        const pattern = svgEl('pattern', { id: 'gridMinor', width: 1, height: 1, patternUnits: 'userSpaceOnUse' });
+        pattern.appendChild(svgEl('path', { d: 'M 1 0 L 0 0 0 1', fill: 'none', stroke: '#eef2f7', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
+        defs.appendChild(pattern);
+        return defs;
+    }
+
+    function renderMat() {
+        matSvg.setAttribute('viewBox', `0 0 ${MAT_W} ${MAT_H}`);
+        matSvg.style.width = (MAT_W * pxPerCm()) + 'px';
+        matSvg.style.height = (MAT_H * pxPerCm()) + 'px';
+        matSvg.innerHTML = '';
+        matSvg.appendChild(buildGridDefs());
+        matSvg.appendChild(svgEl('rect', { x: 0, y: 0, width: MAT_W, height: MAT_H, fill: 'url(#gridMinor)' }));
+        for (let i = 0; i <= MAT_W; i += 10) {
+            matSvg.appendChild(svgEl('line', { x1: i, y1: 0, x2: i, y2: MAT_H, stroke: '#cbd5e1', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
+        }
+        for (let j = 0; j <= MAT_H; j += 10) {
+            matSvg.appendChild(svgEl('line', { x1: 0, y1: j, x2: MAT_W, y2: j, stroke: '#cbd5e1', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
+        }
+        objects.forEach(o => matSvg.appendChild(renderObjectGroup(o)));
+        if (selectedId) {
+            const sel = objects.find(o => o.id === selectedId);
+            if (sel) matSvg.appendChild(renderSelection(sel));
+        }
+        deleteSelBtn.style.display = selectedId ? 'block' : 'none';
+        renderRulers();
+    }
+
+    function renderRulers() {
+        const ppc = pxPerCm();
+        const totalW = MAT_W * ppc, totalH = MAT_H * ppc;
+        rulerTopInner.style.width = totalW + 'px';
+        rulerTopInner.innerHTML = '';
+        for (let i = 0; i <= MAT_W; i++) {
+            const major = i % 10 === 0;
+            const tick = document.createElement('div');
+            tick.style.cssText = `position:absolute; left:${i * ppc}px; top:${major ? 0 : 10}px; width:1px; height:${major ? 20 : 10}px; background:#cbd5e1;`;
+            rulerTopInner.appendChild(tick);
+            if (major) {
+                const label = document.createElement('div');
+                label.textContent = i;
+                label.style.cssText = `position:absolute; left:${i * ppc + 3}px; top:2px; font-size:10px; color:#64748b;`;
+                rulerTopInner.appendChild(label);
+            }
+        }
+        rulerLeftInner.style.height = totalH + 'px';
+        rulerLeftInner.innerHTML = '';
+        for (let j = 0; j <= MAT_H; j++) {
+            const major = j % 10 === 0;
+            const tick = document.createElement('div');
+            tick.style.cssText = `position:absolute; top:${j * ppc}px; left:${major ? 0 : 10}px; height:1px; width:${major ? 20 : 10}px; background:#cbd5e1;`;
+            rulerLeftInner.appendChild(tick);
+            if (major) {
+                const label = document.createElement('div');
+                label.textContent = j;
+                label.style.cssText = `position:absolute; top:${j * ppc + 2}px; left:2px; font-size:9px; color:#64748b;`;
+                rulerLeftInner.appendChild(label);
+            }
+        }
+    }
+
+    canvasViewport.addEventListener('scroll', () => {
+        rulerTopInner.style.transform = `translateX(${-canvasViewport.scrollLeft}px)`;
+        rulerLeftInner.style.transform = `translateY(${-canvasViewport.scrollTop}px)`;
+    });
+
+    // ===================== Interactions souris/tactile =====================
+    matSvg.addEventListener('pointerdown', e => {
+        const handleEl = e.target.closest('[data-handle]');
+        const objEl = e.target.closest('.canvas-object');
+        const pt = clientToCm(e.clientX, e.clientY);
+        if (handleEl) {
+            const id = Number(handleEl.dataset.id);
+            selectedId = id;
+            const obj = objects.find(o => o.id === id);
+            dragState = { mode: 'resize', id, handle: handleEl.dataset.handle, startPt: pt, start: { ...obj } };
+        } else if (objEl) {
+            const id = Number(objEl.dataset.id);
+            selectedId = id;
+            const obj = objects.find(o => o.id === id);
+            dragState = { mode: 'move', id, startPt: pt, start: { ...obj } };
+        } else {
+            selectedId = null;
+        }
+        renderMat();
+    });
+
+    window.addEventListener('pointermove', e => {
+        if (!dragState) return;
+        const pt = clientToCm(e.clientX, e.clientY);
+        const dx = pt.x - dragState.startPt.x;
+        const dy = pt.y - dragState.startPt.y;
+        const obj = objects.find(o => o.id === dragState.id);
+        if (!obj) return;
+        const minSize = 0.5;
+        if (dragState.mode === 'move') {
+            obj.x = dragState.start.x + dx;
+            obj.y = dragState.start.y + dy;
+        } else if (dragState.mode === 'resize') {
+            let { x, y, w, h } = dragState.start;
+            if (dragState.handle.includes('e')) w = Math.max(minSize, dragState.start.w + dx);
+            if (dragState.handle.includes('s')) h = Math.max(minSize, dragState.start.h + dy);
+            if (dragState.handle.includes('w')) { w = Math.max(minSize, dragState.start.w - dx); x = dragState.start.x + (dragState.start.w - w); }
+            if (dragState.handle.includes('n')) { h = Math.max(minSize, dragState.start.h - dy); y = dragState.start.y + (dragState.start.h - h); }
+            obj.x = x; obj.y = y; obj.w = w; obj.h = h;
+            if (obj.type === 'text') obj.fontSize = obj.h * 0.7;
+        }
+        renderMat();
+    });
+
+    window.addEventListener('pointerup', () => { dragState = null; });
+
+    matSvg.addEventListener('dblclick', e => {
+        const objEl = e.target.closest('.canvas-object');
+        if (!objEl) return;
+        const obj = objects.find(o => o.id === Number(objEl.dataset.id));
+        if (obj && obj.type === 'text') editTextObject(obj.id);
+    });
+
+    window.addEventListener('keydown', e => {
+        const tag = document.activeElement ? document.activeElement.tagName : '';
+        if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId && tag !== 'TEXTAREA' && tag !== 'INPUT') {
+            deleteSelected();
+        }
+    });
+
+    function deleteSelected() {
+        if (!selectedId) return;
+        objects = objects.filter(o => o.id !== selectedId);
+        selectedId = null;
+        if (objects.length === 0) downloadBtn.disabled = true;
+        renderMat();
+    }
+    deleteSelBtn.addEventListener('click', deleteSelected);
+
+    // ===================== Zoom =====================
+    function setZoom(z) {
+        zoom = Math.min(3, Math.max(0.25, z));
+        zoomLabel.textContent = Math.round(zoom * 100) + '%';
+        renderMat();
+    }
+    zoomInBtn.addEventListener('click', () => setZoom(zoom + 0.1));
+    zoomOutBtn.addEventListener('click', () => setZoom(zoom - 0.1));
+    zoomResetBtn.addEventListener('click', () => setZoom(1));
+
+    // ===================== Barre d'outils =====================
+    function comingSoon(name) {
+        appendMessage(`La fonctionnalité « ${name} » arrivera dans une prochaine version.`, 'ai');
+    }
+
+    toolNew.addEventListener('click', clearProject);
+    toolProjects.addEventListener('click', () => comingSoon('Projets'));
+    toolMonogram.addEventListener('click', () => comingSoon('Monogramme'));
+    toolLayout.addEventListener('click', () => comingSoon('Mises en page'));
+    toolImages.addEventListener('click', () => fileImporter.click());
+    toolText.addEventListener('click', addText);
+    toolDownload.addEventListener('click', () => downloadBtn.click());
+    toolAI.addEventListener('click', () => { userInput.focus(); userInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+
+    toolShapes.addEventListener('click', (e) => {
+        const isOpen = shapesPopover.style.display === 'flex';
+        if (isOpen) { shapesPopover.style.display = 'none'; return; }
+        const rect = toolShapes.getBoundingClientRect();
+        shapesPopover.style.left = (rect.right + 6) + 'px';
+        shapesPopover.style.top = rect.top + 'px';
+        shapesPopover.style.display = 'flex';
+    });
+    shapesPopover.querySelectorAll('button[data-shape]').forEach(btn => {
+        btn.addEventListener('click', () => { addShape(btn.dataset.shape); shapesPopover.style.display = 'none'; });
+    });
+    document.addEventListener('click', (e) => {
+        if (!shapesPopover.contains(e.target) && e.target !== toolShapes && !toolShapes.contains(e.target)) {
+            shapesPopover.style.display = 'none';
+        }
+    });
+
+    // ===================== Modale Mode d'emploi =====================
     helpBtn.onclick = () => helpModal.style.display = "flex";
     closeModal.onclick = () => helpModal.style.display = "none";
-    window.onclick = (e) => { if (e.target == helpModal) helpModal.style.display = "none"; }
+    window.addEventListener('click', (e) => { if (e.target == helpModal) helpModal.style.display = "none"; });
 
-    window.openTab = function(evt, tabId) {
+    window.openTab = function (evt, tabId) {
         const tabContents = document.getElementsByClassName("modal-tab-content");
         for (let i = 0; i < tabContents.length; i++) tabContents[i].classList.remove("active");
         const tabButtons = document.getElementsByClassName("tab-btn");
         for (let i = 0; i < tabButtons.length; i++) tabButtons[i].classList.remove("active");
         document.getElementById(tabId).classList.add("active");
         evt.currentTarget.classList.add("active");
-    }
+    };
 
-    if(localStorage.getItem('cricut_gemini_key')) {
+    // ===================== Clé API persistée =====================
+    if (localStorage.getItem('cricut_gemini_key')) {
         apiKeyInput.value = localStorage.getItem('cricut_gemini_key');
     }
     apiKeyInput.addEventListener('input', () => {
-        // Nettoyage classique des espaces sans regex problématique
         localStorage.setItem('cricut_gemini_key', apiKeyInput.value.trim());
     });
 
-    // GESTION DU CHARGEMENT DE FICHIERS
-    fileImporter.addEventListener('change', function(e) {
+    // ===================== Import de fichiers =====================
+    fileImporter.addEventListener('change', function (e) {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -250,25 +685,18 @@
         appendMessage(`Importation du fichier : ${file.name}...`, 'user');
 
         if (['png', 'jpg', 'jpeg', 'bmp', 'gif'].includes(extension)) {
-            reader.onload = function(event) {
+            reader.onload = function (event) {
                 try {
-                    const options = { 
-                        ltres: 1, qtres: 1, scale: 1, 
-                        colorsampling: 0, numberofcolors: 2, 
-                        strokewidth: 0, viewbox: true 
+                    const options = {
+                        ltres: 1, qtres: 1, scale: 1,
+                        colorsampling: 0, numberofcolors: 2,
+                        strokewidth: 0, viewbox: true
                     };
-                    
-                    ImageTracer.imageToSVG(event.target.result, function(rawSvg) {
+                    ImageTracer.imageToSVG(event.target.result, function (rawSvg) {
                         try {
-                            if (!rawSvg) {
-                                throw new Error("Le traçage n'a retourné aucun résultat. Réessayez avec une autre image.");
-                            }
-                            // Remplacement par chaîne brute, sans expression régulière
-                            currentSvgCode = rawSvg.replaceAll('<svg', '<svg style="fill: #000000;"');
-
-                            previewContainer.innerHTML = currentSvgCode;
-                            downloadBtn.disabled = false;
-                            appendMessage("Image convertie avec succès en courbes de découpe SVG ! Vous pouvez la télécharger ou l'ajuster via l'IA.", 'ai');
+                            if (!rawSvg) throw new Error("Le traçage n'a retourné aucun résultat. Réessayez avec une autre image.");
+                            addSvgObject(rawSvg, '#000000');
+                            appendMessage("Image convertie et ajoutée sur le plan de travail ! Déplacez-la ou redimensionnez-la librement.", 'ai');
                         } catch (err) {
                             appendMessage(`Erreur lors du traçage de l'image : ${err.message}`, 'ai');
                         }
@@ -279,12 +707,12 @@
             };
             reader.readAsDataURL(file);
         } else if (extension === 'dxf') {
-            reader.onload = function(event) {
+            reader.onload = function (event) {
                 try {
                     const parser = new DxfParser();
                     const dxf = parser.parseSync(event.target.result);
-                    
-                    if(dxf && dxf.entities) {
+
+                    if (dxf && dxf.entities) {
                         let svgPaths = '';
                         dxf.entities.forEach(entity => {
                             if (entity.type === 'LINE') {
@@ -294,12 +722,11 @@
                             }
                         });
 
-                        if(svgPaths === '') throw new Error("Aucune entité linéaire exploitable.");
+                        if (svgPaths === '') throw new Error("Aucune entité linéaire exploitable.");
 
-                        currentSvgCode = `<svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 800 800" width="100%" height="100%"><g transform="translate(400,400)">${svgPaths}</g></svg>`;
-                        previewContainer.innerHTML = currentSvgCode;
-                        downloadBtn.disabled = false;
-                        appendMessage("Fichier CAO DXF lu et converti au format vectoriel Cricut !", 'ai');
+                        const wrapped = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800"><g transform="translate(400,400)">${svgPaths}</g></svg>`;
+                        addSvgObject(wrapped);
+                        appendMessage("Fichier CAO DXF lu et ajouté sur le plan de travail !", 'ai');
                     }
                 } catch (err) {
                     appendMessage(`Erreur DXF : ${err.message}`, 'ai');
@@ -307,27 +734,23 @@
             };
             reader.readAsText(file);
         }
+        fileImporter.value = '';
     });
 
-    const SYSTEM_INSTRUCTION = `Tu es un expert en design et modification de fichiers SVG pour machines de découpe Cricut Maker. Tu reçois des descriptions ou du code SVG existant. Génère uniquement du code SVG propre, sans contours fins (stroke) si l'utilisateur demande des formes unies, en utilisant des formes pleines regroupées par calques et absolument aucun texte markdown ou explication.`;
+    // ===================== Assistant IA Gemini =====================
+    const SYSTEM_INSTRUCTION = `Tu es un expert en design et modification de fichiers SVG pour machines de découpe Cricut Maker. Tu reçois des descriptions. Génère uniquement du code SVG propre, autonome (avec son propre viewBox), sans contours fins (stroke) si l'utilisateur demande des formes unies, en utilisant des formes pleines regroupées par calques et absolument aucun texte markdown ou explication.`;
 
     sendBtn.addEventListener('click', handleGeneration);
     userInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGeneration(); } });
 
     async function handleGeneration() {
         let prompt = userInput.value.trim();
-        
-        // Nettoyage de la clé d'API sans utiliser de regex
         let apiKey = apiKeyInput.value.trim().replaceAll("\r", "").replaceAll("\n", "").replaceAll("\t", "").replaceAll(" ", "");
-        
+
         if (!prompt) return;
         if (!apiKey) {
             alert("Veuillez configurer votre clé d'API Gemini.");
             return;
-        }
-
-        if (currentSvgCode !== '') {
-            prompt = `Voici le code SVG actuel du projet chargé : \n${currentSvgCode}\n Modifie-le ou applique la consigne suivante : ${prompt}`;
         }
 
         appendMessage(userInput.value.trim(), 'user');
@@ -336,7 +759,7 @@
 
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
-            
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -351,18 +774,14 @@
 
             const data = await response.json();
             let svgResponse = data.candidates[0].content.parts[0].text.trim();
-            
-            // NETTOYAGE SÉCURISÉ SANS REGEX (replaceAll avec de simples textes)
             svgResponse = svgResponse.replaceAll('```xml', '').replaceAll('```svg', '').replaceAll('```', '').trim();
 
             if (svgResponse.includes('<svg')) {
                 const startIdx = svgResponse.indexOf('<svg');
                 const endIdx = svgResponse.lastIndexOf('</svg>') + 6;
-                currentSvgCode = svgResponse.substring(startIdx, endIdx);
-                
-                previewContainer.innerHTML = currentSvgCode;
-                downloadBtn.disabled = false;
-                loadingDiv.innerText = "Modification vectorielle appliquée avec succès !";
+                const svgCode = svgResponse.substring(startIdx, endIdx);
+                addSvgObject(svgCode);
+                loadingDiv.innerText = "Élément vectoriel ajouté sur le plan de travail !";
             } else {
                 loadingDiv.innerText = "L'IA n'a pas retourné de code vectoriel valide.";
             }
@@ -380,24 +799,41 @@
         return msgDiv;
     }
 
-    resetBtn.addEventListener('click', function() {
-        if (confirm("Voulez-vous vraiment effacer ce projet et recommencer ?")) {
-            currentSvgCode = '';
-            fileImporter.value = '';
-            previewContainer.innerHTML = '<p id="placeholder" class="placeholder-text">Importez un fichier (Image/DXF) ou demandez à l\'IA pour voir le rendu...</p>';
-            downloadBtn.disabled = true;
-            chatMessages.innerHTML = '<div class="message ai">Bonjour Lilia ! Vous pouvez désormais glisser vos propres images ou fichiers DXF pour les vectoriser/modifier, ou continuer à utiliser l\'IA en écrivant votre prompt ci-dessous. Que fait-on ?</div>';
-            userInput.value = '';
-        }
-    });
+    // ===================== Nouveau projet / Export =====================
+    function clearProject() {
+        if (objects.length > 0 && !confirm("Voulez-vous vraiment effacer ce projet et recommencer ?")) return;
+        objects = [];
+        selectedId = null;
+        downloadBtn.disabled = true;
+        chatMessages.innerHTML = '<div class="message ai">Bonjour Lilia ! Importez une image/DXF, ajoutez des formes ou du texte, ou demandez à l\'IA — chaque élément s\'ajoute sur le plan de travail et reste déplaçable/redimensionnable. Que fait-on ?</div>';
+        userInput.value = '';
+        renderMat();
+    }
+    resetBtn.addEventListener('click', clearProject);
 
-    downloadBtn.addEventListener('click', function() {
-        const blob = new Blob([currentSvgCode], { type: 'image/svg+xml' });
+    function serializeObjectForExport(obj) {
+        const g = renderObjectGroup(obj);
+        g.removeAttribute('data-id');
+        g.removeAttribute('class');
+        g.removeAttribute('style');
+        return new XMLSerializer().serializeToString(g);
+    }
+
+    downloadBtn.addEventListener('click', function () {
+        if (objects.length === 0) return;
+        let body = '';
+        objects.forEach(o => { body += serializeObjectForExport(o); });
+        const finalSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${MAT_W}cm" height="${MAT_H}cm" viewBox="0 0 ${MAT_W} ${MAT_H}">${body}</svg>`;
+        const blob = new Blob([finalSvg], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url; a.download = `ia_cricut_project_${Date.now()}.svg`;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
     });
+
+    // ===================== Initialisation =====================
+    setZoom(1);
+    renderMat();
 </script>
 </body>
 </html>
