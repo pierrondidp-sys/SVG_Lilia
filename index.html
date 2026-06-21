@@ -38,7 +38,7 @@
             background: #f8fafc; cursor: pointer; font-size: 22px; display: flex; align-items: center; justify-content: center;
         }
         .shapes-popover button:hover { background: #e0e7ff; border-color: #3b82f6; }
-        .line-mode-btn { border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; border-radius: 6px; padding: 6px; font-size: 12px; }
+        .line-mode-btn { border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; border-radius: 6px; padding: 6px 4px; font-size: 11px; line-height: 1.2; text-align: center; display: flex; align-items: center; justify-content: center; min-height: 36px; }
         .line-mode-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
 
         .image-search-panel {
@@ -59,15 +59,16 @@
         .image-search-disclaimer { font-size: 10.5px; color: #92400e; background: #fffbeb; border-top: 1px solid #fde68a; padding: 8px 12px; flex-shrink: 0; }
 
         .projects-panel {
-            position: fixed; width: 320px; max-height: 480px;
+            position: fixed; width: 360px; max-height: 480px;
             background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
             box-shadow: 0 12px 28px rgba(0,0,0,.18); z-index: 250;
             display: none; flex-direction: column; overflow: hidden;
         }
-        .projects-header { display: flex; gap: 6px; padding: 12px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; align-items: center; }
-        .projects-header input { flex: 1; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; min-width: 0; }
-        .projects-header button { border: none; background: #10b981; color: #fff; border-radius: 6px; padding: 0 12px; height: 34px; cursor: pointer; font-size: 12px; font-weight: bold; flex-shrink: 0; }
-        #projectsCloseBtn { background: #64748b; width: 34px; padding: 0; }
+        .projects-header { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
+        .projects-header input { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; box-sizing: border-box; }
+        .projects-header-buttons { display: flex; gap: 6px; }
+        .projects-header-buttons button { border: none; background: #10b981; color: #fff; border-radius: 6px; padding: 0 12px; height: 34px; cursor: pointer; font-size: 12px; font-weight: bold; flex: 1; }
+        #projectsCloseBtn { background: #64748b; flex: 0 0 40px; }
         .projects-status { font-size: 12px; color: #64748b; padding: 6px 12px; flex-shrink: 0; min-height: 14px; }
         .projects-list { padding: 0 12px 12px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
         .project-item { border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -277,8 +278,10 @@
     <div id="projectsPanel" class="projects-panel">
         <div class="projects-header">
             <input type="text" id="projectNameInput" placeholder="Nom du projet à enregistrer...">
-            <button id="projectSaveBtn" title="Enregistrer le projet en cours">💾 Enregistrer</button>
-            <button id="projectsCloseBtn" title="Fermer">✕</button>
+            <div class="projects-header-buttons">
+                <button id="projectSaveBtn" title="Enregistrer le projet en cours">💾 Enregistrer</button>
+                <button id="projectsCloseBtn" title="Fermer">✕</button>
+            </div>
         </div>
         <div id="projectsStatus" class="projects-status"></div>
         <div id="projectsList" class="projects-list"></div>
@@ -533,6 +536,8 @@
     let dragState = null;
     let nodeEditId = null;
     let cropState = null;
+    let lastClickTime = 0;
+    let lastClickId = null;
     let eraserMode = false;
     let eraserWidth = 1;
     let currentEraserObj = null;
@@ -1134,15 +1139,36 @@
             dragMoved = false;
         } else if (objEl) {
             const id = Number(objEl.dataset.id);
+            const obj = objects.find(o => o.id === id);
+            const now = Date.now();
+            const isDoubleClick = (id === lastClickId) && (now - lastClickTime < 450);
+            lastClickTime = now;
+            lastClickId = id;
+            if (isDoubleClick) {
+                lastClickTime = 0;
+                lastClickId = null;
+                if (obj.type === 'text') {
+                    editTextObject(obj.id);
+                    renderMat();
+                    return;
+                }
+                if (obj.type === 'polygon') {
+                    nodeEditId = (nodeEditId === obj.id) ? null : obj.id;
+                    selectedId = obj.id;
+                    renderMat();
+                    return;
+                }
+            }
             if (id !== nodeEditId) nodeEditId = null;
             selectedId = id;
-            const obj = objects.find(o => o.id === id);
             const start = (obj.type === 'eraser' || obj.type === 'line' || obj.type === 'polygon') ? { ...obj, points: obj.points.map(p => ({ ...p })) } : { ...obj };
             dragState = { mode: 'move', id, startPt: pt, start };
             dragMoved = false;
         } else {
             selectedId = null;
             nodeEditId = null;
+            lastClickTime = 0;
+            lastClickId = null;
         }
         renderMat();
     });
@@ -1254,18 +1280,8 @@
         }
     });
 
-    matSvg.addEventListener('dblclick', e => {
-        const objEl = e.target.closest('.canvas-object');
-        if (!objEl) return;
-        const obj = objects.find(o => o.id === Number(objEl.dataset.id));
-        if (!obj) return;
-        if (obj.type === 'text') { editTextObject(obj.id); return; }
-        if (obj.type === 'polygon') {
-            nodeEditId = (nodeEditId === obj.id) ? null : obj.id;
-            selectedId = obj.id;
-            renderMat();
-        }
-    });
+    // (la détection de double-clic est désormais gérée directement dans pointerdown,
+    //  pour éviter un conflit de timing avec le rafraîchissement du plan de travail)
 
     window.addEventListener('keydown', e => {
         const tag = document.activeElement ? document.activeElement.tagName : '';
