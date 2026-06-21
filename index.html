@@ -34,7 +34,7 @@
             background-image: linear-gradient(to right, #f8fafc 1px, transparent 1px), linear-gradient(to bottom, #f8fafc 1px, transparent 1px);
         }
         .preview-container svg { max-width: 85%; max-height: 85%; object-fit: contain; }
-        .actions { margin-top: 15px; display: flex; gap: 10px; }
+        .actions { margin-top: 15px; display: flex; gap: 10px; width: 100%; }
         .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
         .btn-success { background: #10b981; color: white; }
         .btn-success:disabled { background: #cbd5e1; cursor: not-allowed; }
@@ -47,7 +47,7 @@
         .chat-header { padding: 15px; background: #0f172a; color: white; }
         .api-box { padding: 10px 15px; background: #1e293b; border-bottom: 1px solid #334155; }
         
-        /* Input clé masqué par style pour éviter les conflits de mot de passe des navigateurs */
+        /* Input clé masqué par style pour éviter les conflits des gestionnaires de mots de passe */
         .api-box input { 
             width: 100%; padding: 6px; background: #334155; border: 1px solid #475569; 
             color: white; border-radius: 4px; box-sizing: border-box; font-size: 12px;
@@ -93,7 +93,7 @@
         .modal-tab-content li { margin-bottom: 10px; }
         .highlight-box { background: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; margin: 15px 0; border-radius: 0 8px 8px 0; font-size: 13.5px; color: #14532d; }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,500&family=Great+Vibes&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -106,7 +106,8 @@
             <p id="placeholder" class="placeholder-text">Demandez à l'IA de générer un dessin pour voir l'aperçu...</p>
         </div>
         <div class="actions">
-            <button id="downloadBtn" class="btn btn-success" disabled>Télécharger pour Cricut (SVG)</button>
+            <button id="downloadBtn" class="btn btn-success" disabled style="flex: 2;">Télécharger pour Cricut (SVG)</button>
+            <button id="resetBtn" class="btn" style="background: #64748b; color: white; flex: 1;">Nouveau projet</button>
         </div>
     </div>
 
@@ -161,14 +162,14 @@
                         <li>Collez la clé dans le champ prévu en haut à droite.</li>
                     </ol>
                     <div class="highlight-box">
-                        <strong>🔒 Sauvegarde automatique :</strong> La clé reste enregistrée de façon sécurisée sur ce PC. Vous n'aurez plus à la remettre lors de vos prochaines visites.
+                        <strong>🔒 Sauvegarde automatique :</strong> La clé reste enregistrée sur ce PC. Vous n'aurez plus à la remettre lors de vos prochaines visites.
                     </div>
                 </div>
 
                 <div id="tab-usage" class="modal-tab-content">
                     <h3>Étape 3 : Demander un motif vectoriel</h3>
                     <ol>
-                        <li>Décrivez votre idée en bas à droite (ex: <em>"Silhouette de tête de chat minimaliste, tracés pleins"</em>) puis cliquez sur **Créer**.</li>
+                        <li>Décrivez votre idée en bas à droite (ex: <em>"Silhouette de fleur épurée"</em>) puis cliquez sur **Créer**.</li>
                     </ol>
                 </div>
 
@@ -189,6 +190,7 @@
     const sendBtn = document.getElementById('sendBtn');
     const previewContainer = document.getElementById('previewContainer');
     const downloadBtn = document.getElementById('downloadBtn');
+    const resetBtn = document.getElementById('resetBtn');
     
     const helpBtn = document.getElementById('helpBtn');
     const helpModal = document.getElementById('helpModal');
@@ -223,7 +225,6 @@
 
     async function handleGeneration() {
         const prompt = userInput.value.trim();
-        // Nettoyage absolu de la clé (supprime retours à la ligne et espaces cachés)
         const apiKey = apiKeyInput.value.trim().replace(/[\r\n\t\s]/g, "");
         
         if (!prompt) return;
@@ -237,7 +238,6 @@
         const loadingDiv = appendMessage("L'IA conçoit votre fichier SVG...", 'ai');
 
         try {
-            // Utilisation d'un encodage d'URL strict pour l'environnement HTTPS de GitHub Pages
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
             
             const response = await fetch(url, {
@@ -252,7 +252,7 @@
 
             if (!response.ok) {
                 if (response.status === 400 || response.status === 403) {
-                    throw new Error("La clé d'API insérée semble invalide ou a expiré. Vérifiez votre clé Google AI Studio.");
+                    throw new Error("La clé d'API insérée semble invalide. Vérifiez votre clé Google AI Studio.");
                 }
                 throw new Error(`Erreur de connexion Google (Statut ${response.status})`);
             }
@@ -264,7 +264,6 @@
             svgResponse = svgResponse.replace(/```xml/g, '').replace(/```svg/g, '').replace(/```/g, '').trim();
 
             if (svgResponse.startsWith('<svg') || svgResponse.includes('<svg')) {
-                // Extraction si du markdown s'est glissé malgré tout
                 const startIdx = svgResponse.indexOf('<svg');
                 const endIdx = svgResponse.lastIndexOf('</svg>') + 6;
                 currentSvgCode = svgResponse.substring(startIdx, endIdx);
@@ -288,6 +287,17 @@
         chatMessages.scrollTop = chatMessages.scrollHeight;
         return msgDiv;
     }
+
+    // Gestion de la réinitialisation (Nouveau Projet)
+    resetBtn.addEventListener('click', function() {
+        if (confirm("Voulez-vous vraiment effacer ce projet et recommencer un nouveau dessin ?")) {
+            currentSvgCode = '';
+            previewContainer.innerHTML = '<p id="placeholder" class="placeholder-text">Demandez à l\'IA de générer un dessin pour voir l\'aperçu...</p>';
+            downloadBtn.disabled = true;
+            chatMessages.innerHTML = '<div class="message ai">Bonjour Lilia ! Votre application est prête et sécurisée sur GitHub Pages. Quel superbe projet allons-nous créer ?</div>';
+            userInput.value = '';
+        }
+    });
 
     downloadBtn.addEventListener('click', function() {
         const blob = new Blob([currentSvgCode], { type: 'image/svg+xml' });
