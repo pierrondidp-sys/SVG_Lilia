@@ -180,6 +180,7 @@
         <button class="tool-rail-btn" id="toolEraser" title="Gomme"><span class="icon">🧹</span>Gomme</button>
         <button class="tool-rail-btn" id="toolLine" title="Lignes et courbes"><span class="icon">✏️</span>Lignes</button>
         <button class="tool-rail-btn" id="toolColor" title="Couleurs"><span class="icon">🎨</span>Couleurs</button>
+        <button class="tool-rail-btn" id="toolCrop" title="Rogner une image sélectionnée"><span class="icon">✂️</span>Rogner</button>
         <button class="tool-rail-btn" id="toolImages" title="Importer une image ou un DXF"><span class="icon">🖼️</span>Images</button>
         <button class="tool-rail-btn" id="toolSearch" title="Rechercher des images libres de droits"><span class="icon">🔍</span>Images web</button>
         <button class="tool-rail-btn" id="toolText" title="Ajouter du texte"><span class="icon">🅣</span>Texte</button>
@@ -191,16 +192,22 @@
     </div>
 
     <!-- Popover de sélection de formes -->
-    <div id="shapesPopover" class="shapes-popover" style="flex-wrap: wrap; width: 168px;">
-        <button data-shape="circle" title="Cercle">⚪</button>
+    <div id="shapesPopover" class="shapes-popover" style="flex-wrap: wrap; width: 224px;">
+        <button data-shape="circle" title="Cercle / Ovale">⚪</button>
+        <button data-shape="rectangle" title="Rectangle">▭</button>
         <button data-shape="square" title="Carré (modifiable)">⬛</button>
-        <button data-shape="triangle" title="Triangle (modifiable)">🔺</button>
-        <button data-shape="pentagon" title="Pentagone (modifiable)">⬠</button>
-        <button data-shape="hexagon" title="Hexagone (modifiable)">⬡</button>
-        <button data-shape="star" title="Étoile (modifiable)">⭐</button>
-        <button data-shape="diamond" title="Losange (modifiable)">🔷</button>
-        <button data-shape="arrow" title="Flèche (modifiable)">➡️</button>
-        <button data-shape="heart" title="Cœur (modifiable)">❤️</button>
+        <button data-shape="roundedRect" title="Rectangle arrondi">▢</button>
+        <button data-shape="triangle" title="Triangle">🔺</button>
+        <button data-shape="rightTriangle" title="Triangle rectangle">📐</button>
+        <button data-shape="pentagon" title="Pentagone">⬠</button>
+        <button data-shape="hexagon" title="Hexagone">⬡</button>
+        <button data-shape="octagon" title="Octogone">🛑</button>
+        <button data-shape="star" title="Étoile">⭐</button>
+        <button data-shape="diamond" title="Losange">🔷</button>
+        <button data-shape="arrow" title="Flèche">➡️</button>
+        <button data-shape="speech" title="Bulle de dialogue">💬</button>
+        <button data-shape="cloud" title="Nuage">☁️</button>
+        <button data-shape="heart" title="Cœur">❤️</button>
     </div>
 
     <!-- Popover réglage gomme -->
@@ -244,6 +251,15 @@
         <div id="imageSearchStatus" class="image-search-status">Recherchez une image à insérer sur le plan de travail.</div>
         <div id="imageSearchResults" class="image-search-results"></div>
         <div class="image-search-disclaimer">⚠️ Images libres de droits (Creative Commons / domaine public) via Openverse. Vérifiez la licence affichée sous chaque image avant un usage commercial.</div>
+    </div>
+
+    <!-- Panneau de validation du rognage -->
+    <div id="cropPanel" style="display: none; position: fixed; z-index: 260; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,.15); padding: 10px; gap: 8px; flex-direction: column; width: 190px;">
+        <div style="font-size: 12px; color: #334155;">Ajustez le cadre vert puis validez.</div>
+        <div style="display: flex; gap: 6px;">
+            <button id="cropApplyBtn" style="flex: 1; background: #10b981; color: #fff; border: none; border-radius: 6px; padding: 8px; font-size: 12px; cursor: pointer;">✓ Valider</button>
+            <button id="cropCancelBtn" style="flex: 1; background: #64748b; color: #fff; border: none; border-radius: 6px; padding: 8px; font-size: 12px; cursor: pointer;">✕ Annuler</button>
+        </div>
     </div>
 
     <!-- ===== ZONE DE TRAVAIL (CENTRE) ===== -->
@@ -340,7 +356,9 @@
                     <ol>
                         <li><strong>Formes / Texte / Images / IA :</strong> chaque élément ajouté apparaît comme un objet indépendant sur le plan de travail (en cm, comme un vrai tapis Cricut). Cliquez un objet pour le sélectionner, faites-le glisser pour le déplacer, et tirez les poignées d'angle pour le redimensionner.</li>
                         <li><strong>Texte :</strong> double-cliquez un texte sur le plan de travail pour le modifier.</li>
-                        <li><strong>Formes modifiables :</strong> carré, triangle, pentagone, hexagone, étoile, losange, flèche et cœur peuvent être déformées sommet par sommet. Double-cliquez la forme pour afficher ses points verts, puis glissez-les un par un. Double-cliquez à nouveau (ou Échap) pour quitter ce mode.</li>
+                        <li><strong>Pivoter :</strong> une petite poignée ronde apparaît au-dessus de tout objet sélectionné, reliée par un trait — faites-la glisser pour faire pivoter l'objet.</li>
+                        <li><strong>Rogner :</strong> sélectionnez une image (importée, IA ou recherche web), cliquez l'outil ✂️ Rogner, ajustez le cadre vert puis validez.</li>
+                        <li><strong>Formes modifiables :</strong> carré, rectangle, triangle, triangle rectangle, pentagone, hexagone, octogone, étoile, losange, flèche, bulle, nuage et cœur peuvent être déformées sommet par sommet. Double-cliquez la forme pour afficher ses points verts, puis glissez-les un par un. Double-cliquez à nouveau (ou Échap) pour quitter ce mode.</li>
                         <li><strong>Suppression :</strong> sélectionnez un objet puis touche Suppr/Retour, ou le bouton « Supprimer la sélection » en haut du plan de travail.</li>
                         <li><strong>Zoom :</strong> utilisez les boutons +/− en bas à droite du plan de travail.</li>
                         <li><strong>Images web :</strong> recherchez des photos libres de droits (Creative Commons / domaine public, via Openverse) directement depuis l'outil 🔍, sans clé à configurer. Cliquez un résultat pour l'ajouter au plan de travail.</li>
@@ -453,6 +471,10 @@
     const toolEraser = document.getElementById('toolEraser');
     const toolLine = document.getElementById('toolLine');
     const toolColor = document.getElementById('toolColor');
+    const toolCrop = document.getElementById('toolCrop');
+    const cropPanel = document.getElementById('cropPanel');
+    const cropApplyBtn = document.getElementById('cropApplyBtn');
+    const cropCancelBtn = document.getElementById('cropCancelBtn');
     const toolSearch = document.getElementById('toolSearch');
     const toolImages = document.getElementById('toolImages');
     const toolText = document.getElementById('toolText');
@@ -472,6 +494,7 @@
     let selectedId = null;
     let dragState = null;
     let nodeEditId = null;
+    let cropState = null;
     let eraserMode = false;
     let eraserWidth = 1;
     let currentEraserObj = null;
@@ -605,12 +628,54 @@
         return pts;
     }
 
+    function roundedRectPoints(cx, cy, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        const x0 = cx - w / 2, y0 = cy - h / 2, x1 = cx + w / 2, y1 = cy + h / 2;
+        const pts = [];
+        const segs = 6;
+        function arc(cxA, cyA, startDeg, endDeg) {
+            for (let i = 0; i <= segs; i++) {
+                const a = (startDeg + (endDeg - startDeg) * i / segs) * Math.PI / 180;
+                pts.push({ x: cxA + r * Math.cos(a), y: cyA + r * Math.sin(a) });
+            }
+        }
+        arc(x1 - r, y0 + r, -90, 0);
+        arc(x1 - r, y1 - r, 0, 90);
+        arc(x0 + r, y1 - r, 90, 180);
+        arc(x0 + r, y0 + r, 180, 270);
+        return pts;
+    }
+
+    function speechBubblePoints(cx, cy, w, h) {
+        const bodyH = h * 0.78;
+        const top = cy - h / 2;
+        const bottom = top + bodyH;
+        const left = cx - w / 2, right = cx + w / 2;
+        return [
+            { x: left, y: top }, { x: right, y: top }, { x: right, y: bottom },
+            { x: cx - w * 0.05, y: bottom }, { x: cx - w * 0.22, y: cy + h / 2 }, { x: cx - w * 0.18, y: bottom },
+            { x: left, y: bottom }
+        ];
+    }
+
+    function cloudPoints(cx, cy, w, h) {
+        const pts = [];
+        const steps = 40;
+        const lobes = 6;
+        for (let i = 0; i <= steps; i++) {
+            const t = (i / steps) * 2 * Math.PI;
+            const r = 1 + 0.22 * Math.cos(lobes * t) - 0.05 * Math.cos(2 * t);
+            pts.push({ x: cx + Math.cos(t) * (w / 2) * r, y: cy + Math.sin(t) * (h / 2) * r * 0.75 });
+        }
+        return pts;
+    }
+
     function addPolygonShape(shapeType) {
         if (eraserMode) setEraserMode(false);
         if (lineMode) setLineMode(false);
         const cx = MAT_W / 2, cy = MAT_H / 2;
         const size = 6;
-        const fills = { square: '#10b981', triangle: '#f59e0b', pentagon: '#8b5cf6', hexagon: '#0ea5e9', star: '#facc15', diamond: '#ec4899', arrow: '#ef4444', heart: '#f43f5e' };
+        const fills = { square: '#10b981', triangle: '#f59e0b', pentagon: '#8b5cf6', hexagon: '#0ea5e9', star: '#facc15', diamond: '#ec4899', arrow: '#ef4444', heart: '#f43f5e', rectangle: '#06b6d4', roundedRect: '#14b8a6', rightTriangle: '#f97316', octagon: '#6366f1', speech: '#22c55e', cloud: '#94a3b8' };
         let points = [];
         switch (shapeType) {
             case 'square':
@@ -636,6 +701,24 @@
                 break;
             case 'heart':
                 points = heartPoints(cx, cy, size, size);
+                break;
+            case 'rectangle':
+                points = [{ x: cx - size * 0.7, y: cy - size * 0.4 }, { x: cx + size * 0.7, y: cy - size * 0.4 }, { x: cx + size * 0.7, y: cy + size * 0.4 }, { x: cx - size * 0.7, y: cy + size * 0.4 }];
+                break;
+            case 'roundedRect':
+                points = roundedRectPoints(cx, cy, size * 1.3, size * 0.8, size * 0.15);
+                break;
+            case 'rightTriangle':
+                points = [{ x: cx - size / 2, y: cy + size / 2 }, { x: cx - size / 2, y: cy - size / 2 }, { x: cx + size / 2, y: cy + size / 2 }];
+                break;
+            case 'octagon':
+                points = regularPolygonPoints(cx, cy, size / 2, 8);
+                break;
+            case 'speech':
+                points = speechBubblePoints(cx, cy, size * 1.2, size * 1.1);
+                break;
+            case 'cloud':
+                points = cloudPoints(cx, cy, size * 1.3, size * 0.9);
                 break;
             default:
                 points = regularPolygonPoints(cx, cy, size / 2, 6);
@@ -723,9 +806,10 @@
             if (obj.colorOverride) {
                 innerContent = `<g fill="${obj.colorOverride}">${stripFillAttrs(obj.innerSVG)}</g>`;
             }
+            const vb = obj.cropBox ? `${obj.cropBox.x} ${obj.cropBox.y} ${obj.cropBox.w} ${obj.cropBox.h}` : `0 0 ${obj.iw} ${obj.ih}`;
             const nested = svgEl('svg', {
                 x: obj.x, y: obj.y, width: obj.w, height: obj.h,
-                viewBox: `0 0 ${obj.iw} ${obj.ih}`, preserveAspectRatio: 'xMidYMid meet'
+                viewBox: vb, preserveAspectRatio: obj.cropBox ? 'xMidYMid slice' : 'xMidYMid meet'
             });
             nested.innerHTML = innerContent;
             g.appendChild(nested);
@@ -763,6 +847,18 @@
                 'data-handle': pos, 'data-id': obj.id, style: 'cursor: nwse-resize;'
             }));
         });
+        const topMidX = bbox.x + bbox.w / 2, topMidY = bbox.y;
+        const rotDist = 26 / pxPerCm();
+        const rotY = topMidY - rotDist;
+        g.appendChild(svgEl('line', {
+            x1: topMidX, y1: topMidY, x2: topMidX, y2: rotY,
+            stroke: '#3b82f6', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke'
+        }));
+        g.appendChild(svgEl('circle', {
+            cx: topMidX, cy: rotY, r: hs / 1.6,
+            fill: '#fff', stroke: '#3b82f6', 'stroke-width': 1.3, 'vector-effect': 'non-scaling-stroke',
+            'data-rotate': '1', 'data-id': obj.id, style: 'cursor: grab;'
+        }));
         return g;
     }
 
@@ -776,6 +872,22 @@
                 cx: p.x, cy: p.y, r: hs / 2,
                 fill: '#10b981', stroke: '#fff', 'stroke-width': 1.5, 'vector-effect': 'non-scaling-stroke',
                 'data-node-index': idx, 'data-id': obj.id, style: 'cursor: pointer;'
+            }));
+        });
+        return g;
+    }
+
+    function renderCropOverlay(obj, rect) {
+        const hs = 9 / pxPerCm();
+        const g = svgEl('g', { class: 'crop-overlay' });
+        g.appendChild(svgEl('rect', { x: obj.x, y: obj.y, width: obj.w, height: obj.h, fill: 'none', stroke: '#94a3b8', 'stroke-width': 1, 'stroke-dasharray': '2 2', 'vector-effect': 'non-scaling-stroke' }));
+        g.appendChild(svgEl('rect', { x: rect.x, y: rect.y, width: rect.w, height: rect.h, fill: 'rgba(16,185,129,0.12)', stroke: '#10b981', 'stroke-width': 1.5, 'vector-effect': 'non-scaling-stroke', style: 'cursor: move;' }));
+        const corners = [[rect.x, rect.y, 'nw'], [rect.x + rect.w, rect.y, 'ne'], [rect.x, rect.y + rect.h, 'sw'], [rect.x + rect.w, rect.y + rect.h, 'se']];
+        corners.forEach(([cx, cy, pos]) => {
+            g.appendChild(svgEl('rect', {
+                x: cx - hs / 2, y: cy - hs / 2, width: hs, height: hs,
+                fill: '#10b981', stroke: '#fff', 'stroke-width': 1.5, 'vector-effect': 'non-scaling-stroke',
+                'data-crop-handle': pos, style: 'cursor: nwse-resize;'
             }));
         });
         return g;
@@ -811,6 +923,11 @@
             const editObj = objects.find(o => o.id === nodeEditId);
             if (editObj && editObj.type === 'polygon') matSvg.appendChild(renderNodeHandles(editObj));
             else nodeEditId = null;
+        }
+        if (cropState) {
+            const cropObj = objects.find(o => o.id === cropState.id);
+            if (cropObj) matSvg.appendChild(renderCropOverlay(cropObj, cropState.rect));
+            else { cropState = null; cropPanel.style.display = 'none'; }
         }
         deleteSelBtn.style.display = selectedId ? 'block' : 'none';
         renderRulers();
@@ -915,6 +1032,21 @@
     // ===================== Interactions souris/tactile =====================
     matSvg.addEventListener('pointerdown', e => {
         const pt = clientToCm(e.clientX, e.clientY);
+        if (cropState) {
+            const cropHandleEl = e.target.closest('[data-crop-handle]');
+            const cropObj = objects.find(o => o.id === cropState.id);
+            if (!cropObj) { cropState = null; cropPanel.style.display = 'none'; renderMat(); return; }
+            if (cropHandleEl) {
+                dragState = { mode: 'crop', handle: cropHandleEl.dataset.cropHandle, startPt: pt, startRect: { ...cropState.rect }, bounds: { x: cropObj.x, y: cropObj.y, w: cropObj.w, h: cropObj.h } };
+                dragMoved = false;
+                return;
+            }
+            if (pt.x >= cropState.rect.x && pt.x <= cropState.rect.x + cropState.rect.w && pt.y >= cropState.rect.y && pt.y <= cropState.rect.y + cropState.rect.h) {
+                dragState = { mode: 'cropMove', startPt: pt, startRect: { ...cropState.rect }, bounds: { x: cropObj.x, y: cropObj.y, w: cropObj.w, h: cropObj.h } };
+                dragMoved = false;
+            }
+            return;
+        }
         if (eraserMode) {
             selectedId = null;
             currentEraserObj = { id: nextObjId++, type: 'eraser', rotation: 0, strokeWidth: eraserWidth, points: [pt] };
@@ -933,6 +1065,7 @@
             return;
         }
         const nodeEl = e.target.closest('[data-node-index]');
+        const rotateEl = e.target.closest('[data-rotate]');
         const handleEl = e.target.closest('[data-handle]');
         const objEl = e.target.closest('.canvas-object');
         if (nodeEl) {
@@ -941,6 +1074,15 @@
             selectedId = id;
             const obj = objects.find(o => o.id === id);
             dragState = { mode: 'node', id, nodeIndex: idx, startPt: pt, start: { points: obj.points.map(p => ({ ...p })) } };
+            dragMoved = false;
+        } else if (rotateEl) {
+            const id = Number(rotateEl.dataset.id);
+            selectedId = id;
+            const obj = objects.find(o => o.id === id);
+            const bbox = getObjBBox(obj);
+            const center = { x: bbox.x + bbox.w / 2, y: bbox.y + bbox.h / 2 };
+            const startAngle = Math.atan2(pt.y - center.y, pt.x - center.x) * 180 / Math.PI;
+            dragState = { mode: 'rotate', id, center, startAngle, startRotation: obj.rotation || 0 };
             dragMoved = false;
         } else if (handleEl) {
             const id = Number(handleEl.dataset.id);
@@ -968,6 +1110,30 @@
     });
 
     window.addEventListener('pointermove', e => {
+        if (cropState && dragState && (dragState.mode === 'crop' || dragState.mode === 'cropMove')) {
+            const pt = clientToCm(e.clientX, e.clientY);
+            const dx = pt.x - dragState.startPt.x, dy = pt.y - dragState.startPt.y;
+            if (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001) dragMoved = true;
+            const b = dragState.bounds;
+            const minSizeCrop = 0.3;
+            if (dragState.mode === 'cropMove') {
+                let nx = dragState.startRect.x + dx, ny = dragState.startRect.y + dy;
+                nx = Math.min(Math.max(nx, b.x), b.x + b.w - dragState.startRect.w);
+                ny = Math.min(Math.max(ny, b.y), b.y + b.h - dragState.startRect.h);
+                cropState.rect = { x: nx, y: ny, w: dragState.startRect.w, h: dragState.startRect.h };
+            } else {
+                let { x, y, w, h } = dragState.startRect;
+                if (dragState.handle.includes('e')) w = Math.max(minSizeCrop, dragState.startRect.w + dx);
+                if (dragState.handle.includes('s')) h = Math.max(minSizeCrop, dragState.startRect.h + dy);
+                if (dragState.handle.includes('w')) { w = Math.max(minSizeCrop, dragState.startRect.w - dx); x = dragState.startRect.x + (dragState.startRect.w - w); }
+                if (dragState.handle.includes('n')) { h = Math.max(minSizeCrop, dragState.startRect.h - dy); y = dragState.startRect.y + (dragState.startRect.h - h); }
+                x = Math.max(b.x, x); y = Math.max(b.y, y);
+                w = Math.min(w, b.x + b.w - x); h = Math.min(h, b.y + b.h - y);
+                cropState.rect = { x, y, w, h };
+            }
+            renderMat();
+            return;
+        }
         if (eraserMode && currentEraserObj) {
             const pt = clientToCm(e.clientX, e.clientY);
             currentEraserObj.points.push(pt);
@@ -1002,6 +1168,9 @@
         } else if (dragState.mode === 'node') {
             const orig = dragState.start.points[dragState.nodeIndex];
             obj.points[dragState.nodeIndex] = { x: orig.x + dx, y: orig.y + dy };
+        } else if (dragState.mode === 'rotate') {
+            const curAngle = Math.atan2(pt.y - dragState.center.y, pt.x - dragState.center.x) * 180 / Math.PI;
+            obj.rotation = dragState.startRotation + (curAngle - dragState.startAngle);
         } else if (dragState.mode === 'resizePoly') {
             const bbox = dragState.startBBox;
             let { x, y, w, h } = bbox;
@@ -1027,6 +1196,10 @@
     });
 
     window.addEventListener('pointerup', () => {
+        if (dragState && (dragState.mode === 'crop' || dragState.mode === 'cropMove')) {
+            dragState = null;
+            return;
+        }
         if (currentEraserObj) {
             currentEraserObj = null;
             downloadBtn.disabled = objects.length === 0;
@@ -1066,6 +1239,9 @@
             nodeEditId = null;
             renderMat();
         }
+        if (e.key === 'Escape' && cropState) {
+            cancelCrop();
+        }
         if ((e.ctrlKey || e.metaKey) && !inField) {
             const k = e.key.toLowerCase();
             if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
@@ -1077,6 +1253,7 @@
         if (!selectedId) return;
         objects = objects.filter(o => o.id !== selectedId);
         if (nodeEditId === selectedId) nodeEditId = null;
+        if (cropState && cropState.id === selectedId) { cropState = null; cropPanel.style.display = 'none'; }
         selectedId = null;
         if (objects.length === 0) downloadBtn.disabled = true;
         renderMat();
@@ -1233,6 +1410,51 @@
         colorPopover.style.top = rect.top + 'px';
         colorPopover.style.display = 'flex';
         syncColorPopover();
+    });
+
+    // ===================== Rognage =====================
+    function cancelCrop() {
+        cropState = null;
+        cropPanel.style.display = 'none';
+        renderMat();
+    }
+    toolCrop.addEventListener('click', () => {
+        if (cropState) { cancelCrop(); return; }
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj || obj.type !== 'svg') {
+            appendMessage("Sélectionnez d'abord une image (importée, IA ou recherche web) sur le plan de travail pour la rogner.", 'ai');
+            return;
+        }
+        if (eraserMode) setEraserMode(false);
+        if (lineMode) setLineMode(false);
+        nodeEditId = null;
+        cropState = { id: obj.id, rect: { x: obj.x, y: obj.y, w: obj.w, h: obj.h } };
+        const rect = toolCrop.getBoundingClientRect();
+        cropPanel.style.left = (rect.right + 6) + 'px';
+        cropPanel.style.top = rect.top + 'px';
+        cropPanel.style.display = 'flex';
+        renderMat();
+    });
+    cropCancelBtn.addEventListener('click', cancelCrop);
+    cropApplyBtn.addEventListener('click', () => {
+        if (!cropState) return;
+        const obj = objects.find(o => o.id === cropState.id);
+        if (obj) {
+            const relX = (cropState.rect.x - obj.x) / obj.w;
+            const relY = (cropState.rect.y - obj.y) / obj.h;
+            const relW = cropState.rect.w / obj.w;
+            const relH = cropState.rect.h / obj.h;
+            obj.cropBox = {
+                x: relX * obj.iw, y: relY * obj.ih,
+                w: Math.max(1, relW * obj.iw), h: Math.max(1, relH * obj.ih)
+            };
+            obj.x = cropState.rect.x; obj.y = cropState.rect.y;
+            obj.w = cropState.rect.w; obj.h = cropState.rect.h;
+            pushHistory();
+        }
+        cropState = null;
+        cropPanel.style.display = 'none';
+        renderMat();
     });
     colorPicker.addEventListener('input', () => {
         const obj = objects.find(o => o.id === selectedId);
