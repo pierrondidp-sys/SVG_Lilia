@@ -253,12 +253,33 @@
     </div>
 
     <!-- Popover outil Couleurs -->
-    <div id="colorPopover" class="shapes-popover" style="flex-direction: column; align-items: stretch; width: 200px;">
+    <div id="colorPopover" class="shapes-popover" style="flex-direction: column; align-items: stretch; width: 240px; max-height: 70vh; overflow-y: auto;">
         <div id="colorNoSelection" style="font-size: 12px; color: #64748b;">Sélectionnez un objet sur le plan de travail pour modifier sa couleur.</div>
         <div id="colorEditRow" style="display: none; flex-direction: column; gap: 8px;">
             <label style="font-size: 12px; color: #334155;">Couleur de l'objet sélectionné :</label>
-            <input type="color" id="colorPicker" value="#3b82f6" style="width: 100%; height: 36px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 2px;">
+            <div style="display: flex; gap: 6px;">
+                <input type="color" id="colorPicker" value="#3b82f6" style="width: 40px; height: 36px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 2px; flex-shrink: 0;">
+                <input type="text" id="colorHexInput" value="#3B82F6" maxlength="7" placeholder="#RRGGBB" style="flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 13px; text-transform: uppercase;">
+                <button id="colorEyedropperBtn" title="Pipette : prélever une couleur à l'écran" style="width: 36px; height: 36px; flex-shrink: 0; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; cursor: pointer; font-size: 16px;">🎯</button>
+            </div>
             <button id="colorResetBtn" style="display: none; width: 100%; padding: 6px; font-size: 12px; border-radius: 6px;">Couleur d'origine (image/IA)</button>
+
+            <div id="multiColorSection" style="display: none; flex-direction: column; gap: 8px; border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 2px;">
+                <label style="font-size: 12px; color: #334155;">Couleurs détectées dans l'image :</label>
+                <div id="detectedColorsSwatches" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                <div id="replaceColorControls" style="display: none; flex-direction: column; gap: 6px; background: #f8fafc; border-radius: 8px; padding: 8px;">
+                    <label style="font-size: 11px; color: #64748b;">Remplacer la couleur sélectionnée par :</label>
+                    <div style="display: flex; gap: 6px;">
+                        <input type="color" id="replaceColorPicker" value="#000000" style="width: 36px; height: 32px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 2px; flex-shrink: 0;">
+                        <input type="text" id="replaceColorHex" maxlength="7" placeholder="#RRGGBB" style="flex: 1; min-width: 0; padding: 5px 7px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 12px; text-transform: uppercase;">
+                        <button id="replaceColorEyedropperBtn" title="Pipette" style="width: 32px; height: 32px; flex-shrink: 0; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; cursor: pointer; font-size: 14px;">🎯</button>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <button id="applyReplaceColorBtn" style="flex: 1; padding: 7px; font-size: 11.5px; border: none; border-radius: 6px; background: #10b981; color: #fff; cursor: pointer;">✓ Remplacer</button>
+                        <button id="eraseColorBtn" style="flex: 1; padding: 7px; font-size: 11.5px; border: none; border-radius: 6px; background: #fee2e2; color: #dc2626; cursor: pointer;">🧹 Effacer</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -390,6 +411,7 @@
                     <ol>
                         <li><strong>Formes / Texte / Images / IA :</strong> chaque élément ajouté apparaît comme un objet indépendant sur le plan de travail (en cm, comme un vrai tapis Cricut). Cliquez un objet pour le sélectionner, faites-le glisser pour le déplacer, et tirez les poignées d'angle pour le redimensionner.</li>
                         <li><strong>Texte :</strong> double-cliquez un texte sur le plan de travail pour le modifier.</li>
+                        <li><strong>Couleurs :</strong> le code hexadécimal est lisible et modifiable directement (champ à côté du sélecteur). La pipette 🎯 prélève une couleur n'importe où à l'écran (nécessite Chrome ou Edge récent). Pour une image multicolore (importée, IA ou web), les couleurs détectées s'affichent en pastilles : cliquez-en une pour la remplacer par une autre, ou l'effacer complètement.</li>
                         <li><strong>Projets :</strong> le bouton 🚀 Projets permet d'enregistrer le plan de travail actuel sous un nom, et de rouvrir un projet sauvegardé plus tard. Les projets sont stockés localement dans ce navigateur (pas sur internet) — ils ne sont donc disponibles que sur cet appareil et ce navigateur.</li>
                         <li><strong>Pivoter :</strong> une petite poignée ronde apparaît au-dessus de tout objet sélectionné, reliée par un trait — faites-la glisser pour faire pivoter l'objet.</li>
                         <li><strong>Rogner :</strong> sélectionnez une image (importée, IA ou recherche web), cliquez l'outil ✂️ Rogner, ajustez le cadre vert puis validez.</li>
@@ -486,7 +508,17 @@
     const colorNoSelection = document.getElementById('colorNoSelection');
     const colorEditRow = document.getElementById('colorEditRow');
     const colorPicker = document.getElementById('colorPicker');
+    const colorHexInput = document.getElementById('colorHexInput');
+    const colorEyedropperBtn = document.getElementById('colorEyedropperBtn');
     const colorResetBtn = document.getElementById('colorResetBtn');
+    const multiColorSection = document.getElementById('multiColorSection');
+    const detectedColorsSwatches = document.getElementById('detectedColorsSwatches');
+    const replaceColorControls = document.getElementById('replaceColorControls');
+    const replaceColorPicker = document.getElementById('replaceColorPicker');
+    const replaceColorHex = document.getElementById('replaceColorHex');
+    const replaceColorEyedropperBtn = document.getElementById('replaceColorEyedropperBtn');
+    const applyReplaceColorBtn = document.getElementById('applyReplaceColorBtn');
+    const eraseColorBtn = document.getElementById('eraseColorBtn');
     const imageSearchPanel = document.getElementById('imageSearchPanel');
     const imageSearchInput = document.getElementById('imageSearchInput');
     const imageSearchBtn = document.getElementById('imageSearchBtn');
@@ -538,6 +570,7 @@
     let cropState = null;
     let lastClickTime = 0;
     let lastClickId = null;
+    let selectedSourceColor = null;
     let eraserMode = false;
     let eraserWidth = 1;
     let currentEraserObj = null;
@@ -1574,6 +1607,82 @@
     });
 
     // ===================== Couleurs =====================
+    function normalizeColor(c) {
+        if (!c) return '';
+        let v = c.trim().toLowerCase();
+        if (!v.startsWith('#')) return v;
+        if (v.length === 4) {
+            v = '#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3];
+        }
+        return v;
+    }
+
+    function isValidHex(v) {
+        return /^#[0-9a-f]{6}$/i.test(v);
+    }
+
+    function extractColorsFromSvg(svgString) {
+        const re = /fill\s*=\s*"([^"]+)"/gi;
+        const found = [];
+        let m;
+        while ((m = re.exec(svgString)) !== null) {
+            const c = normalizeColor(m[1]);
+            if (c && c !== 'none' && isValidHex(c) && !found.includes(c)) found.push(c);
+        }
+        return found;
+    }
+
+    function replaceColorInObject(obj, fromColor, toColorOrNull) {
+        const normFrom = normalizeColor(fromColor);
+        const re = /fill\s*=\s*"([^"]+)"/gi;
+        obj.innerSVG = obj.innerSVG.replace(re, (match, val) => {
+            if (normalizeColor(val) === normFrom) {
+                return toColorOrNull ? `fill="${toColorOrNull}"` : `fill="none"`;
+            }
+            return match;
+        });
+    }
+
+    function applyColorToSelection(val) {
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj) return;
+        if (obj.type === 'shape' || obj.type === 'polygon') obj.fill = val;
+        else if (obj.type === 'text') obj.color = val;
+        else if (obj.type === 'line') obj.color = val;
+        else if (obj.type === 'svg') obj.colorOverride = val;
+        renderMat();
+    }
+
+    function renderDetectedSwatches(obj) {
+        detectedColorsSwatches.innerHTML = '';
+        replaceColorControls.style.display = 'none';
+        selectedSourceColor = null;
+        if (obj.type !== 'svg' || obj.colorOverride) {
+            multiColorSection.style.display = 'none';
+            return;
+        }
+        const colors = extractColorsFromSvg(obj.innerSVG);
+        if (colors.length < 2) {
+            multiColorSection.style.display = 'none';
+            return;
+        }
+        multiColorSection.style.display = 'flex';
+        colors.forEach(c => {
+            const sw = document.createElement('button');
+            sw.title = c;
+            sw.style.cssText = `width:28px; height:28px; border-radius:6px; border:2px solid #e2e8f0; background:${c}; cursor:pointer; padding:0;`;
+            sw.addEventListener('click', () => {
+                selectedSourceColor = c;
+                detectedColorsSwatches.querySelectorAll('button').forEach(b => b.style.borderColor = '#e2e8f0');
+                sw.style.borderColor = '#3b82f6';
+                replaceColorPicker.value = c;
+                replaceColorHex.value = c.toUpperCase();
+                replaceColorControls.style.display = 'flex';
+            });
+            detectedColorsSwatches.appendChild(sw);
+        });
+    }
+
     function syncColorPopover() {
         const obj = objects.find(o => o.id === selectedId);
         if (!obj || obj.type === 'eraser') {
@@ -1589,7 +1698,9 @@
         else if (obj.type === 'line') current = obj.color;
         else if (obj.type === 'svg') current = obj.colorOverride || '#000000';
         colorPicker.value = current;
+        if (document.activeElement !== colorHexInput) colorHexInput.value = current.toUpperCase();
         colorResetBtn.style.display = obj.type === 'svg' ? 'block' : 'none';
+        renderDetectedSwatches(obj);
     }
     toolColor.addEventListener('click', () => {
         const isOpen = colorPopover.style.display === 'flex';
@@ -1646,16 +1757,54 @@
         renderMat();
     });
     colorPicker.addEventListener('input', () => {
-        const obj = objects.find(o => o.id === selectedId);
-        if (!obj) return;
-        const val = colorPicker.value;
-        if (obj.type === 'shape' || obj.type === 'polygon') obj.fill = val;
-        else if (obj.type === 'text') obj.color = val;
-        else if (obj.type === 'line') obj.color = val;
-        else if (obj.type === 'svg') obj.colorOverride = val;
-        renderMat();
+        applyColorToSelection(colorPicker.value);
+        colorHexInput.value = colorPicker.value.toUpperCase();
     });
     colorPicker.addEventListener('change', () => pushHistory());
+
+    colorHexInput.addEventListener('input', () => {
+        let v = colorHexInput.value.trim();
+        if (v && !v.startsWith('#')) v = '#' + v;
+        if (isValidHex(v)) {
+            colorPicker.value = v;
+            applyColorToSelection(v);
+        }
+    });
+    colorHexInput.addEventListener('change', () => {
+        let v = colorHexInput.value.trim();
+        if (v && !v.startsWith('#')) v = '#' + v;
+        if (isValidHex(v)) {
+            colorHexInput.value = v.toUpperCase();
+            pushHistory();
+        } else {
+            colorHexInput.value = colorPicker.value.toUpperCase();
+        }
+    });
+
+    async function pickColorFromScreen() {
+        if (!window.EyeDropper) {
+            appendMessage("La pipette nécessite un navigateur compatible (Chrome ou Edge récents). Vous pouvez sinon saisir le code hexadécimal directement.", 'ai');
+            return null;
+        }
+        try {
+            const eyeDropper = new EyeDropper();
+            const result = await eyeDropper.open();
+            return result.sRGBHex;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    colorEyedropperBtn.addEventListener('click', async () => {
+        const hex = await pickColorFromScreen();
+        if (hex) {
+            colorPicker.value = hex;
+            colorHexInput.value = hex.toUpperCase();
+            applyColorToSelection(hex);
+            pushHistory();
+        }
+    });
+
     colorResetBtn.addEventListener('click', () => {
         const obj = objects.find(o => o.id === selectedId);
         if (obj && obj.type === 'svg') {
@@ -1664,6 +1813,42 @@
             pushHistory();
             syncColorPopover();
         }
+    });
+
+    // ----- Remplacement / effacement d'une couleur au sein d'une image multicolore -----
+    replaceColorPicker.addEventListener('input', () => {
+        replaceColorHex.value = replaceColorPicker.value.toUpperCase();
+    });
+    replaceColorHex.addEventListener('input', () => {
+        let v = replaceColorHex.value.trim();
+        if (v && !v.startsWith('#')) v = '#' + v;
+        if (isValidHex(v)) replaceColorPicker.value = v;
+    });
+    replaceColorEyedropperBtn.addEventListener('click', async () => {
+        const hex = await pickColorFromScreen();
+        if (hex) {
+            replaceColorPicker.value = hex;
+            replaceColorHex.value = hex.toUpperCase();
+        }
+    });
+    applyReplaceColorBtn.addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj || obj.type !== 'svg' || !selectedSourceColor) return;
+        const target = replaceColorPicker.value;
+        replaceColorInObject(obj, selectedSourceColor, target);
+        renderMat();
+        pushHistory();
+        appendMessage(`Couleur ${selectedSourceColor} remplacée par ${target} dans l'image.`, 'ai');
+        syncColorPopover();
+    });
+    eraseColorBtn.addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj || obj.type !== 'svg' || !selectedSourceColor) return;
+        replaceColorInObject(obj, selectedSourceColor, null);
+        renderMat();
+        pushHistory();
+        appendMessage(`Couleur ${selectedSourceColor} effacée de l'image.`, 'ai');
+        syncColorPopover();
     });
 
     // ===================== Recherche d'images web (Openverse) =====================
