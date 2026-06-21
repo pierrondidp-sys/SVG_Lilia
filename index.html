@@ -268,7 +268,12 @@
                 <label style="font-size: 12px; color: #334155;">Couleurs détectées dans l'image :</label>
                 <div id="detectedColorsSwatches" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
                 <div id="replaceColorControls" style="display: none; flex-direction: column; gap: 6px; background: #f8fafc; border-radius: 8px; padding: 8px;">
-                    <label style="font-size: 11px; color: #64748b;">Remplacer la couleur sélectionnée par :</label>
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #1e293b;">
+                        <span>Couleur sélectionnée :</span>
+                        <span id="sourceColorSwatch" style="width: 18px; height: 18px; border-radius: 4px; border: 1px solid #cbd5e1; flex-shrink: 0;"></span>
+                        <strong id="sourceColorLabel" style="font-family: monospace;"></strong>
+                    </div>
+                    <label style="font-size: 11px; color: #64748b;">Remplacer par :</label>
                     <div style="display: flex; gap: 6px;">
                         <input type="color" id="replaceColorPicker" value="#000000" style="width: 36px; height: 32px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 2px; flex-shrink: 0;">
                         <input type="text" id="replaceColorHex" maxlength="7" placeholder="#RRGGBB" style="flex: 1; min-width: 0; padding: 5px 7px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 12px; text-transform: uppercase;">
@@ -514,6 +519,8 @@
     const multiColorSection = document.getElementById('multiColorSection');
     const detectedColorsSwatches = document.getElementById('detectedColorsSwatches');
     const replaceColorControls = document.getElementById('replaceColorControls');
+    const sourceColorSwatch = document.getElementById('sourceColorSwatch');
+    const sourceColorLabel = document.getElementById('sourceColorLabel');
     const replaceColorPicker = document.getElementById('replaceColorPicker');
     const replaceColorHex = document.getElementById('replaceColorHex');
     const replaceColorEyedropperBtn = document.getElementById('replaceColorEyedropperBtn');
@@ -1621,6 +1628,11 @@
         return /^#[0-9a-f]{6}$/i.test(v);
     }
 
+    function hexToRgb(hex) {
+        const v = hex.replace('#', '');
+        return { r: parseInt(v.substr(0, 2), 16), g: parseInt(v.substr(2, 2), 16), b: parseInt(v.substr(4, 2), 16) };
+    }
+
     function extractColorsFromSvg(svgString) {
         const re = /fill\s*=\s*"([^"]+)"/gi;
         const found = [];
@@ -1630,6 +1642,20 @@
             if (c && c !== 'none' && isValidHex(c) && !found.includes(c)) found.push(c);
         }
         return found;
+    }
+
+    function closestDetectedColor(obj, hex) {
+        const colors = extractColorsFromSvg(obj.innerSVG);
+        if (colors.length === 0) return null;
+        if (colors.includes(hex)) return hex;
+        const target = hexToRgb(hex);
+        let best = colors[0], bestDist = Infinity;
+        colors.forEach(c => {
+            const rgb = hexToRgb(c);
+            const d = (rgb.r - target.r) ** 2 + (rgb.g - target.g) ** 2 + (rgb.b - target.b) ** 2;
+            if (d < bestDist) { bestDist = d; best = c; }
+        });
+        return best;
     }
 
     function replaceColorInObject(obj, fromColor, toColorOrNull) {
@@ -1653,34 +1679,48 @@
         renderMat();
     }
 
+    function selectSourceColor(c) {
+        selectedSourceColor = c;
+        detectedColorsSwatches.querySelectorAll('button').forEach(b => {
+            b.style.borderColor = (b.dataset.color === c) ? '#3b82f6' : '#e2e8f0';
+        });
+        sourceColorSwatch.style.background = c;
+        sourceColorLabel.textContent = c.toUpperCase();
+        replaceColorControls.style.display = 'flex';
+    }
+
     function renderDetectedSwatches(obj) {
         detectedColorsSwatches.innerHTML = '';
-        replaceColorControls.style.display = 'none';
-        selectedSourceColor = null;
         if (obj.type !== 'svg' || obj.colorOverride) {
             multiColorSection.style.display = 'none';
+            replaceColorControls.style.display = 'none';
+            selectedSourceColor = null;
             return;
         }
         const colors = extractColorsFromSvg(obj.innerSVG);
-        if (colors.length < 2) {
+        if (colors.length === 0) {
             multiColorSection.style.display = 'none';
+            replaceColorControls.style.display = 'none';
+            selectedSourceColor = null;
             return;
         }
         multiColorSection.style.display = 'flex';
+        if (selectedSourceColor && !colors.includes(selectedSourceColor)) {
+            selectedSourceColor = null;
+            replaceColorControls.style.display = 'none';
+        }
         colors.forEach(c => {
             const sw = document.createElement('button');
+            sw.dataset.color = c;
             sw.title = c;
-            sw.style.cssText = `width:28px; height:28px; border-radius:6px; border:2px solid #e2e8f0; background:${c}; cursor:pointer; padding:0;`;
-            sw.addEventListener('click', () => {
-                selectedSourceColor = c;
-                detectedColorsSwatches.querySelectorAll('button').forEach(b => b.style.borderColor = '#e2e8f0');
-                sw.style.borderColor = '#3b82f6';
-                replaceColorPicker.value = c;
-                replaceColorHex.value = c.toUpperCase();
-                replaceColorControls.style.display = 'flex';
-            });
+            sw.style.cssText = `width:28px; height:28px; border-radius:6px; border:2px solid ${c === selectedSourceColor ? '#3b82f6' : '#e2e8f0'}; background:${c}; cursor:pointer; padding:0;`;
+            sw.addEventListener('click', () => selectSourceColor(c));
             detectedColorsSwatches.appendChild(sw);
         });
+        if (selectedSourceColor) {
+            sourceColorSwatch.style.background = selectedSourceColor;
+            sourceColorLabel.textContent = selectedSourceColor.toUpperCase();
+        }
     }
 
     function syncColorPopover() {
@@ -1797,7 +1837,23 @@
 
     colorEyedropperBtn.addEventListener('click', async () => {
         const hex = await pickColorFromScreen();
-        if (hex) {
+        if (!hex) return;
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj) return;
+        if (obj.type === 'svg' && !obj.colorOverride) {
+            const matched = closestDetectedColor(obj, hex);
+            if (!matched) {
+                appendMessage(`Couleur prélevée : ${hex.toUpperCase()}, mais aucune couleur exploitable n'a été détectée dans cette image.`, 'ai');
+                return;
+            }
+            multiColorSection.style.display = 'flex';
+            selectSourceColor(matched);
+            if (matched !== hex) {
+                appendMessage(`Couleur prélevée : ${hex.toUpperCase()} → couleur correspondante dans l'image : ${matched.toUpperCase()}. Choisissez une couleur de remplacement ou cliquez « Effacer ».`, 'ai');
+            } else {
+                appendMessage(`Couleur ${hex.toUpperCase()} sélectionnée dans l'image. Choisissez une couleur de remplacement ou cliquez « Effacer ».`, 'ai');
+            }
+        } else {
             colorPicker.value = hex;
             colorHexInput.value = hex.toUpperCase();
             applyColorToSelection(hex);
