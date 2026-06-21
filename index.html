@@ -178,8 +178,18 @@
                 <div id="tab-config" class="modal-tab-content">
                     <h3>Étape : Obtenir une clé d'API Google Gemini</h3>
                     <ol>
-                        <li>Rendez-vous sur : <a href="https://aistudio.google.com/" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: bold;">aistudio.google.com</a>.</li>
+                        <li>Rendez-vous sur : <a href="https://aistudio.google.com/" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: bold;">aistudio.google.com</a> et connectez-vous avec votre compte Google.</li>
+                        <li>Lors de votre première visite, acceptez les conditions d'utilisation de l'API Generative AI si elles vous sont demandées.</li>
+                        <li>Dans le menu de gauche, cliquez sur <strong>« Get API key »</strong> (Obtenir une clé d'API).</li>
+                        <li>Cliquez sur le bouton <strong>« Create API key »</strong> (Créer une clé d'API).</li>
+                        <li>Choisissez <strong>« Create API key in new project »</strong> si vous n'avez pas encore de projet Google Cloud — Google s'occupe de tout créer automatiquement, aucune configuration cloud n'est nécessaire.</li>
+                        <li>Votre clé apparaît à l'écran, sous la forme d'une longue chaîne commençant par <code>AIzaSy...</code>. Cliquez sur l'icône de copie pour la copier.</li>
+                        <li>Collez-la directement dans le champ <strong>« Clé d'API Gemini »</strong> en haut de la fenêtre de chat de cet outil.</li>
+                        <li>Vérifiez que votre clé n'est pas marquée <strong>« Unrestricted »</strong> (non restreinte) sur la page des clés. Si c'est le cas, cliquez sur « Restrict key » puis sélectionnez « Restrict to Gemini API only » — depuis juin 2026, Google bloque les requêtes provenant de clés non restreintes.</li>
                     </ol>
+                    <p style="background:#fef3c7; border:1px solid #fcd34d; border-radius:6px; padding:10px 12px; font-size:13px; color:#78350f;">
+                        ⚠️ Cette clé est personnelle, ne la partagez avec personne. Le niveau gratuit de l'API Gemini permet de tester l'outil sans frais ni carte bancaire, dans la limite des quotas journaliers (voir la page tarifs d'AI Studio).
+                    </p>
                 </div>
 
                 <div id="tab-usage" class="modal-tab-content">
