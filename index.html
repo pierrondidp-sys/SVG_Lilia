@@ -58,6 +58,26 @@
         .image-search-credit { font-size: 9.5px; color: #94a3b8; margin-top: 3px; line-height: 1.3; }
         .image-search-disclaimer { font-size: 10.5px; color: #92400e; background: #fffbeb; border-top: 1px solid #fde68a; padding: 8px 12px; flex-shrink: 0; }
 
+        .projects-panel {
+            position: fixed; width: 320px; max-height: 480px;
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(0,0,0,.18); z-index: 250;
+            display: none; flex-direction: column; overflow: hidden;
+        }
+        .projects-header { display: flex; gap: 6px; padding: 12px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; align-items: center; }
+        .projects-header input { flex: 1; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; min-width: 0; }
+        .projects-header button { border: none; background: #10b981; color: #fff; border-radius: 6px; padding: 0 12px; height: 34px; cursor: pointer; font-size: 12px; font-weight: bold; flex-shrink: 0; }
+        #projectsCloseBtn { background: #64748b; width: 34px; padding: 0; }
+        .projects-status { font-size: 12px; color: #64748b; padding: 6px 12px; flex-shrink: 0; min-height: 14px; }
+        .projects-list { padding: 0 12px 12px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .project-item { border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .project-item-name { font-size: 13px; font-weight: 600; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
+        .project-item-date { font-size: 10.5px; color: #94a3b8; }
+        .project-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+        .project-item-actions button { border: none; border-radius: 5px; padding: 6px 9px; font-size: 11px; cursor: pointer; }
+        .project-btn-open { background: #3b82f6; color: #fff; }
+        .project-btn-delete { background: #fee2e2; color: #dc2626; }
+
         /* Layout colonnes */
         .workspace {
             flex: 1; display: flex; flex-direction: column;
@@ -174,7 +194,7 @@
     <!-- ===== BARRE D'OUTILS (GAUCHE) ===== -->
     <div class="app-toolbar">
         <button class="tool-rail-btn" id="toolNew" title="Nouveau projet"><span class="icon">➕</span>Nouveau</button>
-        <button class="tool-rail-btn" id="toolProjects" title="Bientôt disponible"><span class="icon">🚀</span>Projets</button>
+        <button class="tool-rail-btn" id="toolProjects" title="Enregistrer / ouvrir un projet"><span class="icon">🚀</span>Projets</button>
         <div class="tool-rail-sep"></div>
         <button class="tool-rail-btn" id="toolShapes" title="Ajouter une forme"><span class="icon">▲</span>Formes</button>
         <button class="tool-rail-btn" id="toolEraser" title="Gomme"><span class="icon">🧹</span>Gomme</button>
@@ -251,6 +271,17 @@
         <div id="imageSearchStatus" class="image-search-status">Recherchez une image à insérer sur le plan de travail.</div>
         <div id="imageSearchResults" class="image-search-results"></div>
         <div class="image-search-disclaimer">⚠️ Images libres de droits (Creative Commons / domaine public) via Openverse. Vérifiez la licence affichée sous chaque image avant un usage commercial.</div>
+    </div>
+
+    <!-- Panneau Projets (enregistrer / ouvrir) -->
+    <div id="projectsPanel" class="projects-panel">
+        <div class="projects-header">
+            <input type="text" id="projectNameInput" placeholder="Nom du projet à enregistrer...">
+            <button id="projectSaveBtn" title="Enregistrer le projet en cours">💾 Enregistrer</button>
+            <button id="projectsCloseBtn" title="Fermer">✕</button>
+        </div>
+        <div id="projectsStatus" class="projects-status"></div>
+        <div id="projectsList" class="projects-list"></div>
     </div>
 
     <!-- Panneau de validation du rognage -->
@@ -356,6 +387,7 @@
                     <ol>
                         <li><strong>Formes / Texte / Images / IA :</strong> chaque élément ajouté apparaît comme un objet indépendant sur le plan de travail (en cm, comme un vrai tapis Cricut). Cliquez un objet pour le sélectionner, faites-le glisser pour le déplacer, et tirez les poignées d'angle pour le redimensionner.</li>
                         <li><strong>Texte :</strong> double-cliquez un texte sur le plan de travail pour le modifier.</li>
+                        <li><strong>Projets :</strong> le bouton 🚀 Projets permet d'enregistrer le plan de travail actuel sous un nom, et de rouvrir un projet sauvegardé plus tard. Les projets sont stockés localement dans ce navigateur (pas sur internet) — ils ne sont donc disponibles que sur cet appareil et ce navigateur.</li>
                         <li><strong>Pivoter :</strong> une petite poignée ronde apparaît au-dessus de tout objet sélectionné, reliée par un trait — faites-la glisser pour faire pivoter l'objet.</li>
                         <li><strong>Rogner :</strong> sélectionnez une image (importée, IA ou recherche web), cliquez l'outil ✂️ Rogner, ajustez le cadre vert puis validez.</li>
                         <li><strong>Formes modifiables :</strong> carré, rectangle, triangle, triangle rectangle, pentagone, hexagone, octogone, étoile, losange, flèche, bulle, nuage et cœur peuvent être déformées sommet par sommet. Double-cliquez la forme pour afficher ses points verts, puis glissez-les un par un. Double-cliquez à nouveau (ou Échap) pour quitter ce mode.</li>
@@ -475,6 +507,12 @@
     const cropPanel = document.getElementById('cropPanel');
     const cropApplyBtn = document.getElementById('cropApplyBtn');
     const cropCancelBtn = document.getElementById('cropCancelBtn');
+    const projectsPanel = document.getElementById('projectsPanel');
+    const projectNameInput = document.getElementById('projectNameInput');
+    const projectSaveBtn = document.getElementById('projectSaveBtn');
+    const projectsCloseBtn = document.getElementById('projectsCloseBtn');
+    const projectsStatus = document.getElementById('projectsStatus');
+    const projectsList = document.getElementById('projectsList');
     const toolSearch = document.getElementById('toolSearch');
     const toolImages = document.getElementById('toolImages');
     const toolText = document.getElementById('toolText');
@@ -1277,9 +1315,141 @@
     }
 
     toolNew.addEventListener('click', clearProject);
-    toolProjects.addEventListener('click', () => comingSoon('Projets'));
     toolMonogram.addEventListener('click', () => comingSoon('Monogramme'));
     toolLayout.addEventListener('click', () => comingSoon('Mises en page'));
+
+    // ===================== Projets (enregistrer / ouvrir) =====================
+    const PROJECTS_STORAGE_KEY = 'cricut_saved_projects';
+
+    function loadProjectsStore() {
+        try {
+            const raw = localStorage.getItem(PROJECTS_STORAGE_KEY);
+            return raw ? JSON.parse(raw) : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function saveProjectsStore(store) {
+        try {
+            localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(store));
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function renderProjectsList() {
+        const store = loadProjectsStore();
+        const names = Object.keys(store).sort((a, b) => (store[b].savedAt || 0) - (store[a].savedAt || 0));
+        projectsList.innerHTML = '';
+        if (names.length === 0) {
+            projectsList.innerHTML = '<div style="font-size:12px; color:#94a3b8; text-align:center; padding:20px 0;">Aucun projet enregistré pour le moment.</div>';
+            return;
+        }
+        names.forEach(name => {
+            const proj = store[name];
+            const item = document.createElement('div');
+            item.className = 'project-item';
+            const dateStr = proj.savedAt ? new Date(proj.savedAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+            const nbObjects = (proj.objects || []).length;
+            const infoDiv = document.createElement('div');
+            infoDiv.style.cssText = 'min-width:0; flex:1;';
+            infoDiv.innerHTML = `<div class="project-item-name">${escapeHtml(name)}</div><div class="project-item-date">${dateStr} · ${nbObjects} élément(s)</div>`;
+            const actions = document.createElement('div');
+            actions.className = 'project-item-actions';
+            const openBtn = document.createElement('button');
+            openBtn.className = 'project-btn-open';
+            openBtn.textContent = 'Ouvrir';
+            openBtn.addEventListener('click', () => openProject(name));
+            const delBtn = document.createElement('button');
+            delBtn.className = 'project-btn-delete';
+            delBtn.textContent = '🗑️';
+            delBtn.title = 'Supprimer ce projet';
+            delBtn.addEventListener('click', () => deleteProject(name));
+            actions.appendChild(openBtn);
+            actions.appendChild(delBtn);
+            item.appendChild(infoDiv);
+            item.appendChild(actions);
+            projectsList.appendChild(item);
+        });
+    }
+
+    function saveCurrentProject() {
+        const name = projectNameInput.value.trim();
+        if (!name) {
+            projectsStatus.textContent = "Donnez un nom au projet avant d'enregistrer.";
+            return;
+        }
+        const store = loadProjectsStore();
+        const overwrite = !!store[name];
+        if (overwrite && !confirm(`Un projet nommé "${name}" existe déjà. Le remplacer ?`)) return;
+        store[name] = {
+            objects: JSON.parse(JSON.stringify(objects)),
+            nextObjId: nextObjId, matW: MAT_W, matH: MAT_H,
+            savedAt: Date.now()
+        };
+        const ok = saveProjectsStore(store);
+        if (!ok) {
+            projectsStatus.textContent = "Erreur : stockage local plein ou indisponible.";
+            return;
+        }
+        projectsStatus.textContent = overwrite ? `Projet "${name}" mis à jour.` : `Projet "${name}" enregistré.`;
+        projectNameInput.value = '';
+        renderProjectsList();
+        appendMessage(`Projet "${name}" enregistré dans ce navigateur.`, 'ai');
+    }
+
+    function openProject(name) {
+        const store = loadProjectsStore();
+        const proj = store[name];
+        if (!proj) return;
+        if (objects.length > 0 && !confirm(`Ouvrir "${name}" remplacera le plan de travail actuel (vous pourrez toujours faire « Annuler » ensuite). Continuer ?`)) return;
+        objects = JSON.parse(JSON.stringify(proj.objects || []));
+        nextObjId = proj.nextObjId || (objects.reduce((m, o) => Math.max(m, o.id), 0) + 1);
+        MAT_W = proj.matW || 30;
+        MAT_H = proj.matH || 30;
+        matWidthInput.value = MAT_W;
+        matHeightInput.value = MAT_H;
+        selectedId = null;
+        nodeEditId = null;
+        cropState = null;
+        cropPanel.style.display = 'none';
+        downloadBtn.disabled = objects.length === 0;
+        renderMat();
+        pushHistory();
+        projectsPanel.style.display = 'none';
+        appendMessage(`Projet "${name}" ouvert.`, 'ai');
+    }
+
+    function deleteProject(name) {
+        if (!confirm(`Supprimer définitivement le projet "${name}" ?`)) return;
+        const store = loadProjectsStore();
+        delete store[name];
+        saveProjectsStore(store);
+        renderProjectsList();
+    }
+
+    toolProjects.addEventListener('click', () => {
+        const isOpen = projectsPanel.style.display === 'flex';
+        if (isOpen) { projectsPanel.style.display = 'none'; return; }
+        const rect = toolProjects.getBoundingClientRect();
+        projectsPanel.style.left = (rect.right + 6) + 'px';
+        projectsPanel.style.top = rect.top + 'px';
+        projectsPanel.style.display = 'flex';
+        projectsStatus.textContent = '';
+        renderProjectsList();
+        projectNameInput.focus();
+    });
+    projectsCloseBtn.addEventListener('click', () => { projectsPanel.style.display = 'none'; });
+    projectSaveBtn.addEventListener('click', saveCurrentProject);
+    projectNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveCurrentProject(); });
     toolImages.addEventListener('click', () => fileImporter.click());
     toolText.addEventListener('click', addText);
     toolDownload.addEventListener('click', () => downloadBtn.click());
@@ -1322,6 +1492,9 @@
         }
         if (!imageSearchPanel.contains(e.target) && e.target !== toolSearch && !toolSearch.contains(e.target)) {
             imageSearchPanel.style.display = 'none';
+        }
+        if (!projectsPanel.contains(e.target) && e.target !== toolProjects && !toolProjects.contains(e.target)) {
+            projectsPanel.style.display = 'none';
         }
     });
 
