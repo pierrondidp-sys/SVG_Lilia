@@ -109,7 +109,7 @@
         .ruler-left { width: 26px; background: #f8fafc; border-right: 1px solid #e2e8f0; overflow: hidden; position: relative; flex-shrink: 0; }
         .ruler-left-inner { position: absolute; top: 0; left: 0; width: 100%; }
         .canvas-viewport { flex: 1; overflow: auto; background: #fafafa; position: relative; }
-        .mat-svg { display: block; background: #ffffff; }
+        .mat-svg { display: block; background: #ffffff; overflow: visible; }
 
         .zoom-controls {
             position: absolute; bottom: 12px; right: 12px; background: #fff; border: 1px solid #e2e8f0;
@@ -326,7 +326,10 @@
     <div class="workspace">
         <h1>
             <span>Aperçu du Design Cricut</span>
-            <button id="helpBtn" class="btn btn-info">📖 Mode d'emploi</button>
+            <span style="display: flex; gap: 8px;">
+                <button id="helpBtn" class="btn btn-info">📖 Mode d'emploi</button>
+                <button id="closeAppBtn" class="btn btn-info" style="background: #dc2626;" title="Fermer l'outil">✕ Fermer</button>
+            </span>
         </h1>
 
         <div class="canvas-area">
@@ -482,6 +485,7 @@
     const fileImporter = document.getElementById('fileImporter');
 
     const helpBtn = document.getElementById('helpBtn');
+    const closeAppBtn = document.getElementById('closeAppBtn');
     const helpModal = document.getElementById('helpModal');
     const closeModal = document.getElementById('closeModal');
     const importColorModal = document.getElementById('importColorModal');
@@ -938,9 +942,9 @@
             stroke: '#3b82f6', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke'
         }));
         g.appendChild(svgEl('circle', {
-            cx: topMidX, cy: rotY, r: hs / 1.6,
+            cx: topMidX, cy: rotY, r: hs / 1.1,
             fill: '#fff', stroke: '#3b82f6', 'stroke-width': 1.3, 'vector-effect': 'non-scaling-stroke',
-            'data-rotate': '1', 'data-id': obj.id, style: 'cursor: grab;'
+            'data-rotate': '1', 'data-id': obj.id, style: 'cursor: grab; pointer-events: all;'
         }));
         return g;
     }
@@ -2008,6 +2012,17 @@
 
     // ===================== Modale Mode d'emploi =====================
     helpBtn.onclick = () => helpModal.style.display = "flex";
+
+    closeAppBtn.addEventListener('click', () => {
+        const message = objects.length > 0
+            ? "Fermer l'outil ? Pensez à enregistrer votre projet (bouton 🚀 Projets) ou à le télécharger si besoin. Continuer ?"
+            : "Fermer l'outil ?";
+        if (!confirm(message)) return;
+        window.close();
+        setTimeout(() => {
+            appendMessage("Votre navigateur a empêché la fermeture automatique de cet onglet (mesure de sécurité standard pour les pages non ouvertes par un script). Fermez-le manuellement avec Ctrl+W (Cmd+W sur Mac), ou via le bouton ✕ de l'onglet.", 'ai');
+        }, 300);
+    });
     closeModal.onclick = () => helpModal.style.display = "none";
     window.addEventListener('click', (e) => { if (e.target == helpModal) helpModal.style.display = "none"; });
 
