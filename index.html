@@ -313,7 +313,7 @@
                         <li><strong>Formes modifiables :</strong> carré, triangle, pentagone, hexagone, étoile, losange, flèche et cœur peuvent être déformées sommet par sommet. Double-cliquez la forme pour afficher ses points verts, puis glissez-les un par un. Double-cliquez à nouveau (ou Échap) pour quitter ce mode.</li>
                         <li><strong>Suppression :</strong> sélectionnez un objet puis touche Suppr/Retour, ou le bouton « Supprimer la sélection » en haut du plan de travail.</li>
                         <li><strong>Zoom :</strong> utilisez les boutons +/− en bas à droite du plan de travail.</li>
-                        <li><strong>Images (PNG, JPG, BMP, GIF) :</strong> l'application les convertit instantanément en contours monochromes SVG nets, ajoutés comme objet sur le plan de travail.</li>
+                        <li><strong>Images (PNG, JPG, BMP, GIF) :</strong> à chaque import, une fenêtre vous demande de choisir entre un contour noir et blanc (silhouette de découpe) ou la conservation des couleurs d'origine.</li>
                         <li><strong>Fichiers DXF :</strong> l'outil décode la géométrie CAO et l'ajoute aussi comme objet déplaçable.</li>
                         <li><strong>Téléchargement :</strong> exporte l'intégralité du plan de travail (tous les objets, à leur taille réelle en cm) en un seul fichier SVG prêt pour Cricut Design Space.</li>
                     </ol>
@@ -346,6 +346,20 @@
         </div>
     </div>
 
+    <!-- MODALE (CHOIX COULEUR À L'IMPORT) -->
+    <div id="importColorModal" class="modal">
+        <div class="modal-content" style="max-width: 380px;">
+            <div class="modal-header">
+                <h2>Mode d'import de l'image</h2>
+            </div>
+            <div style="padding: 24px; display: flex; flex-direction: column; gap: 12px;">
+                <p style="margin: 0; font-size: 13px; color: #475569;">Comment souhaitez-vous importer cette image ?</p>
+                <button id="importBWBtn" class="btn" style="background: #0f172a; color: #fff; padding: 14px;">⚫ Noir et blanc (silhouette de découpe)</button>
+                <button id="importColorBtn" class="btn" style="background: #3b82f6; color: #fff; padding: 14px;">🎨 Couleurs d'origine</button>
+            </div>
+        </div>
+    </div>
+
 <script>
     // ===================== Références DOM =====================
     const apiKeyInput = document.getElementById('apiKeyInput');
@@ -359,6 +373,9 @@
     const helpBtn = document.getElementById('helpBtn');
     const helpModal = document.getElementById('helpModal');
     const closeModal = document.getElementById('closeModal');
+    const importColorModal = document.getElementById('importColorModal');
+    const importBWBtn = document.getElementById('importBWBtn');
+    const importColorBtn = document.getElementById('importColorBtn');
 
     const matSvg = document.getElementById('matSvg');
     const canvasViewport = document.getElementById('canvasViewport');
@@ -1232,7 +1249,22 @@
     });
 
     // ===================== Import de fichiers =====================
-    fileImporter.addEventListener('change', function (e) {
+    function askImportColorMode() {
+        return new Promise((resolve) => {
+            importColorModal.style.display = 'flex';
+            function onBW() { cleanup(); resolve('bw'); }
+            function onColor() { cleanup(); resolve('color'); }
+            function cleanup() {
+                importColorModal.style.display = 'none';
+                importBWBtn.removeEventListener('click', onBW);
+                importColorBtn.removeEventListener('click', onColor);
+            }
+            importBWBtn.addEventListener('click', onBW);
+            importColorBtn.addEventListener('click', onColor);
+        });
+    }
+
+    fileImporter.addEventListener('change', async function (e) {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -1242,17 +1274,16 @@
         appendMessage(`Importation du fichier : ${file.name}...`, 'user');
 
         if (['png', 'jpg', 'jpeg', 'bmp', 'gif'].includes(extension)) {
+            const mode = await askImportColorMode();
             reader.onload = function (event) {
                 try {
-                    const options = {
-                        ltres: 1, qtres: 1, scale: 1,
-                        colorsampling: 0, numberofcolors: 2,
-                        strokewidth: 0, viewbox: true
-                    };
+                    const options = mode === 'color'
+                        ? { ltres: 1, qtres: 1, scale: 1, colorsampling: 1, numberofcolors: 16, strokewidth: 0, viewbox: true }
+                        : { ltres: 1, qtres: 1, scale: 1, colorsampling: 0, numberofcolors: 2, strokewidth: 0, viewbox: true };
                     ImageTracer.imageToSVG(event.target.result, function (rawSvg) {
                         try {
                             if (!rawSvg) throw new Error("Le traçage n'a retourné aucun résultat. Réessayez avec une autre image.");
-                            addSvgObject(rawSvg, '#000000');
+                            addSvgObject(rawSvg, mode === 'bw' ? '#000000' : null);
                             appendMessage("Image convertie et ajoutée sur le plan de travail ! Déplacez-la ou redimensionnez-la librement.", 'ai');
                         } catch (err) {
                             appendMessage(`Erreur lors du traçage de l'image : ${err.message}`, 'ai');
