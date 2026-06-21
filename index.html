@@ -87,6 +87,7 @@
         .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; text-align: center; }
         .btn-success { background: #10b981; color: white; }
         .btn-success:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
         .btn-info { background: #64748b; color: white; font-size: 14px; padding: 8px 15px; }
         .btn-info:hover { background: #475569; }
@@ -192,6 +193,11 @@
                 <input type="number" id="matHeightInput" min="1" max="200" step="1" value="30" style="width: 55px; padding: 3px 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
                 <span>cm</span>
                 <button id="applyMatSize" class="btn" style="padding: 4px 10px; font-size: 12px; background: #3b82f6; color: #fff;">Appliquer</button>
+                <div style="margin-left: auto; display: flex; gap: 6px;">
+                    <button id="undoBtn" class="btn" style="padding: 4px 10px; font-size: 12px; background: #64748b; color: #fff;" title="Annuler (Ctrl+Z)">↩ Annuler</button>
+                    <button id="redoBtn" class="btn" style="padding: 4px 10px; font-size: 12px; background: #64748b; color: #fff;" title="Rétablir (Ctrl+Y)">↪ Rétablir</button>
+                    <button id="resetOriginalBtn" class="btn" style="padding: 4px 10px; font-size: 12px; background: #f59e0b; color: #fff;" title="Revenir au projet original">⟲ Original</button>
+                </div>
             </div>
             <div class="ruler-row">
                 <div class="ruler-corner"></div>
@@ -332,6 +338,9 @@
     const matWidthInput = document.getElementById('matWidthInput');
     const matHeightInput = document.getElementById('matHeightInput');
     const applyMatSize = document.getElementById('applyMatSize');
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
+    const resetOriginalBtn = document.getElementById('resetOriginalBtn');
 
     const toolNew = document.getElementById('toolNew');
     const toolProjects = document.getElementById('toolProjects');
@@ -356,6 +365,10 @@
     let eraserMode = false;
     let eraserWidth = 1;
     let currentEraserObj = null;
+    let dragMoved = false;
+    let history = [];
+    let historyIndex = -1;
+    const MAX_HISTORY = 60;
 
     function pxPerCm() { return PX_PER_CM_BASE * zoom; }
 
@@ -410,6 +423,7 @@
         selectedId = obj.id;
         downloadBtn.disabled = false;
         renderMat();
+        pushHistory();
         return obj;
     }
 
@@ -425,6 +439,7 @@
         selectedId = obj.id;
         downloadBtn.disabled = false;
         renderMat();
+        pushHistory();
     }
 
     function addText() {
@@ -438,6 +453,7 @@
         selectedId = obj.id;
         downloadBtn.disabled = false;
         renderMat();
+        pushHistory();
         setTimeout(() => editTextObject(obj.id), 50);
     }
 
@@ -445,7 +461,7 @@
         const obj = objects.find(o => o.id === id);
         if (!obj) return;
         const val = prompt("Texte :", obj.text);
-        if (val !== null && val.trim() !== '') { obj.text = val; renderMat(); }
+        if (val !== null && val.trim() !== '') { obj.text = val; renderMat(); pushHistory(); }
     }
 
     function getObjBBox(obj) {
@@ -590,6 +606,63 @@
         rulerLeftInner.style.transform = `translateY(${-canvasViewport.scrollTop}px)`;
     });
 
+    // ===================== Historique (Annuler / Rétablir / Original) =====================
+    function snapshot() {
+        return JSON.stringify({ objects, nextObjId, matW: MAT_W, matH: MAT_H });
+    }
+
+    function pushHistory() {
+        history = history.slice(0, historyIndex + 1);
+        history.push(snapshot());
+        if (history.length > MAX_HISTORY) history.shift();
+        historyIndex = history.length - 1;
+        updateUndoRedoButtons();
+    }
+
+    function restoreSnapshot(json) {
+        const s = JSON.parse(json);
+        objects = s.objects;
+        nextObjId = s.nextObjId;
+        MAT_W = s.matW;
+        MAT_H = s.matH;
+        matWidthInput.value = MAT_W;
+        matHeightInput.value = MAT_H;
+        selectedId = null;
+        downloadBtn.disabled = objects.length === 0;
+        renderMat();
+    }
+
+    function undo() {
+        if (historyIndex <= 0) return;
+        historyIndex--;
+        restoreSnapshot(history[historyIndex]);
+        updateUndoRedoButtons();
+    }
+
+    function redo() {
+        if (historyIndex >= history.length - 1) return;
+        historyIndex++;
+        restoreSnapshot(history[historyIndex]);
+        updateUndoRedoButtons();
+    }
+
+    function resetToOriginal() {
+        restoreSnapshot(history[0]);
+        pushHistory();
+    }
+
+    function updateUndoRedoButtons() {
+        undoBtn.disabled = historyIndex <= 0;
+        redoBtn.disabled = historyIndex >= history.length - 1;
+    }
+
+    undoBtn.addEventListener('click', undo);
+    redoBtn.addEventListener('click', redo);
+    resetOriginalBtn.addEventListener('click', () => {
+        if (objects.length > 0 && !confirm("Revenir au projet original ? Vous pourrez toujours faire « Annuler » ensuite si besoin.")) return;
+        resetToOriginal();
+    });
+
     // ===================== Interactions souris/tactile =====================
     matSvg.addEventListener('pointerdown', e => {
         const pt = clientToCm(e.clientX, e.clientY);
@@ -607,12 +680,14 @@
             selectedId = id;
             const obj = objects.find(o => o.id === id);
             dragState = { mode: 'resize', id, handle: handleEl.dataset.handle, startPt: pt, start: { ...obj } };
+            dragMoved = false;
         } else if (objEl) {
             const id = Number(objEl.dataset.id);
             selectedId = id;
             const obj = objects.find(o => o.id === id);
             const start = obj.type === 'eraser' ? { ...obj, points: obj.points.map(p => ({ ...p })) } : { ...obj };
             dragState = { mode: 'move', id, startPt: pt, start };
+            dragMoved = false;
         } else {
             selectedId = null;
         }
@@ -630,6 +705,7 @@
         const pt = clientToCm(e.clientX, e.clientY);
         const dx = pt.x - dragState.startPt.x;
         const dy = pt.y - dragState.startPt.y;
+        if (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001) dragMoved = true;
         const obj = objects.find(o => o.id === dragState.id);
         if (!obj) return;
         const minSize = 0.5;
@@ -656,8 +732,12 @@
         if (currentEraserObj) {
             currentEraserObj = null;
             downloadBtn.disabled = objects.length === 0;
+            pushHistory();
         }
-        dragState = null;
+        if (dragState) {
+            dragState = null;
+            if (dragMoved) pushHistory();
+        }
     });
 
     matSvg.addEventListener('dblclick', e => {
@@ -669,8 +749,14 @@
 
     window.addEventListener('keydown', e => {
         const tag = document.activeElement ? document.activeElement.tagName : '';
-        if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId && tag !== 'TEXTAREA' && tag !== 'INPUT') {
+        const inField = tag === 'TEXTAREA' || tag === 'INPUT';
+        if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId && !inField) {
             deleteSelected();
+        }
+        if ((e.ctrlKey || e.metaKey) && !inField) {
+            const k = e.key.toLowerCase();
+            if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+            else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
         }
     });
 
@@ -680,6 +766,7 @@
         selectedId = null;
         if (objects.length === 0) downloadBtn.disabled = true;
         renderMat();
+        pushHistory();
     }
     deleteSelBtn.addEventListener('click', deleteSelected);
 
@@ -755,6 +842,7 @@
             MAT_W = w;
             MAT_H = h;
             renderMat();
+            pushHistory();
         }
     });
 
@@ -914,6 +1002,7 @@
         chatMessages.innerHTML = '<div class="message ai">Bonjour Lilia ! Importez une image/DXF, ajoutez des formes ou du texte, ou demandez à l\'IA — chaque élément s\'ajoute sur le plan de travail et reste déplaçable/redimensionnable. Que fait-on ?</div>';
         userInput.value = '';
         renderMat();
+        pushHistory();
     }
     resetBtn.addEventListener('click', clearProject);
 
@@ -940,6 +1029,7 @@
     // ===================== Initialisation =====================
     setZoom(1);
     renderMat();
+    pushHistory();
 </script>
 </body>
 </html>
