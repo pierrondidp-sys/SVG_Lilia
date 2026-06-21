@@ -98,14 +98,15 @@
         .modal-tab-content h3 { margin-top: 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
         .modal-tab-content ol { padding-left: 20px; line-height: 1.6; }
         .modal-tab-content li { margin-bottom: 10px; }
-        .highlight-box { background: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; margin: 15px 0; border-radius: 0 8px 8px 0; font-size: 13.5px; color: #14532d; }
     </style>
+    <!-- Liens CDN stables et vérifiés pour les bibliothèques d'import -->
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/potrace@2.1.8/dist/potrace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/imagetracerjs/1.2.6/imagetracer_v1.2.6.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
 </head>
 <body>
 
+    <!-- ZONE DE TRAVAIL (GAUCHE) -->
     <div class="workspace">
         <h1>
             <span>Aperçu du Design Cricut</span>
@@ -120,14 +121,17 @@
         </div>
     </div>
 
+    <!-- FENÊTRE DE DISCUSSION & OUTILS (DROITE) -->
     <div class="sidebar-chat">
         
+        <!-- Logo Calligraphique -->
         <div style="padding: 15px 10px 10px 10px; background: #ffffff; text-align: center; border-bottom: 1px solid #cbd5e1;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 90" width="100%" height="100%">
                 <text x="50%" y="60%" text-anchor="middle" font-family="'Great Vibes', 'Georgia', serif" font-size="42" font-style="italic" fill="#000000" letter-spacing="1">Fée main Lilia...</text>
             </svg>
         </div>
 
+        <!-- ZONE INTERACTIVE D'IMPORTATION DE FICHIERS -->
         <div style="padding: 10px 15px; background: #f8fafc; border-bottom: 1px solid #cbd5e1;">
             <div class="import-box">
                 <p>📁 Insérer Image (PNG, JPG, BMP, GIF) ou DXF</p>
@@ -148,6 +152,7 @@
         </div>
     </div>
 
+    <!-- MODALE (MODE D'EMPLOI) -->
     <div id="helpModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -164,9 +169,9 @@
                 <div id="tab-files" class="modal-tab-content active">
                     <h3>Importation et retouche de fichiers</h3>
                     <ol>
-                        <li>**Images (PNG, JPG, BMP, GIF) :** Lorsque vous chargez une image, l'application exécute un algorithme d'autotracer (Potrace) pour la convertir instantanément en contours pleins SVG nets, parfaits pour la découpe vinyle.</li>
-                        <li>**Fichiers DXF :** L'outil décode l'architecture vectorielle du fichier CAO pour l'afficher à gauche et la rendre téléchargeable au format SVG compatible Cricut.</li>
-                        <li>**Modifications par IA :** Une fois le fichier chargé, vous pouvez utiliser la zone de texte en bas à droite pour ordonner à l'IA de modifier ou d'ajouter des éléments au tracé actuel.</li>
+                        <li>**Images (PNG, JPG, BMP, GIF) :** Lorsque vous chargez une image, l'application la convertit instantanément en contours monochromes SVG nets, parfaits pour la découpe vinyle Cricut.</li>
+                        <li>**Fichiers DXF :** L'outil décode la géométrie CAO pour l'afficher et la rendre téléchargeable au format SVG compatible Cricut.</li>
+                        <li>**Modifications par IA :** Une fois le fichier chargé, vous pouvez utiliser le chat en bas à droite pour demander des modifications à l'IA.</li>
                     </ol>
                 </div>
 
@@ -174,7 +179,6 @@
                     <h3>Étape : Obtenir une clé d'API Google Gemini</h3>
                     <ol>
                         <li>Rendez-vous sur : <a href="https://aistudio.google.com/" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: bold;">aistudio.google.com</a>.</li>
-                        <li>Connectez-se avec son compte Google et cliquez sur **"Get API key"**.</li>
                     </ol>
                 </div>
 
@@ -224,7 +228,7 @@
         localStorage.setItem('cricut_gemini_key', apiKeyInput.value.trim());
     });
 
-    // GESTION DU CHARGEMENT DE FICHIERS (IMAGES & DXF)
+    // GESTION DU CHARGEMENT DE FICHIERS (IMAGES AVEC IMAGETRACER & DXF)
     fileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -235,19 +239,30 @@
         appendMessage(`Importation du fichier : ${file.name}...`, 'user');
 
         if (['png', 'jpg', 'jpeg', 'bmp', 'gif'].includes(extension)) {
-            // Traitement Image Matricielle -> Traçage vectoriel SVG (Potrace)
             reader.onload = function(event) {
-                Potrace.loadImage(event.target.result);
-                Potrace.process(function() {
-                    currentSvgCode = Potrace.getSVG(1.0); // Échelle 1
+                try {
+                    // Options d'ImageTracer adaptées pour obtenir une découpe nette et simplifiée (monochrome noir)
+                    const options = { 
+                        ltres: 1, qtres: 1, scale: 1, 
+                        colorsampling: 0, numberofcolors: 2, 
+                        strokewidth: 0, viewbox: true 
+                    };
+                    
+                    // Transformation directe en chaîne SVG
+                    currentSvgCode = ImageTracer.imageToSVG(event.target.result, options);
+                    
+                    // Forcer la couleur noire uniforme pour la découpe Cricut
+                    currentSvgCode = currentSvgCode.replace(/fill="[^"]*"/g, 'fill="#000000"');
+
                     previewContainer.innerHTML = currentSvgCode;
                     downloadBtn.disabled = false;
-                    appendMessage("Image convertie avec succès en courbes de découpe SVG ! Vous pouvez la télécharger ou demander à l'IA de la modifier.", 'ai');
-                });
+                    appendMessage("Image convertie avec succès en courbes de découpe SVG ! Vous pouvez la télécharger ou l'ajuster via l'IA.", 'ai');
+                } catch (err) {
+                    appendMessage(`Erreur lors du traçage de l'image : ${err.message}`, 'ai');
+                }
             };
             reader.readAsDataURL(file);
         } else if (extension === 'dxf') {
-            // Traitement DXF -> Conversion en éléments graphiques SVG
             reader.onload = function(event) {
                 try {
                     const parser = new DxfParser();
@@ -255,7 +270,6 @@
                     
                     if(dxf && dxf.entities) {
                         let svgPaths = '';
-                        // Extraction basique des entités de lignes et cercles du DXF
                         dxf.entities.forEach(entity => {
                             if (entity.type === 'LINE') {
                                 svgPaths += `<line x1="${entity.vertices[0].x}" y1="${-entity.vertices[0].y}" x2="${entity.vertices[1].x}" y2="${-entity.vertices[1].y}" stroke="black" stroke-width="2"/>`;
@@ -264,17 +278,15 @@
                             }
                         });
 
-                        if(svgPaths === '') {
-                            throw new Error("Aucune entité de découpe compatible (LINE, CIRCLE) n'a été extraite.");
-                        }
+                        if(svgPaths === '') throw new Error("Aucune entité linéaire exploitable.");
 
                         currentSvgCode = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%"><g transform="translate(400,400)">${svgPaths}</g></svg>`;
                         previewContainer.innerHTML = currentSvgCode;
                         downloadBtn.disabled = false;
-                        appendMessage("Fichier CAO DXF lu et converti avec succès au format vectoriel Cricut !", 'ai');
+                        appendMessage("Fichier CAO DXF lu et converti au format vectoriel Cricut !", 'ai');
                     }
                 } catch (err) {
-                    appendMessage(`Erreur de lecture du DXF : ${err.message}. Assurez-vous qu'il contient des tracés simples.`, 'ai');
+                    appendMessage(`Erreur DXF : ${err.message}`, 'ai');
                 }
             };
             reader.readAsText(file);
@@ -292,11 +304,10 @@
         
         if (!prompt) return;
         if (!apiKey) {
-            alert("Veuillez configurer votre clé d'API Gemini dans le champ prévu à cet effet.");
+            alert("Veuillez configurer votre clé d'API Gemini.");
             return;
         }
 
-        // Si un fichier est déjà chargé, on l'envoie à l'IA pour qu'elle puisse le modifier
         if (currentSvgCode !== '') {
             prompt = `Voici le code SVG actuel du projet chargé : \n${currentSvgCode}\n Modifie-le ou applique la consigne suivante : ${prompt}`;
         }
@@ -318,13 +329,12 @@
                 })
             });
 
-            if (!response.ok) {
-                throw new Error("Clé d'API invalide ou problème réseau de l'API Google.");
-            }
+            if (!response.ok) throw new Error("Erreur réseau ou clé d'API invalide.");
 
             const data = await response.json();
             let svgResponse = data.candidates[0].content.parts[0].text.trim();
-            svgResponse = svgResponse.replace(/```xml/g, '').replace(/```svg/g, '').replace(/```/g, '').trim();
+            svgResponse = svgResponse.replace(/```xml/g, '').replace(/
+```svg/g, '').replace(/```/g, '').trim();
 
             if (svgResponse.includes('<svg')) {
                 const startIdx = svgResponse.indexOf('<svg');
@@ -335,7 +345,7 @@
                 downloadBtn.disabled = false;
                 loadingDiv.innerText = "Modification vectorielle appliquée avec succès !";
             } else {
-                loadingDiv.innerText = "L'IA n'a pas retourné de code vectoriel valide pour la modification.";
+                loadingDiv.innerText = "L'IA n'a pas retourné de code vectoriel valide.";
             }
         } catch (error) {
             loadingDiv.innerText = "Erreur technique : " + error.message;
