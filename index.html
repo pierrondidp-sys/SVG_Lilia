@@ -9,7 +9,7 @@
             font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0; padding: 0;
             background-color: #f1f5f9;
-            display: flex; height: 100vh;
+            display: flex; height: 100vh; overflow: hidden;
             color: #334155;
         }
 
@@ -58,6 +58,31 @@
         .image-search-credit { font-size: 9.5px; color: #94a3b8; margin-top: 3px; line-height: 1.3; }
         .image-search-disclaimer { font-size: 10.5px; color: #92400e; background: #fffbeb; border-top: 1px solid #fde68a; padding: 8px 12px; flex-shrink: 0; }
 
+        .text-panel {
+            position: fixed; width: 280px;
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(0,0,0,.18); z-index: 250;
+            display: none; flex-direction: column; gap: 0; overflow: hidden;
+        }
+        .text-panel-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; font-weight: 600; color: #334155; }
+        .text-panel-body { display: flex; flex-direction: column; gap: 10px; padding: 12px; max-height: 60vh; overflow-y: auto; }
+        .text-panel-label { font-size: 11px; color: #64748b; margin-bottom: 3px; }
+        .font-search-input { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; }
+        .font-list { max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px; }
+        .font-item { padding: 7px 10px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .font-item:last-child { border-bottom: none; }
+        .font-item:hover { background: #f0f9ff; }
+        .font-item.active { background: #dbeafe; color: #1d4ed8; font-weight: 600; }
+        .text-style-row { display: flex; gap: 6px; }
+        .text-style-btn { flex: 1; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 6px; padding: 7px; cursor: pointer; font-size: 14px; }
+        .text-style-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+        .text-size-row { display: flex; align-items: center; gap: 8px; }
+        .text-size-row input[type=range] { flex: 1; }
+        .text-size-val { font-size: 12px; font-family: monospace; min-width: 38px; text-align: right; color: #334155; }
+        .text-color-row { display: flex; gap: 6px; align-items: center; }
+        .text-color-row input[type=color] { width: 36px; height: 32px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 2px; flex-shrink: 0; }
+        .text-color-hex { flex: 1; min-width: 0; padding: 5px 7px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 12px; text-transform: uppercase; }
+
         .projects-panel {
             position: fixed; width: 360px; max-height: 480px;
             background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
@@ -85,14 +110,15 @@
             padding: 20px; box-sizing: border-box; min-width: 0;
         }
         .sidebar-chat {
-            width: 380px; background: white; border-left: 1px solid #cbd5e1;
+            width: 380px; min-width: 320px; max-width: 420px; background: white;
+            border-left: 1px solid #cbd5e1;
             display: flex; flex-direction: column; flex-shrink: 0;
             box-shadow: -2px 0 10px rgba(0,0,0,0.05);
             transition: width 0.25s ease, opacity 0.2s ease;
-            overflow: hidden;
+            overflow: hidden; height: 100vh; box-sizing: border-box;
         }
-        .sidebar-chat.closed { width: 0; opacity: 0; }
-        .sidebar-chat > * { width: 380px; }
+        .sidebar-chat.closed { width: 0; min-width: 0; opacity: 0; }
+        .sidebar-chat > * { width: 100%; box-sizing: border-box; }
 
         h1 { margin-top: 0; color: #1e293b; font-size: 24px; display: flex; justify-content: space-between; align-items: center; }
 
@@ -121,11 +147,38 @@
         .zoom-controls span { min-width: 38px; text-align: center; color: #64748b; }
 
         .delete-sel-btn {
-            position: absolute; top: 12px; right: 12px; background: #fff; border: 1px solid #fca5a5;
-            color: #dc2626; border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer;
-            display: none; z-index: 20; box-shadow: 0 2px 8px rgba(0,0,0,.1);
+            background: #fff; border: 1px solid #fca5a5;
+            color: #dc2626; border-radius: 8px; padding: 12px 16px; font-size: 14px; cursor: pointer;
+            display: none; font-weight: bold;
         }
         .delete-sel-btn:hover { background: #fef2f2; }
+
+        /* ===== Panneau Retouche ===== */
+        .retouche-panel {
+            position: fixed; width: 300px; max-height: 80vh; overflow-y: auto;
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(0,0,0,.18); z-index: 250;
+            display: none; flex-direction: column;
+        }
+        .rp-section { border-bottom: 1px solid #f1f5f9; padding: 12px 14px; }
+        .rp-section:last-child { border-bottom: none; }
+        .rp-title { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+        .rp-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+        .rp-row label { font-size: 11.5px; color: #334155; width: 90px; flex-shrink: 0; }
+        .rp-row input[type=range] { flex: 1; }
+        .rp-row .rp-val { font-size: 11px; font-family: monospace; width: 32px; text-align: right; color: #64748b; }
+        .rp-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .rp-btn { border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 7px; padding: 8px 6px; cursor: pointer; font-size: 12px; text-align: center; line-height: 1.3; }
+        .rp-btn:hover { background: #e0e7ff; border-color: #3b82f6; }
+        .rp-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+        .rp-btn.danger { border-color: #fca5a5; color: #dc2626; }
+        .rp-btn.danger:hover { background: #fee2e2; }
+        .rp-apply { width: 100%; margin-top: 6px; border: none; border-radius: 7px; padding: 9px; cursor: pointer; font-size: 12px; font-weight: 600; background: #10b981; color: #fff; }
+        .rp-apply:hover { background: #059669; }
+        .rp-no-img { font-size: 12px; color: #94a3b8; padding: 14px; text-align: center; }
+        .rp-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px 0; }
+        .rp-header span { font-size: 13px; font-weight: 600; color: #1e293b; }
+        .rp-header button { border: none; background: none; font-size: 16px; cursor: pointer; color: #94a3b8; }
 
         .actions { margin-top: 15px; display: flex; gap: 10px; width: 100%; flex-shrink: 0; }
         .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; text-align: center; }
@@ -141,13 +194,16 @@
 
         /* Fenêtre de Chat */
         .chat-header { padding: 15px; background: #0f172a; color: white; }
-        .api-box { padding: 10px 15px; background: #1e293b; border-bottom: 1px solid #334155; }
-
+        .api-box { padding: 10px 15px; background: #1e293b; border-bottom: 1px solid #334155; display: flex; flex-direction: column; gap: 6px; }
         .api-box input {
             width: 100%; padding: 6px; background: #334155; border: 1px solid #475569;
             color: white; border-radius: 4px; box-sizing: border-box; font-size: 12px;
             -webkit-text-security: disc;
         }
+        .api-box-row { display: flex; gap: 6px; align-items: center; }
+        .api-box-row select { flex: 1; padding: 5px 6px; background: #334155; border: 1px solid #475569; color: white; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .api-box-row button { flex-shrink: 0; padding: 5px 8px; background: #475569; border: none; color: #94a3b8; border-radius: 4px; font-size: 11px; cursor: pointer; white-space: nowrap; }
+        .api-box-row button:hover { background: #64748b; color: white; }
 
         .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         .message { padding: 10px 14px; border-radius: 8px; max-width: 85%; font-size: 14px; line-height: 1.4; }
@@ -186,7 +242,7 @@
         .modal-tab-content li { margin-bottom: 10px; }
     </style>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPCEtLSBGaWwgLS0+CiAgPHBhdGggZD0iTTYgNTAgQyAxNiA0MCwgMTAgMzAsIDIyIDI2IiBmaWxsPSJub25lIiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPCEtLSBBaWd1aWxsZSAtLT4KICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSAzMCAyOCkiPgogICAgPHJlY3QgeD0iMjgiIHk9IjYiIHdpZHRoPSIzIiBoZWlnaHQ9IjM0IiByeD0iMS41IiBmaWxsPSIjOTRhM2I4Ii8+CiAgICA8cG9seWdvbiBwb2ludHM9IjI5LjUsNCAyNiwxMiAzMywxMiIgZmlsbD0iIzk0YTNiOCIvPgogICAgPGVsbGlwc2UgY3g9IjI5LjUiIGN5PSIzNCIgcng9IjIuNCIgcnk9IjMuNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjQ3NDhiIiBzdHJva2Utd2lkdGg9IjEuMiIvPgogIDwvZz4KICA8IS0tIETDqSDDoCBjb3VkcmUgKHRoaW1ibGUpIC0tPgogIDxnPgogICAgPHBhdGggZD0iTTIyIDYyIEMgMjAgNDYsIDIyIDM0LCAzMiAzMCBDIDQyIDM0LCA0NCA0NiwgNDIgNjIgWiIgZmlsbD0iI2Y1OWUwYiIgc3Ryb2tlPSIjYjQ1MzA5IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogICAgPGVsbGlwc2UgY3g9IjMyIiBjeT0iMzAiIHJ4PSIxMCIgcnk9IjQiIGZpbGw9IiNmYmJmMjQiIHN0cm9rZT0iI2I0NTMwOSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwhLS0gbW90aWZzIGFsdsOpb2xlcyAtLT4KICAgIDxjaXJjbGUgY3g9IjI2IiBjeT0iNDAiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzOCIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzOCIgY3k9IjQwIiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjI0IiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzAiIGN5PSI0NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzNiIgY3k9IjQ2IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMjIiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIyOCIgY3k9IjU1IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjM0IiBjeT0iNTUiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iNDAiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgPC9nPgo8L3N2Zz4K">
-    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Roboto:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Lato:ital,wght@0,400;0,700;1,400;1,700&family=Montserrat:ital,wght@0,400;0,700;1,400;1,700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Raleway:ital,wght@0,400;0,700;1,400;1,700&family=Oswald:wght@400;700&family=Merriweather:ital,wght@0,400;0,700;1,400;1,700&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Nunito:ital,wght@0,400;0,700;1,400;1,700&family=Quicksand:wght@400;700&family=Caveat:wght@400;700&family=Sacramento&family=Allura&family=Satisfy&family=Parisienne&family=Amatic+SC:wght@400;700&family=Permanent+Marker&family=Shadows+Into+Light&family=Kalam:wght@400;700&family=Indie+Flower&family=Courgette&family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400;1,700&family=Bebas+Neue&family=Anton&family=Impact&family=Abril+Fatface&family=Righteous&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
 </head>
@@ -202,6 +258,7 @@
         <button class="tool-rail-btn" id="toolLine" title="Lignes et courbes"><span class="icon">✏️</span>Lignes</button>
         <button class="tool-rail-btn" id="toolColor" title="Couleurs"><span class="icon">🎨</span>Couleurs</button>
         <button class="tool-rail-btn" id="toolCrop" title="Rogner une image sélectionnée"><span class="icon">✂️</span>Rogner</button>
+        <button class="tool-rail-btn" id="toolRetouche" title="Retouche d'image"><span class="icon">🖌️</span>Retouche</button>
         <button class="tool-rail-btn" id="toolImages" title="Importer une image ou un DXF"><span class="icon">🖼️</span>Images</button>
         <button class="tool-rail-btn" id="toolSearch" title="Rechercher des images libres de droits"><span class="icon">🔍</span>Images web</button>
         <button class="tool-rail-btn" id="toolText" title="Ajouter du texte"><span class="icon">🅣</span>Texte</button>
@@ -313,6 +370,98 @@
         <div id="projectsList" class="projects-list"></div>
     </div>
 
+    <!-- Panneau de mise en forme du texte -->
+    <div id="textPanel" class="text-panel">
+        <div class="text-panel-header">
+            <span>🅣 Mise en forme du texte</span>
+            <button id="textPanelCloseBtn" style="border:none;background:none;font-size:16px;cursor:pointer;color:#94a3b8;">✕</button>
+        </div>
+        <div class="text-panel-body">
+            <div>
+                <div class="text-panel-label">Police</div>
+                <input type="text" id="fontSearchInput" class="font-search-input" placeholder="Rechercher une police…">
+                <div class="font-list" id="fontList"></div>
+            </div>
+            <div>
+                <div class="text-panel-label">Style</div>
+                <div class="text-style-row">
+                    <button id="boldBtn" class="text-style-btn" title="Gras"><strong>G</strong></button>
+                    <button id="italicBtn" class="text-style-btn" title="Italique"><em>I</em></button>
+                </div>
+            </div>
+            <div>
+                <div class="text-panel-label">Taille : <span id="fontSizeVal">3.0 cm</span></div>
+                <div class="text-size-row">
+                    <input type="range" id="fontSizeRange" min="0.5" max="20" step="0.1" value="3">
+                </div>
+            </div>
+            <div>
+                <div class="text-panel-label">Couleur</div>
+                <div class="text-color-row">
+                    <input type="color" id="textColorPicker" value="#000000">
+                    <input type="text" id="textColorHex" class="text-color-hex" value="#000000" maxlength="7" placeholder="#RRGGBB">
+                </div>
+            </div>
+            <div>
+                <div class="text-panel-label">Contenu</div>
+                <textarea id="textContentArea" rows="2" style="width:100%;box-sizing:border-box;padding:7px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;resize:vertical;font-family:inherit;"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panneau Retouche d'image -->
+    <div id="retouchePanel" class="retouche-panel">
+        <div class="rp-header">
+            <span>🖌️ Retouche d'image</span>
+            <button id="retouchePanelCloseBtn">✕</button>
+        </div>
+        <div id="retoucheNoImg" class="rp-no-img">Sélectionnez une image (PNG/JPG) sur le plan de travail.</div>
+        <div id="retoucheBody" style="display:none;">
+            <!-- Réglages non-destructifs -->
+            <div class="rp-section">
+                <div class="rp-title">Réglages</div>
+                <div class="rp-row"><label>Luminosité</label><input type="range" id="rpBrightness" min="-100" max="100" step="1" value="0"><span class="rp-val" id="rpBrightnessVal">0</span></div>
+                <div class="rp-row"><label>Contraste</label><input type="range" id="rpContrast" min="-100" max="100" step="1" value="0"><span class="rp-val" id="rpContrastVal">0</span></div>
+                <div class="rp-row"><label>Saturation</label><input type="range" id="rpSaturation" min="-100" max="100" step="1" value="0"><span class="rp-val" id="rpSaturationVal">0</span></div>
+                <div class="rp-row"><label>Exposition</label><input type="range" id="rpExposure" min="-100" max="100" step="1" value="0"><span class="rp-val" id="rpExposureVal">0</span></div>
+                <div class="rp-row"><label>Flou</label><input type="range" id="rpBlur" min="0" max="20" step="0.5" value="0"><span class="rp-val" id="rpBlurVal">0</span></div>
+                <button class="rp-apply" id="rpApplyFilters">✓ Appliquer les réglages</button>
+            </div>
+            <!-- Effets -->
+            <div class="rp-section">
+                <div class="rp-title">Effets</div>
+                <div class="rp-btn-grid">
+                    <button class="rp-btn" id="rpGrayscale">⬛ Niveaux de gris</button>
+                    <button class="rp-btn" id="rpInvert">🔄 Inverser</button>
+                    <button class="rp-btn" id="rpSepia">🟫 Sépia</button>
+                    <button class="rp-btn" id="rpSharpen">🔪 Accentuer</button>
+                    <button class="rp-btn" id="rpSoften">☁️ Adoucir</button>
+                    <button class="rp-btn" id="rpEmboss">💎 Relief</button>
+                </div>
+                <div class="rp-row" style="margin-top:10px;">
+                    <label>Seuillage</label>
+                    <input type="range" id="rpThreshold" min="0" max="255" step="1" value="128">
+                    <span class="rp-val" id="rpThresholdVal">128</span>
+                </div>
+                <button class="rp-btn" style="width:100%;margin-top:2px;" id="rpApplyThreshold">⚫ Appliquer seuillage (Cricut B&amp;W)</button>
+            </div>
+            <!-- Transformations -->
+            <div class="rp-section">
+                <div class="rp-title">Transformations</div>
+                <div class="rp-btn-grid">
+                    <button class="rp-btn" id="rpFlipH">↔️ Retourner H</button>
+                    <button class="rp-btn" id="rpFlipV">↕️ Retourner V</button>
+                    <button class="rp-btn" id="rpRotate90CW">↻ Rotation 90° D</button>
+                    <button class="rp-btn" id="rpRotate90CCW">↺ Rotation 90° G</button>
+                </div>
+            </div>
+            <!-- Réinitialiser -->
+            <div class="rp-section">
+                <button class="rp-btn danger" style="width:100%;" id="rpReset">↩ Réinitialiser l'image originale</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Panneau de validation du rognage -->
     <div id="cropPanel" style="display: none; position: fixed; z-index: 260; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,.15); padding: 10px; gap: 8px; flex-direction: column; width: 190px;">
         <div style="font-size: 12px; color: #334155;">Ajustez le cadre vert puis validez.</div>
@@ -356,7 +505,6 @@
                     <svg id="matSvg" class="mat-svg" xmlns="http://www.w3.org/2000/svg"></svg>
                 </div>
             </div>
-            <button id="deleteSelBtn" class="delete-sel-btn">🗑️ Supprimer la sélection</button>
             <div class="zoom-controls">
                 <button id="zoomOutBtn">−</button>
                 <span id="zoomLabel">100%</span>
@@ -367,6 +515,7 @@
 
         <div class="actions">
             <button id="downloadBtn" class="btn btn-success" disabled style="flex: 2;">Télécharger pour Cricut (SVG)</button>
+            <button id="deleteSelBtn" class="delete-sel-btn">🗑️ Supprimer</button>
             <button id="resetBtn" class="btn" style="background: #64748b; color: white; flex: 1;">Nouveau projet</button>
         </div>
     </div>
@@ -386,10 +535,17 @@
 
         <div class="chat-header" style="display: flex; align-items: center; gap: 10px;">
             <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPCEtLSBGaWwgLS0+CiAgPHBhdGggZD0iTTYgNTAgQyAxNiA0MCwgMTAgMzAsIDIyIDI2IiBmaWxsPSJub25lIiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPCEtLSBBaWd1aWxsZSAtLT4KICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSAzMCAyOCkiPgogICAgPHJlY3QgeD0iMjgiIHk9IjYiIHdpZHRoPSIzIiBoZWlnaHQ9IjM0IiByeD0iMS41IiBmaWxsPSIjOTRhM2I4Ii8+CiAgICA8cG9seWdvbiBwb2ludHM9IjI5LjUsNCAyNiwxMiAzMywxMiIgZmlsbD0iIzk0YTNiOCIvPgogICAgPGVsbGlwc2UgY3g9IjI5LjUiIGN5PSIzNCIgcng9IjIuNCIgcnk9IjMuNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjQ3NDhiIiBzdHJva2Utd2lkdGg9IjEuMiIvPgogIDwvZz4KICA8IS0tIETDqSDDoCBjb3VkcmUgKHRoaW1ibGUpIC0tPgogIDxnPgogICAgPHBhdGggZD0iTTIyIDYyIEMgMjAgNDYsIDIyIDM0LCAzMiAzMCBDIDQyIDM0LCA0NCA0NiwgNDIgNjIgWiIgZmlsbD0iI2Y1OWUwYiIgc3Ryb2tlPSIjYjQ1MzA5IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogICAgPGVsbGlwc2UgY3g9IjMyIiBjeT0iMzAiIHJ4PSIxMCIgcnk9IjQiIGZpbGw9IiNmYmJmMjQiIHN0cm9rZT0iI2I0NTMwOSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwhLS0gbW90aWZzIGFsdsOpb2xlcyAtLT4KICAgIDxjaXJjbGUgY3g9IjI2IiBjeT0iNDAiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzOCIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzOCIgY3k9IjQwIiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjI0IiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzAiIGN5PSI0NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzNiIgY3k9IjQ2IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMjIiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIyOCIgY3k9IjU1IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjM0IiBjeT0iNTUiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iNDAiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgPC9nPgo8L3N2Zz4K" alt="" style="width: 24px; height: 24px; flex-shrink: 0;">
-            <span><strong>Assistant IA Cricut</strong> (Gemini)</span>
+            <span><strong>Assistant IA Cricut</strong> — <span id="modelLabel">Gemini 2.5 Flash</span></span>
         </div>
         <div class="api-box">
             <input type="text" id="apiKeyInput" placeholder="Collez votre clé d'API Gemini ici..." autocomplete="off">
+            <div class="api-box-row">
+                <select id="geminiModelSelect" title="Modèle Gemini">
+                    <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash 🧠 (recommandé)</option>
+                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite ⚡ (économique)</option>
+                </select>
+                <button id="clearChatBtn" title="Vider l'historique du chat">🗑️ Vider</button>
+            </div>
         </div>
         <div id="chatMessages" class="chat-messages">
             <div class="message ai">Bonjour Lilia ! Importez une image/DXF, ajoutez des formes ou du texte, ou demandez à l'IA — chaque élément s'ajoute sur le plan de travail et reste déplaçable/redimensionnable. Que fait-on ?</div>
@@ -460,16 +616,16 @@
         </div>
     </div>
 
-    <!-- MODALE (CHOIX COULEUR À L'IMPORT) -->
+    <!-- MODALE (CHOIX COULEUR À L'EXPORT) -->
     <div id="importColorModal" class="modal">
         <div class="modal-content" style="max-width: 380px;">
             <div class="modal-header">
-                <h2>Mode d'import de l'image</h2>
+                <h2>Mode de vectorisation</h2>
             </div>
             <div style="padding: 24px; display: flex; flex-direction: column; gap: 12px;">
-                <p style="margin: 0; font-size: 13px; color: #475569;">Comment souhaitez-vous importer cette image ?</p>
+                <p style="margin: 0; font-size: 13px; color: #475569;">Comment vectoriser les images pour l'export Cricut ?</p>
                 <button id="importBWBtn" class="btn" style="background: #0f172a; color: #fff; padding: 14px;">⚫ Noir et blanc (silhouette de découpe)</button>
-                <button id="importColorBtn" class="btn" style="background: #3b82f6; color: #fff; padding: 14px;">🎨 Couleurs d'origine</button>
+                <button id="importColorBtn" class="btn" style="background: #3b82f6; color: #fff; padding: 14px;">🎨 Conserver les couleurs détectées</button>
             </div>
         </div>
     </div>
@@ -477,6 +633,8 @@
 <script>
     // ===================== Références DOM =====================
     const apiKeyInput = document.getElementById('apiKeyInput');
+    const geminiModelSelect = document.getElementById('geminiModelSelect');
+    const clearChatBtn = document.getElementById('clearChatBtn');
     const chatMessages = document.getElementById('chatMessages');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
@@ -550,6 +708,28 @@
     const toolLine = document.getElementById('toolLine');
     const toolColor = document.getElementById('toolColor');
     const toolCrop = document.getElementById('toolCrop');
+    const toolRetouche = document.getElementById('toolRetouche');
+    const retouchePanel = document.getElementById('retouchePanel');
+    const retouchePanelCloseBtn = document.getElementById('retouchePanelCloseBtn');
+    const retoucheNoImg = document.getElementById('retoucheNoImg');
+    const retoucheBody = document.getElementById('retoucheBody');
+    const rpBrightness = document.getElementById('rpBrightness');
+    const rpContrast = document.getElementById('rpContrast');
+    const rpSaturation = document.getElementById('rpSaturation');
+    const rpExposure = document.getElementById('rpExposure');
+    const rpBlur = document.getElementById('rpBlur');
+    const rpThreshold = document.getElementById('rpThreshold');
+    const textPanel = document.getElementById('textPanel');
+    const textPanelCloseBtn = document.getElementById('textPanelCloseBtn');
+    const fontSearchInput = document.getElementById('fontSearchInput');
+    const fontList = document.getElementById('fontList');
+    const boldBtn = document.getElementById('boldBtn');
+    const italicBtn = document.getElementById('italicBtn');
+    const fontSizeRange = document.getElementById('fontSizeRange');
+    const fontSizeVal = document.getElementById('fontSizeVal');
+    const textColorPicker = document.getElementById('textColorPicker');
+    const textColorHex = document.getElementById('textColorHex');
+    const textContentArea = document.getElementById('textContentArea');
     const cropPanel = document.getElementById('cropPanel');
     const cropApplyBtn = document.getElementById('cropApplyBtn');
     const cropCancelBtn = document.getElementById('cropCancelBtn');
@@ -823,25 +1003,27 @@
         if (eraserMode) setEraserMode(false);
         if (lineMode) setLineMode(false);
         nodeEditId = null;
-        const w = 10, h = 2.5;
+        const h = 3.0, w = 14;
         const obj = {
             id: nextObjId++, type: 'text',
             x: (MAT_W - w) / 2, y: (MAT_H - h) / 2, w, h, rotation: 0,
-            text: 'Votre texte', fontSize: h * 0.7, color: '#000000'
+            text: 'Votre texte',
+            fontSize: h * 0.85,
+            fontFamily: currentTextFont,
+            bold: currentTextBold,
+            italic: currentTextItalic,
+            color: currentTextColor
         };
         objects.push(obj);
         selectedId = obj.id;
         downloadBtn.disabled = false;
         renderMat();
         pushHistory();
-        setTimeout(() => editTextObject(obj.id), 50);
+        openTextPanel(obj.id);
     }
 
     function editTextObject(id) {
-        const obj = objects.find(o => o.id === id);
-        if (!obj) return;
-        const val = prompt("Texte :", obj.text);
-        if (val !== null && val.trim() !== '') { obj.text = val; renderMat(); pushHistory(); }
+        openTextPanel(id);
     }
 
     function getObjBBox(obj) {
@@ -883,8 +1065,12 @@
             }
         } else if (obj.type === 'text') {
             const t = svgEl('text', {
-                x: obj.x, y: obj.y + obj.h * 0.78,
-                'font-size': obj.fontSize, 'font-family': "'Segoe UI', Arial, sans-serif", fill: obj.color || '#000000'
+                x: obj.x, y: obj.y + obj.h * 0.85,
+                'font-size': obj.fontSize,
+                'font-family': obj.fontFamily || "'Segoe UI', Arial, sans-serif",
+                'font-weight': obj.bold ? 'bold' : 'normal',
+                'font-style': obj.italic ? 'italic' : 'normal',
+                fill: obj.color || '#000000'
             });
             t.textContent = obj.text;
             g.appendChild(t);
@@ -900,6 +1086,23 @@
             });
             nested.innerHTML = innerContent;
             g.appendChild(nested);
+        } else if (obj.type === 'raster') {
+            const cssFilter = buildRasterCSSFilter(obj);
+            const img = svgEl('image', {
+                x: obj.x, y: obj.y, width: obj.w, height: obj.h,
+                href: obj.dataUrl, preserveAspectRatio: 'xMidYMid meet'
+            });
+            if (cssFilter) img.setAttribute('style', `filter: ${cssFilter};`);
+            if (obj.cropBox) {
+                const clipId = `clip-${obj.id}`;
+                const defs = svgEl('defs', {});
+                const clipPath = svgEl('clipPath', { id: clipId });
+                clipPath.appendChild(svgEl('rect', { x: obj.x, y: obj.y, width: obj.w, height: obj.h }));
+                defs.appendChild(clipPath);
+                g.appendChild(defs);
+                img.setAttribute('clip-path', `url(#${clipId})`);
+            }
+            g.appendChild(img);
         } else if (obj.type === 'eraser' || obj.type === 'line') {
             const strokeColor = obj.type === 'eraser' ? '#ffffff' : obj.color;
             if (obj.points.length < 2) {
@@ -1017,6 +1220,16 @@
             else { cropState = null; cropPanel.style.display = 'none'; }
         }
         deleteSelBtn.style.display = selectedId ? 'block' : 'none';
+        const selObj = selectedId ? objects.find(o => o.id === selectedId) : null;
+        if (textPanel.style.display === 'flex') {
+            if (selObj && selObj.type === 'text') {
+                if (selObj.id !== textPanelObjId) syncTextPanel(selObj);
+            } else if (!selObj || selObj.type !== 'text') {
+                textPanelObjId = null;
+                syncTextPanel(null);
+            }
+        }
+        if (retouchePanel.style.display === 'flex') syncRetouchePanel();
         renderRulers();
         if (colorPopover.style.display === 'flex') syncColorPopover();
     }
@@ -1169,7 +1382,7 @@
             const bbox = getObjBBox(obj);
             const center = { x: bbox.x + bbox.w / 2, y: bbox.y + bbox.h / 2 };
             const startAngle = Math.atan2(pt.y - center.y, pt.x - center.x) * 180 / Math.PI;
-            dragState = { mode: 'rotate', id, center, startAngle, startRotation: obj.rotation || 0 };
+            dragState = { mode: 'rotate', id, center, startAngle, startRotation: obj.rotation || 0, startPt: pt };
             dragMoved = false;
         } else if (handleEl) {
             const id = Number(handleEl.dataset.id);
@@ -1370,6 +1583,443 @@
     zoomResetBtn.addEventListener('click', () => setZoom(1));
 
     // ===================== Barre d'outils =====================
+    // ===================== Outil Texte — polices et mise en forme =====================
+    const FONT_LIST = [
+        { name: 'Segoe UI', label: 'Segoe UI (défaut)' },
+        { name: 'Arial', label: 'Arial' },
+        { name: 'Georgia', label: 'Georgia' },
+        { name: 'Times New Roman', label: 'Times New Roman' },
+        { name: 'Courier New', label: 'Courier New' },
+        { name: 'Roboto', label: 'Roboto' },
+        { name: 'Open Sans', label: 'Open Sans' },
+        { name: 'Lato', label: 'Lato' },
+        { name: 'Montserrat', label: 'Montserrat' },
+        { name: 'Nunito', label: 'Nunito' },
+        { name: 'Raleway', label: 'Raleway' },
+        { name: 'PT Sans', label: 'PT Sans' },
+        { name: 'Oswald', label: 'Oswald' },
+        { name: 'Quicksand', label: 'Quicksand' },
+        { name: 'Merriweather', label: 'Merriweather' },
+        { name: 'Playfair Display', label: 'Playfair Display' },
+        { name: 'Cormorant Garamond', label: 'Cormorant Garamond' },
+        { name: 'Cinzel', label: 'Cinzel' },
+        { name: 'Bebas Neue', label: 'Bebas Neue' },
+        { name: 'Anton', label: 'Anton' },
+        { name: 'Abril Fatface', label: 'Abril Fatface' },
+        { name: 'Righteous', label: 'Righteous' },
+        { name: 'Permanent Marker', label: 'Permanent Marker' },
+        { name: 'Shadows Into Light', label: 'Shadows Into Light' },
+        { name: 'Indie Flower', label: 'Indie Flower' },
+        { name: 'Amatic SC', label: 'Amatic SC' },
+        { name: 'Kalam', label: 'Kalam' },
+        { name: 'Caveat', label: 'Caveat' },
+        { name: 'Dancing Script', label: 'Dancing Script' },
+        { name: 'Pacifico', label: 'Pacifico' },
+        { name: 'Lobster', label: 'Lobster' },
+        { name: 'Courgette', label: 'Courgette' },
+        { name: 'Great Vibes', label: 'Great Vibes' },
+        { name: 'Sacramento', label: 'Sacramento' },
+        { name: 'Allura', label: 'Allura' },
+        { name: 'Satisfy', label: 'Satisfy' },
+        { name: 'Parisienne', label: 'Parisienne' },
+    ];
+
+    let currentTextFont = 'Segoe UI';
+    let currentTextBold = false;
+    let currentTextItalic = false;
+    let currentTextColor = '#000000';
+    let textPanelObjId = null;
+
+    function buildFontList(filter) {
+        fontList.innerHTML = '';
+        const filtered = filter ? FONT_LIST.filter(f => f.label.toLowerCase().includes(filter.toLowerCase())) : FONT_LIST;
+        const obj = objects.find(o => o.id === textPanelObjId);
+        const active = obj ? obj.fontFamily : currentTextFont;
+        filtered.forEach(f => {
+            const div = document.createElement('div');
+            div.className = 'font-item' + (f.name === active ? ' active' : '');
+            div.textContent = f.label;
+            div.style.fontFamily = f.name;
+            div.addEventListener('click', () => {
+                currentTextFont = f.name;
+                applyTextProp('fontFamily', f.name);
+                buildFontList(fontSearchInput.value);
+            });
+            fontList.appendChild(div);
+        });
+        if (active && !filtered.find(f => f.name === active)) {
+            const div = document.createElement('div');
+            div.className = 'font-item active';
+            div.textContent = active;
+            div.style.fontFamily = active;
+            fontList.insertBefore(div, fontList.firstChild);
+        }
+    }
+
+    function syncTextPanel(obj) {
+        textPanelObjId = obj ? obj.id : null;
+        fontSearchInput.value = '';
+        buildFontList('');
+        const bold = obj ? !!obj.bold : currentTextBold;
+        const italic = obj ? !!obj.italic : currentTextItalic;
+        const color = obj ? (obj.color || '#000000') : currentTextColor;
+        const size = obj ? (obj.fontSize || 3) : 3;
+        boldBtn.classList.toggle('active', bold);
+        italicBtn.classList.toggle('active', italic);
+        textColorPicker.value = color;
+        textColorHex.value = color.toUpperCase();
+        fontSizeRange.value = Math.min(20, Math.max(0.5, size));
+        fontSizeVal.textContent = size.toFixed(1) + ' cm';
+        textContentArea.value = obj ? obj.text : '';
+        textContentArea.style.fontFamily = obj ? (obj.fontFamily || 'Segoe UI') : currentTextFont;
+    }
+
+    function applyTextProp(prop, val) {
+        currentTextFont = prop === 'fontFamily' ? val : currentTextFont;
+        currentTextBold = prop === 'bold' ? val : currentTextBold;
+        currentTextItalic = prop === 'italic' ? val : currentTextItalic;
+        currentTextColor = prop === 'color' ? val : currentTextColor;
+        const obj = objects.find(o => o.id === textPanelObjId);
+        if (!obj) return;
+        obj[prop] = val;
+        if (prop === 'fontFamily') textContentArea.style.fontFamily = val;
+        renderMat();
+    }
+
+    function openTextPanel(objId) {
+        textPanelObjId = objId;
+        const obj = objects.find(o => o.id === objId);
+        const rect = toolText.getBoundingClientRect();
+        textPanel.style.left = (rect.right + 6) + 'px';
+        textPanel.style.top = Math.max(10, rect.top - 50) + 'px';
+        textPanel.style.display = 'flex';
+        syncTextPanel(obj || null);
+    }
+
+    fontSearchInput.addEventListener('input', () => buildFontList(fontSearchInput.value));
+    boldBtn.addEventListener('click', () => {
+        const obj = objects.find(o => o.id === textPanelObjId);
+        const newVal = obj ? !obj.bold : !currentTextBold;
+        boldBtn.classList.toggle('active', newVal);
+        applyTextProp('bold', newVal);
+        if (obj) pushHistory();
+    });
+    italicBtn.addEventListener('click', () => {
+        const obj = objects.find(o => o.id === textPanelObjId);
+        const newVal = obj ? !obj.italic : !currentTextItalic;
+        italicBtn.classList.toggle('active', newVal);
+        applyTextProp('italic', newVal);
+        if (obj) pushHistory();
+    });
+    fontSizeRange.addEventListener('input', () => {
+        const val = parseFloat(fontSizeRange.value);
+        fontSizeVal.textContent = val.toFixed(1) + ' cm';
+        applyTextProp('fontSize', val);
+    });
+    fontSizeRange.addEventListener('change', () => { const obj = objects.find(o => o.id === textPanelObjId); if (obj) pushHistory(); });
+    textColorPicker.addEventListener('input', () => {
+        textColorHex.value = textColorPicker.value.toUpperCase();
+        applyTextProp('color', textColorPicker.value);
+    });
+    textColorPicker.addEventListener('change', () => { const obj = objects.find(o => o.id === textPanelObjId); if (obj) pushHistory(); });
+    textColorHex.addEventListener('input', () => {
+        let v = textColorHex.value.trim();
+        if (!v.startsWith('#')) v = '#' + v;
+        if (/^#[0-9a-f]{6}$/i.test(v)) { textColorPicker.value = v; applyTextProp('color', v); }
+    });
+    textColorHex.addEventListener('change', () => {
+        let v = textColorHex.value.trim();
+        if (!v.startsWith('#')) v = '#' + v;
+        if (/^#[0-9a-f]{6}$/i.test(v)) { textColorHex.value = v.toUpperCase(); const obj = objects.find(o => o.id === textPanelObjId); if (obj) pushHistory(); }
+    });
+    textContentArea.addEventListener('input', () => {
+        const obj = objects.find(o => o.id === textPanelObjId);
+        if (!obj || !textContentArea.value.trim()) return;
+        obj.text = textContentArea.value;
+        renderMat();
+    });
+    textContentArea.addEventListener('change', () => { const obj = objects.find(o => o.id === textPanelObjId); if (obj) pushHistory(); });
+    textPanelCloseBtn.addEventListener('click', () => { textPanel.style.display = 'none'; });
+
+    // ===================== Retouche d'image =====================
+
+    function buildRasterCSSFilter(obj) {
+        if (!obj.adjustments) return '';
+        const a = obj.adjustments;
+        const parts = [];
+        if (a.brightness) parts.push(`brightness(${1 + a.brightness / 100})`);
+        if (a.contrast) parts.push(`contrast(${1 + a.contrast / 100})`);
+        if (a.saturation) parts.push(`saturate(${1 + a.saturation / 100})`);
+        if (a.exposure) parts.push(`brightness(${Math.pow(2, a.exposure / 100)})`);
+        if (a.blur) parts.push(`blur(${a.blur * 0.5}px)`);
+        return parts.join(' ');
+    }
+
+    function syncRetouchePanel() {
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj || obj.type !== 'raster') {
+            retoucheNoImg.style.display = 'block';
+            retoucheBody.style.display = 'none';
+            return;
+        }
+        retoucheNoImg.style.display = 'none';
+        retoucheBody.style.display = 'block';
+        const a = obj.adjustments || {};
+        rpBrightness.value = a.brightness || 0; document.getElementById('rpBrightnessVal').textContent = a.brightness || 0;
+        rpContrast.value = a.contrast || 0; document.getElementById('rpContrastVal').textContent = a.contrast || 0;
+        rpSaturation.value = a.saturation || 0; document.getElementById('rpSaturationVal').textContent = a.saturation || 0;
+        rpExposure.value = a.exposure || 0; document.getElementById('rpExposureVal').textContent = a.exposure || 0;
+        rpBlur.value = a.blur || 0; document.getElementById('rpBlurVal').textContent = a.blur || 0;
+    }
+
+    function applyCanvasOp(obj, opFn) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                opFn(ctx, canvas, img);
+                obj.dataUrl = canvas.toDataURL('image/png');
+                if (!obj.originalDataUrl) obj.originalDataUrl = obj.dataUrl;
+                renderMat();
+                pushHistory();
+                resolve();
+            };
+            img.onerror = () => reject(new Error("Impossible de charger l'image."));
+            img.src = obj.dataUrl;
+        });
+    }
+
+    function canvasConvolve(ctx, canvas, img, kernel, divisor, offset) {
+        ctx.drawImage(img, 0, 0);
+        const src = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const dst = ctx.createImageData(canvas.width, canvas.height);
+        const w = canvas.width, h = canvas.height;
+        for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+                let r = 0, g = 0, b = 0;
+                for (let ky = -1; ky <= 1; ky++) {
+                    for (let kx = -1; kx <= 1; kx++) {
+                        const pi = ((y + ky) * w + (x + kx)) * 4;
+                        const ki = (ky + 1) * 3 + (kx + 1);
+                        r += src.data[pi] * kernel[ki];
+                        g += src.data[pi + 1] * kernel[ki];
+                        b += src.data[pi + 2] * kernel[ki];
+                    }
+                }
+                const di = (y * w + x) * 4;
+                dst.data[di] = Math.min(255, Math.max(0, r / divisor + offset));
+                dst.data[di + 1] = Math.min(255, Math.max(0, g / divisor + offset));
+                dst.data[di + 2] = Math.min(255, Math.max(0, b / divisor + offset));
+                dst.data[di + 3] = src.data[di + 3];
+            }
+        }
+        ctx.putImageData(dst, 0, 0);
+    }
+
+    function burnFiltersToCanvas(obj) {
+        return new Promise((resolve, reject) => {
+            const cssFilter = buildRasterCSSFilter(obj);
+            if (!cssFilter) { resolve(); return; }
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.filter = cssFilter;
+                ctx.drawImage(img, 0, 0);
+                obj.dataUrl = canvas.toDataURL('image/png');
+                obj.adjustments = {};
+                renderMat();
+                pushHistory();
+                syncRetouchePanel();
+                resolve();
+            };
+            img.onerror = () => reject(new Error("Impossible d'appliquer les réglages."));
+            img.src = obj.dataUrl;
+        });
+    }
+
+    function openRetouchePanel() {
+        const rect = toolRetouche.getBoundingClientRect();
+        retouchePanel.style.left = (rect.right + 6) + 'px';
+        retouchePanel.style.top = Math.max(10, rect.top) + 'px';
+        retouchePanel.style.display = 'flex';
+        syncRetouchePanel();
+    }
+
+    toolRetouche.addEventListener('click', () => {
+        if (retouchePanel.style.display === 'flex') { retouchePanel.style.display = 'none'; return; }
+        openRetouchePanel();
+    });
+    retouchePanelCloseBtn.addEventListener('click', () => { retouchePanel.style.display = 'none'; });
+
+    // Sliders non-destructifs
+    function bindSlider(el, key, valId) {
+        el.addEventListener('input', () => {
+            document.getElementById(valId).textContent = el.value;
+            const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+            if (!obj) return;
+            if (!obj.adjustments) obj.adjustments = {};
+            obj.adjustments[key] = parseFloat(el.value);
+            renderMat();
+        });
+        el.addEventListener('change', () => { const obj = objects.find(o => o.id === selectedId && o.type === 'raster'); if (obj) pushHistory(); });
+    }
+    bindSlider(rpBrightness, 'brightness', 'rpBrightnessVal');
+    bindSlider(rpContrast, 'contrast', 'rpContrastVal');
+    bindSlider(rpSaturation, 'saturation', 'rpSaturationVal');
+    bindSlider(rpExposure, 'exposure', 'rpExposureVal');
+    bindSlider(rpBlur, 'blur', 'rpBlurVal');
+    rpThreshold.addEventListener('input', () => { document.getElementById('rpThresholdVal').textContent = rpThreshold.value; });
+
+    document.getElementById('rpApplyFilters').addEventListener('click', async () => {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (!obj) return;
+        await burnFiltersToCanvas(obj);
+        appendMessage("Réglages appliqués définitivement sur l'image.", 'ai');
+    });
+
+    // Effets destructifs
+    document.getElementById('rpGrayscale').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (!obj) return;
+        applyCanvasOp(obj, (ctx, canvas, img) => {
+            ctx.drawImage(img, 0, 0);
+            const d = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < d.data.length; i += 4) {
+                const g = 0.299 * d.data[i] + 0.587 * d.data[i+1] + 0.114 * d.data[i+2];
+                d.data[i] = d.data[i+1] = d.data[i+2] = g;
+            }
+            ctx.putImageData(d, 0, 0);
+        });
+    });
+
+    document.getElementById('rpInvert').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (!obj) return;
+        applyCanvasOp(obj, (ctx, canvas, img) => {
+            ctx.drawImage(img, 0, 0);
+            const d = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < d.data.length; i += 4) {
+                d.data[i] = 255 - d.data[i]; d.data[i+1] = 255 - d.data[i+1]; d.data[i+2] = 255 - d.data[i+2];
+            }
+            ctx.putImageData(d, 0, 0);
+        });
+    });
+
+    document.getElementById('rpSepia').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (!obj) return;
+        applyCanvasOp(obj, (ctx, canvas, img) => {
+            ctx.drawImage(img, 0, 0);
+            const d = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < d.data.length; i += 4) {
+                const r = d.data[i], g = d.data[i+1], b = d.data[i+2];
+                d.data[i]   = Math.min(255, r*0.393 + g*0.769 + b*0.189);
+                d.data[i+1] = Math.min(255, r*0.349 + g*0.686 + b*0.168);
+                d.data[i+2] = Math.min(255, r*0.272 + g*0.534 + b*0.131);
+            }
+            ctx.putImageData(d, 0, 0);
+        });
+    });
+
+    document.getElementById('rpSharpen').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (!obj) return;
+        applyCanvasOp(obj, (ctx, canvas, img) => {
+            canvasConvolve(ctx, canvas, img, [0,-1,0,-1,5,-1,0,-1,0], 1, 0);
+        });
+    });
+
+    document.getElementById('rpSoften').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (!obj) return;
+        applyCanvasOp(obj, (ctx, canvas, img) => {
+            canvasConvolve(ctx, canvas, img, [1,2,1,2,4,2,1,2,1], 16, 0);
+        });
+    });
+
+    document.getElementById('rpEmboss').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (!obj) return;
+        applyCanvasOp(obj, (ctx, canvas, img) => {
+            canvasConvolve(ctx, canvas, img, [-2,-1,0,-1,1,1,0,1,2], 1, 128);
+        });
+    });
+
+    document.getElementById('rpApplyThreshold').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (!obj) return;
+        const t = parseInt(rpThreshold.value);
+        applyCanvasOp(obj, (ctx, canvas, img) => {
+            ctx.drawImage(img, 0, 0);
+            const d = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < d.data.length; i += 4) {
+                const g = 0.299 * d.data[i] + 0.587 * d.data[i+1] + 0.114 * d.data[i+2];
+                const v = g >= t ? 255 : 0;
+                d.data[i] = d.data[i+1] = d.data[i+2] = v;
+            }
+            ctx.putImageData(d, 0, 0);
+        });
+        appendMessage(`Seuillage à ${t} appliqué — image convertie en silhouette B&W prête pour la découpe Cricut.`, 'ai');
+    });
+
+    // Transformations
+    document.getElementById('rpFlipH').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (!obj) return;
+        applyCanvasOp(obj, (ctx, canvas, img) => {
+            ctx.translate(canvas.width, 0); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0);
+        });
+    });
+
+    document.getElementById('rpFlipV').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (!obj) return;
+        applyCanvasOp(obj, (ctx, canvas, img) => {
+            ctx.translate(0, canvas.height); ctx.scale(1, -1); ctx.drawImage(img, 0, 0);
+        });
+    });
+
+    document.getElementById('rpRotate90CW').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (!obj) return;
+        applyCanvasOp(obj, (ctx, canvas, img) => {
+            canvas.width = img.naturalHeight; canvas.height = img.naturalWidth;
+            ctx.translate(canvas.width, 0); ctx.rotate(Math.PI / 2); ctx.drawImage(img, 0, 0);
+        });
+        const obj2 = objects.find(o => o.id === selectedId);
+        if (obj2) { const tmp = obj2.w; obj2.w = obj2.h; obj2.h = tmp; obj2.naturalW = obj2.h; obj2.naturalH = obj2.w; }
+    });
+
+    document.getElementById('rpRotate90CCW').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (!obj) return;
+        applyCanvasOp(obj, (ctx, canvas, img) => {
+            canvas.width = img.naturalHeight; canvas.height = img.naturalWidth;
+            ctx.translate(0, canvas.height); ctx.rotate(-Math.PI / 2); ctx.drawImage(img, 0, 0);
+        });
+        const obj2 = objects.find(o => o.id === selectedId);
+        if (obj2) { const tmp = obj2.w; obj2.w = obj2.h; obj2.h = tmp; }
+    });
+
+    document.getElementById('rpReset').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (!obj) return;
+        if (!obj.originalDataUrl) { appendMessage("Aucune version originale sauvegardée (l'image est déjà dans son état d'import).", 'ai'); return; }
+        if (!confirm("Revenir à l'image originale ? Toutes les retouches seront perdues.")) return;
+        obj.dataUrl = obj.originalDataUrl;
+        obj.adjustments = {};
+        renderMat();
+        pushHistory();
+        syncRetouchePanel();
+        appendMessage("Image réinitialisée à son état d'origine.", 'ai');
+    });
+
     function comingSoon(name) {
         appendMessage(`La fonctionnalité « ${name} » arrivera dans une prochaine version.`, 'ai');
     }
@@ -1511,7 +2161,13 @@
     projectSaveBtn.addEventListener('click', saveCurrentProject);
     projectNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveCurrentProject(); });
     toolImages.addEventListener('click', () => fileImporter.click());
-    toolText.addEventListener('click', addText);
+    toolText.addEventListener('click', () => {
+        if (textPanel.style.display === 'flex' && !textPanelObjId) {
+            textPanel.style.display = 'none';
+            return;
+        }
+        addText();
+    });
     toolDownload.addEventListener('click', () => downloadBtn.click());
     let aiPanelOpen = true;
     function setAIPanelOpen(open) {
@@ -1673,6 +2329,84 @@
         });
     }
 
+    const COLOR_TOLERANCE = 30; // distance euclidienne max entre deux couleurs
+
+    function hexToRgbArr(hex) {
+        const v = hex.replace('#', '');
+        return [parseInt(v.substr(0, 2), 16), parseInt(v.substr(2, 2), 16), parseInt(v.substr(4, 2), 16)];
+    }
+
+    function rgbToHex(r, g, b) {
+        return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+    }
+
+    function colorDistance(r1, g1, b1, r2, g2, b2) {
+        return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
+    }
+
+    function rasterReplaceColor(obj, fromHex, toHex) {
+        return new Promise((resolve, reject) => {
+            const [fr, fg, fb] = hexToRgbArr(fromHex);
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    if (data[i + 3] === 0) continue;
+                    if (colorDistance(data[i], data[i + 1], data[i + 2], fr, fg, fb) <= COLOR_TOLERANCE) {
+                        if (toHex) {
+                            const [tr, tg, tb] = hexToRgbArr(toHex);
+                            data[i] = tr; data[i + 1] = tg; data[i + 2] = tb;
+                        } else {
+                            data[i + 3] = 0;
+                        }
+                    }
+                }
+                ctx.putImageData(imageData, 0, 0);
+                obj.dataUrl = canvas.toDataURL('image/png');
+                resolve();
+            };
+            img.onerror = () => reject(new Error("Impossible de lire l'image."));
+            img.src = obj.dataUrl;
+        });
+    }
+
+    function sampleRasterColors(obj, maxColors) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const scale = Math.min(1, 120 / Math.max(img.naturalWidth, img.naturalHeight));
+                canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+                canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                const buckets = {};
+                for (let i = 0; i < data.length; i += 4) {
+                    if (data[i + 3] < 30) continue;
+                    const r = data[i] & 0xF0, g = data[i + 1] & 0xF0, b = data[i + 2] & 0xF0;
+                    const key = (r << 16) | (g << 8) | b;
+                    buckets[key] = (buckets[key] || 0) + 1;
+                }
+                const sorted = Object.entries(buckets).sort((a, b) => b[1] - a[1]);
+                const colors = sorted.slice(0, maxColors || 16).map(([key]) => {
+                    const k = parseInt(key);
+                    const r = (k >> 16) & 0xFF, g = (k >> 8) & 0xFF, b = k & 0xFF;
+                    return rgbToHex(r, g, b);
+                });
+                resolve(colors);
+            };
+            img.onerror = () => resolve([]);
+            img.src = obj.dataUrl;
+        });
+    }
+
     function applyColorToSelection(val) {
         const obj = objects.find(o => o.id === selectedId);
         if (!obj) return;
@@ -1693,15 +2427,29 @@
         replaceColorControls.style.display = 'flex';
     }
 
-    function renderDetectedSwatches(obj) {
+    async function renderDetectedSwatches(obj) {
         detectedColorsSwatches.innerHTML = '';
-        if (obj.type !== 'svg' || obj.colorOverride) {
+        if (obj.type !== 'svg' && obj.type !== 'raster') {
             multiColorSection.style.display = 'none';
             replaceColorControls.style.display = 'none';
             selectedSourceColor = null;
             return;
         }
-        const colors = extractColorsFromSvg(obj.innerSVG);
+        if (obj.type === 'svg' && obj.colorOverride) {
+            multiColorSection.style.display = 'none';
+            replaceColorControls.style.display = 'none';
+            selectedSourceColor = null;
+            return;
+        }
+        let colors = [];
+        if (obj.type === 'raster') {
+            detectedColorsSwatches.innerHTML = '<span style="font-size:11px;color:#94a3b8;">Analyse des couleurs…</span>';
+            multiColorSection.style.display = 'flex';
+            colors = await sampleRasterColors(obj, 16);
+        } else {
+            colors = extractColorsFromSvg(obj.innerSVG);
+        }
+        detectedColorsSwatches.innerHTML = '';
         if (colors.length === 0) {
             multiColorSection.style.display = 'none';
             replaceColorControls.style.display = 'none';
@@ -1709,7 +2457,7 @@
             return;
         }
         multiColorSection.style.display = 'flex';
-        if (selectedSourceColor && !colors.includes(selectedSourceColor)) {
+        if (selectedSourceColor && !colors.some(c => normalizeColor(c) === normalizeColor(selectedSourceColor))) {
             selectedSourceColor = null;
             replaceColorControls.style.display = 'none';
         }
@@ -1717,7 +2465,7 @@
             const sw = document.createElement('button');
             sw.dataset.color = c;
             sw.title = c;
-            sw.style.cssText = `width:28px; height:28px; border-radius:6px; border:2px solid ${c === selectedSourceColor ? '#3b82f6' : '#e2e8f0'}; background:${c}; cursor:pointer; padding:0;`;
+            sw.style.cssText = `width:28px; height:28px; border-radius:6px; border:2px solid ${normalizeColor(c) === normalizeColor(selectedSourceColor) ? '#3b82f6' : '#e2e8f0'}; background:${c}; cursor:pointer; padding:0;`;
             sw.addEventListener('click', () => selectSourceColor(c));
             detectedColorsSwatches.appendChild(sw);
         });
@@ -1732,15 +2480,16 @@
         if (!obj || obj.type === 'eraser') {
             colorNoSelection.style.display = 'block';
             colorEditRow.style.display = 'none';
+            colorNoSelection.textContent = "Sélectionnez un objet sur le plan de travail pour modifier sa couleur.";
             return;
         }
-        colorNoSelection.style.display = 'none';
         colorEditRow.style.display = 'flex';
         let current = '#000000';
         if (obj.type === 'shape' || obj.type === 'polygon') current = obj.fill;
         else if (obj.type === 'text') current = obj.color || '#000000';
         else if (obj.type === 'line') current = obj.color;
         else if (obj.type === 'svg') current = obj.colorOverride || '#000000';
+        else if (obj.type === 'raster') current = '#000000';
         colorPicker.value = current;
         if (document.activeElement !== colorHexInput) colorHexInput.value = current.toUpperCase();
         colorResetBtn.style.display = obj.type === 'svg' ? 'block' : 'none';
@@ -1765,8 +2514,8 @@
     toolCrop.addEventListener('click', () => {
         if (cropState) { cancelCrop(); return; }
         const obj = objects.find(o => o.id === selectedId);
-        if (!obj || obj.type !== 'svg') {
-            appendMessage("Sélectionnez d'abord une image (importée, IA ou recherche web) sur le plan de travail pour la rogner.", 'ai');
+        if (!obj || (obj.type !== 'svg' && obj.type !== 'raster')) {
+            appendMessage("Sélectionnez d'abord une image sur le plan de travail pour la rogner.", 'ai');
             return;
         }
         if (eraserMode) setEraserMode(false);
@@ -1844,7 +2593,27 @@
         if (!hex) return;
         const obj = objects.find(o => o.id === selectedId);
         if (!obj) return;
-        if (obj.type === 'svg' && !obj.colorOverride) {
+        if (obj.type === 'raster') {
+            const palette = await sampleRasterColors(obj, 32);
+            if (palette.length === 0) {
+                appendMessage(`Couleur prélevée : ${hex.toUpperCase()}, mais impossible d'analyser cette image.`, 'ai');
+                return;
+            }
+            const [tr, tg, tb] = hexToRgbArr(hex);
+            let best = palette[0], bestDist = Infinity;
+            palette.forEach(c => {
+                const [r, g, b] = hexToRgbArr(c);
+                const d = colorDistance(r, g, b, tr, tg, tb);
+                if (d < bestDist) { bestDist = d; best = c; }
+            });
+            multiColorSection.style.display = 'flex';
+            await renderDetectedSwatches(obj);
+            selectSourceColor(best);
+            const msg = best !== hex
+                ? `Couleur prélevée : ${hex.toUpperCase()} → teinte la plus proche dans l'image : ${best.toUpperCase()} (tolérance ${COLOR_TOLERANCE}). Remplacez ou effacez.`
+                : `Couleur ${hex.toUpperCase()} sélectionnée dans l'image. Remplacez ou effacez.`;
+            appendMessage(msg, 'ai');
+        } else if (obj.type === 'svg' && !obj.colorOverride) {
             const matched = closestDetectedColor(obj, hex);
             if (!matched) {
                 appendMessage(`Couleur prélevée : ${hex.toUpperCase()}, mais aucune couleur exploitable n'a été détectée dans cette image.`, 'ai');
@@ -1853,9 +2622,9 @@
             multiColorSection.style.display = 'flex';
             selectSourceColor(matched);
             if (matched !== hex) {
-                appendMessage(`Couleur prélevée : ${hex.toUpperCase()} → couleur correspondante dans l'image : ${matched.toUpperCase()}. Choisissez une couleur de remplacement ou cliquez « Effacer ».`, 'ai');
+                appendMessage(`Couleur prélevée : ${hex.toUpperCase()} → couleur correspondante : ${matched.toUpperCase()}. Remplacez ou effacez.`, 'ai');
             } else {
-                appendMessage(`Couleur ${hex.toUpperCase()} sélectionnée dans l'image. Choisissez une couleur de remplacement ou cliquez « Effacer ».`, 'ai');
+                appendMessage(`Couleur ${hex.toUpperCase()} sélectionnée. Remplacez ou effacez.`, 'ai');
             }
         } else {
             colorPicker.value = hex;
@@ -1891,24 +2660,54 @@
             replaceColorHex.value = hex.toUpperCase();
         }
     });
-    applyReplaceColorBtn.addEventListener('click', () => {
+    applyReplaceColorBtn.addEventListener('click', async () => {
         const obj = objects.find(o => o.id === selectedId);
-        if (!obj || obj.type !== 'svg' || !selectedSourceColor) return;
+        if (!obj || !selectedSourceColor) return;
         const target = replaceColorPicker.value;
-        replaceColorInObject(obj, selectedSourceColor, target);
-        renderMat();
-        pushHistory();
-        appendMessage(`Couleur ${selectedSourceColor} remplacée par ${target} dans l'image.`, 'ai');
-        syncColorPopover();
+        applyReplaceColorBtn.disabled = true;
+        applyReplaceColorBtn.textContent = '…';
+        try {
+            if (obj.type === 'raster') {
+                await rasterReplaceColor(obj, selectedSourceColor, target);
+                renderMat();
+                pushHistory();
+                appendMessage(`Couleur ${selectedSourceColor.toUpperCase()} remplacée par ${target.toUpperCase()} dans l'image.`, 'ai');
+                syncColorPopover();
+            } else if (obj.type === 'svg') {
+                replaceColorInObject(obj, selectedSourceColor, target);
+                renderMat();
+                pushHistory();
+                appendMessage(`Couleur ${selectedSourceColor.toUpperCase()} remplacée par ${target.toUpperCase()}.`, 'ai');
+                syncColorPopover();
+            }
+        } finally {
+            applyReplaceColorBtn.disabled = false;
+            applyReplaceColorBtn.textContent = '✓ Remplacer';
+        }
     });
-    eraseColorBtn.addEventListener('click', () => {
+    eraseColorBtn.addEventListener('click', async () => {
         const obj = objects.find(o => o.id === selectedId);
-        if (!obj || obj.type !== 'svg' || !selectedSourceColor) return;
-        replaceColorInObject(obj, selectedSourceColor, null);
-        renderMat();
-        pushHistory();
-        appendMessage(`Couleur ${selectedSourceColor} effacée de l'image.`, 'ai');
-        syncColorPopover();
+        if (!obj || !selectedSourceColor) return;
+        eraseColorBtn.disabled = true;
+        eraseColorBtn.textContent = '…';
+        try {
+            if (obj.type === 'raster') {
+                await rasterReplaceColor(obj, selectedSourceColor, null);
+                renderMat();
+                pushHistory();
+                appendMessage(`Couleur ${selectedSourceColor.toUpperCase()} effacée de l'image.`, 'ai');
+                syncColorPopover();
+            } else if (obj.type === 'svg') {
+                replaceColorInObject(obj, selectedSourceColor, null);
+                renderMat();
+                pushHistory();
+                appendMessage(`Couleur ${selectedSourceColor.toUpperCase()} effacée.`, 'ai');
+                syncColorPopover();
+            }
+        } finally {
+            eraseColorBtn.disabled = false;
+            eraseColorBtn.textContent = '🧹 Effacer';
+        }
     });
 
     // ===================== Recherche d'images web (Openverse) =====================
@@ -1973,15 +2772,35 @@
     imageSearchBtn.addEventListener('click', runImageSearch);
     imageSearchInput.addEventListener('keydown', e => { if (e.key === 'Enter') runImageSearch(); });
 
+    // Convertit un SVG (string) en dataURL PNG via <canvas>
+    function svgToPngDataUrl(svgString, w, h) {
+        return new Promise((resolve, reject) => {
+            const blob = new Blob([svgString], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = w || img.naturalWidth || 512;
+                canvas.height = h || img.naturalHeight || 512;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                URL.revokeObjectURL(url);
+                resolve(canvas.toDataURL('image/png'));
+            };
+            img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Impossible de convertir le SVG en image.")); };
+            img.src = url;
+        });
+    }
+
     async function insertWebImage(item) {
         imageSearchStatus.textContent = "Ajout de l'image en cours...";
         const imgUrl = item.url || item.thumbnail;
-        let href = imgUrl;
+        let dataUrl = null;
         try {
             const resp = await fetch(imgUrl, { mode: 'cors' });
             if (resp.ok) {
                 const blob = await resp.blob();
-                href = await new Promise((resolve, reject) => {
+                dataUrl = await new Promise((resolve, reject) => {
                     const r = new FileReader();
                     r.onload = () => resolve(r.result);
                     r.onerror = reject;
@@ -1989,13 +2808,30 @@
                 });
             }
         } catch (err) {
-            // Image non accessible en CORS : on garde l'URL directe (fonctionne à l'affichage, nécessite internet à la réouverture)
+            // CORS bloqué : fallback image directe via <img>
         }
-        const w = item.width || 400, h = item.height || 400;
-        const wrapped = `<svg viewBox="0 0 ${w} ${h}"><image href="${href}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice"/></svg>`;
-        addSvgObject(wrapped);
+        if (!dataUrl) {
+            // Chargement via balise img pour contourner CORS
+            dataUrl = await new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth || 400;
+                    canvas.height = img.naturalHeight || 400;
+                    canvas.getContext('2d').drawImage(img, 0, 0);
+                    try { resolve(canvas.toDataURL('image/jpeg', 0.92)); }
+                    catch { resolve(imgUrl); } // canvas tainted : on garde l'URL directe
+                };
+                img.onerror = () => resolve(imgUrl);
+                img.src = imgUrl;
+            });
+        }
+        const naturalW = item.width || 400, naturalH = item.height || 400;
+        const fileName = item.title ? item.title.substring(0, 40) : 'image-web';
+        addRasterObject(dataUrl, fileName, naturalW, naturalH);
         imageSearchStatus.textContent = "Image ajoutée sur le plan de travail !";
-        appendMessage("Image insérée depuis la recherche web. Pour la découper avec la Cricut (plutôt que l'imprimer), utilisez aussi « Images » pour la transformer en contour vectoriel.", 'ai');
+        appendMessage("Image web ajoutée. Elle sera vectorisée au moment de l'export.", 'ai');
     }
 
     // ===================== Taille du tapis =====================
@@ -2039,11 +2875,44 @@
     if (localStorage.getItem('cricut_gemini_key')) {
         apiKeyInput.value = localStorage.getItem('cricut_gemini_key');
     }
+    if (localStorage.getItem('cricut_gemini_model')) {
+        geminiModelSelect.value = localStorage.getItem('cricut_gemini_model');
+        const label = geminiModelSelect.options[geminiModelSelect.selectedIndex]?.text.replace(/[⚡🧠]/g, '').trim();
+        if (label) document.getElementById('modelLabel').textContent = label;
+    }
+    geminiModelSelect.addEventListener('change', () => {
+        localStorage.setItem('cricut_gemini_model', geminiModelSelect.value);
+        const label = geminiModelSelect.options[geminiModelSelect.selectedIndex].text.replace(/[⚡🧠]/g, '').trim();
+        document.getElementById('modelLabel').textContent = label;
+        appendMessage(`Modèle basculé vers : ${label}`, 'ai');
+    });
+    clearChatBtn.addEventListener('click', () => {
+        if (!confirm("Vider l'historique du chat ? (aucun effet sur le plan de travail)")) return;
+        chatMessages.innerHTML = '<div class="message ai">Chat vidé. L\'historique affiché ici n\'est pas envoyé à l\'IA — chaque requête est indépendante.</div>';
+    });
     apiKeyInput.addEventListener('input', () => {
         localStorage.setItem('cricut_gemini_key', apiKeyInput.value.trim());
     });
 
     // ===================== Import de fichiers =====================
+    function addRasterObject(dataUrl, fileName, naturalW, naturalH) {
+        const maxDim = 12; // cm
+        let w, h;
+        if (naturalW >= naturalH) { w = maxDim; h = maxDim * (naturalH / naturalW); }
+        else { h = maxDim; w = maxDim * (naturalW / naturalH); }
+        const obj = {
+            id: nextObjId++, type: 'raster',
+            x: (MAT_W - w) / 2, y: (MAT_H - h) / 2, w, h, rotation: 0,
+            dataUrl, originalDataUrl: dataUrl, fileName, naturalW, naturalH, adjustments: {}
+        };
+        objects.push(obj);
+        selectedId = obj.id;
+        nodeEditId = null;
+        downloadBtn.disabled = false;
+        renderMat();
+        pushHistory();
+    }
+
     function askImportColorMode() {
         return new Promise((resolve) => {
             importColorModal.style.display = 'flex';
@@ -2059,34 +2928,35 @@
         });
     }
 
+    async function vectorizeRasterObject(obj, mode) {
+        return new Promise((resolve, reject) => {
+            const options = mode === 'color'
+                ? { ltres: 1, qtres: 1, scale: 1, colorsampling: 1, numberofcolors: 16, strokewidth: 0, viewbox: true }
+                : { ltres: 1, qtres: 1, scale: 1, colorsampling: 0, numberofcolors: 2, strokewidth: 0, viewbox: true };
+            ImageTracer.imageToSVG(obj.dataUrl, function (rawSvg) {
+                if (!rawSvg) { reject(new Error("Le traçage n'a retourné aucun résultat.")); return; }
+                resolve({ rawSvg, mode });
+            }, options);
+        });
+    }
+
     fileImporter.addEventListener('change', async function (e) {
         const file = e.target.files[0];
         if (!file) return;
-
         const extension = file.name.split('.').pop().toLowerCase();
         const reader = new FileReader();
-
         appendMessage(`Importation du fichier : ${file.name}...`, 'user');
 
         if (['png', 'jpg', 'jpeg', 'bmp', 'gif'].includes(extension)) {
-            const mode = await askImportColorMode();
             reader.onload = function (event) {
-                try {
-                    const options = mode === 'color'
-                        ? { ltres: 1, qtres: 1, scale: 1, colorsampling: 1, numberofcolors: 16, strokewidth: 0, viewbox: true }
-                        : { ltres: 1, qtres: 1, scale: 1, colorsampling: 0, numberofcolors: 2, strokewidth: 0, viewbox: true };
-                    ImageTracer.imageToSVG(event.target.result, function (rawSvg) {
-                        try {
-                            if (!rawSvg) throw new Error("Le traçage n'a retourné aucun résultat. Réessayez avec une autre image.");
-                            addSvgObject(rawSvg, mode === 'bw' ? '#000000' : null);
-                            appendMessage("Image convertie et ajoutée sur le plan de travail ! Déplacez-la ou redimensionnez-la librement.", 'ai');
-                        } catch (err) {
-                            appendMessage(`Erreur lors du traçage de l'image : ${err.message}`, 'ai');
-                        }
-                    }, options);
-                } catch (err) {
-                    appendMessage(`Erreur lors du traçage de l'image : ${err.message}`, 'ai');
-                }
+                const dataUrl = event.target.result;
+                const img = new Image();
+                img.onload = function () {
+                    addRasterObject(dataUrl, file.name, img.naturalWidth, img.naturalHeight);
+                    appendMessage(`Image "${file.name}" ajoutée sur le plan de travail. Elle sera vectorisée automatiquement à l'export pour Cricut.`, 'ai');
+                };
+                img.onerror = () => appendMessage("Impossible de charger cette image.", 'ai');
+                img.src = dataUrl;
             };
             reader.readAsDataURL(file);
         } else if (extension === 'dxf') {
@@ -2094,7 +2964,6 @@
                 try {
                     const parser = new DxfParser();
                     const dxf = parser.parseSync(event.target.result);
-
                     if (dxf && dxf.entities) {
                         let svgPaths = '';
                         dxf.entities.forEach(entity => {
@@ -2104,9 +2973,7 @@
                                 svgPaths += `<circle cx="${entity.center.x}" cy="${-entity.center.y}" r="${entity.radius}" stroke="black" stroke-width="2" fill="none"/>`;
                             }
                         });
-
                         if (svgPaths === '') throw new Error("Aucune entité linéaire exploitable.");
-
                         const wrapped = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800"><g transform="translate(400,400)">${svgPaths}</g></svg>`;
                         addSvgObject(wrapped);
                         appendMessage("Fichier CAO DXF lu et ajouté sur le plan de travail !", 'ai');
@@ -2123,10 +2990,13 @@
     // ===================== Assistant IA Gemini =====================
     const SYSTEM_INSTRUCTION = `Tu es un expert en design et modification de fichiers SVG pour machines de découpe Cricut Maker. Tu reçois des descriptions. Génère uniquement du code SVG propre, autonome (avec son propre viewBox), sans contours fins (stroke) si l'utilisateur demande des formes unies, en utilisant des formes pleines regroupées par calques et absolument aucun texte markdown ou explication.`;
 
+    let apiRequestInProgress = false;
+
     sendBtn.addEventListener('click', handleGeneration);
     userInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGeneration(); } });
 
     async function handleGeneration() {
+        if (apiRequestInProgress) return; // bloque les doubles envois
         let prompt = userInput.value.trim();
         let apiKey = apiKeyInput.value.trim().replaceAll("\r", "").replaceAll("\n", "").replaceAll("\t", "").replaceAll(" ", "");
 
@@ -2138,10 +3008,30 @@
 
         appendMessage(userInput.value.trim(), 'user');
         userInput.value = '';
-        const loadingDiv = appendMessage("L'IA traite votre demande sur le modèle vectoriel...", 'ai');
+        const loadingDiv = appendMessage("L'IA traite votre demande...", 'ai');
+        await handleGenerationWithText(prompt, apiKey, loadingDiv, 0);
+    }
+
+    async function handleGenerationWithText(prompt, apiKey, loadingDiv, retryCount) {
+        if (!apiKey) apiKey = apiKeyInput.value.trim().replaceAll("\r","").replaceAll("\n","").replaceAll("\t","").replaceAll(" ","");
+        if (!loadingDiv) loadingDiv = appendMessage("L'IA traite votre demande...", 'ai');
+        if (retryCount === undefined) retryCount = 0;
+        if (retryCount > 1) {
+            // Max 1 relance automatique pour éviter toute boucle
+            loadingDiv.innerText = "⚠️ Quota dépassé après relance. Attendez quelques minutes ou vérifiez votre quota sur ai.dev/rate-limit.";
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Créer';
+            apiRequestInProgress = false;
+            return;
+        }
+
+        apiRequestInProgress = true;
+        sendBtn.disabled = true;
+        sendBtn.textContent = '⏳';
 
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+            const model = geminiModelSelect.value || 'gemini-2.0-flash';
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -2153,24 +3043,102 @@
                 })
             });
 
-            if (!response.ok) throw new Error("Erreur réseau ou clé d'API invalide.");
-
             const data = await response.json();
-            let svgResponse = data.candidates[0].content.parts[0].text.trim();
+
+            // Détection des erreurs API (clé invalide, quota, blocage de sécurité, etc.)
+            if (!response.ok) {
+                const msg = data?.error?.message || `Erreur HTTP ${response.status}`;
+                throw new Error(`Erreur API Gemini : ${msg}`);
+            }
+            if (!data.candidates || data.candidates.length === 0) {
+                const reason = data?.promptFeedback?.blockReason || 'réponse vide ou bloquée par les filtres de sécurité';
+                throw new Error(`L'IA n'a pas pu répondre : ${reason}. Reformulez votre demande.`);
+            }
+            const candidate = data.candidates[0];
+
+            // Gemini 2.5 Flash peut renvoyer des parties "thought" (réflexion interne)
+            // avant le texte réel. On rassemble tous les textes non-thought.
+            const parts = candidate.content?.parts || [];
+            const textParts = parts.filter(p => p.text && !p.thought);
+            const allText = textParts.length > 0
+                ? textParts.map(p => p.text).join('')
+                : parts.filter(p => p.text).map(p => p.text).join('');
+
+            if (!allText.trim()) {
+                const reason = candidate.finishReason || 'inconnue';
+                throw new Error(`L'IA n'a retourné aucun texte (raison : ${reason}). Reformulez votre demande ou vérifiez votre quota Gemini.`);
+            }
+
+            let svgResponse = allText.trim();
             svgResponse = svgResponse.replaceAll('```xml', '').replaceAll('```svg', '').replaceAll('```', '').trim();
 
             if (svgResponse.includes('<svg')) {
                 const startIdx = svgResponse.indexOf('<svg');
                 const endIdx = svgResponse.lastIndexOf('</svg>') + 6;
                 const svgCode = svgResponse.substring(startIdx, endIdx);
-                addSvgObject(svgCode);
-                loadingDiv.innerText = "Élément vectoriel ajouté sur le plan de travail !";
+                try {
+                    const pngDataUrl = await svgToPngDataUrl(svgCode, 1024, 1024);
+                    addRasterObject(pngDataUrl, 'ia-gemini.png', 1024, 1024);
+                    loadingDiv.innerText = "Image IA ajoutée sur le plan de travail (PNG). Elle sera vectorisée à l'export.";
+                } catch (err) {
+                    loadingDiv.innerText = "Erreur de conversion PNG : " + err.message;
+                }
+                unlock();
             } else {
-                loadingDiv.innerText = "L'IA n'a pas retourné de code vectoriel valide.";
+                // Réponse textuelle sans SVG — on l'affiche directement dans le chat
+                loadingDiv.remove();
+                appendMessage(svgResponse || "L'IA n'a pas pu générer d'image. Essayez une description de motif ou de forme à créer.", 'ai');
+                unlock();
             }
         } catch (error) {
-            loadingDiv.innerText = "Erreur technique : " + error.message;
+            const msg = error.message || '';
+            const isQuota = msg.toLowerCase().includes('quota') || msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED');
+            const retryMatch = msg.match(/retry in ([\d.]+)s/i);
+            const retrySeconds = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) + 1 : null;
+
+            if (isQuota && retrySeconds && retryCount === 0) {
+                // Une seule tentative automatique avec délai
+                let remaining = Math.min(retrySeconds, 30); // max 30s d'attente
+                loadingDiv.innerText = `⏳ Limite temporaire — nouvelle tentative dans ${remaining}s…`;
+                const countdown = setInterval(() => {
+                    remaining--;
+                    if (remaining <= 0) {
+                        clearInterval(countdown);
+                        loadingDiv.innerText = "🔄 Relance de la requête…";
+                        apiRequestInProgress = false; // permet la relance
+                        handleGenerationWithText(prompt, apiKey, loadingDiv, retryCount + 1);
+                    } else {
+                        loadingDiv.innerText = `⏳ Limite temporaire — nouvelle tentative dans ${remaining}s…`;
+                    }
+                }, 1000);
+                // Ne pas appeler unlock() ici — la relance va le faire
+            } else if (isQuota && geminiModelSelect.value === 'gemini-2.5-flash' && retryCount === 0) {
+                // Basculement vers Flash-Lite, une seule fois
+                loadingDiv.innerText = "⚠️ Quota Flash atteint. Bascule sur Gemini 2.5 Flash-Lite…";
+                geminiModelSelect.value = 'gemini-2.5-flash-lite';
+                localStorage.setItem('cricut_gemini_model', 'gemini-2.5-flash-lite');
+                document.getElementById('modelLabel').textContent = 'Gemini 2.5 Flash-Lite';
+                apiRequestInProgress = false; // permet la relance
+                setTimeout(() => {
+                    loadingDiv.innerText = "🔄 Nouvelle tentative avec Gemini 2.5 Flash-Lite…";
+                    handleGenerationWithText(prompt, apiKey, loadingDiv, retryCount + 1);
+                }, 1500);
+                // Ne pas appeler unlock() ici — la relance va le faire
+            } else {
+                if (isQuota) {
+                    loadingDiv.innerText = "⚠️ Quota dépassé. Attendez quelques minutes ou vérifiez ai.dev/rate-limit.";
+                } else {
+                    loadingDiv.innerText = "Erreur technique : " + msg;
+                }
+                unlock();
+            }
         }
+    }
+
+    function unlock() {
+        apiRequestInProgress = false;
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Créer';
     }
 
     function appendMessage(text, sender) {
@@ -2195,24 +3163,60 @@
     }
     resetBtn.addEventListener('click', clearProject);
 
-    function serializeObjectForExport(obj) {
-        const g = renderObjectGroup(obj);
+    function serializeObjectForExport(obj, svgOverrides) {
+        let exportObj = obj;
+        if (obj.type === 'raster' && svgOverrides && svgOverrides[obj.id]) {
+            exportObj = svgOverrides[obj.id];
+        }
+        const g = renderObjectGroup(exportObj);
         g.removeAttribute('data-id');
         g.removeAttribute('class');
         g.removeAttribute('style');
         return new XMLSerializer().serializeToString(g);
     }
 
-    downloadBtn.addEventListener('click', function () {
+    downloadBtn.addEventListener('click', async function () {
         if (objects.length === 0) return;
-        let body = '';
-        objects.forEach(o => { body += serializeObjectForExport(o); });
-        const finalSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${MAT_W}cm" height="${MAT_H}cm" viewBox="0 0 ${MAT_W} ${MAT_H}">${body}</svg>`;
-        const blob = new Blob([finalSvg], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `ia_cricut_project_${Date.now()}.svg`;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        const hasRaster = objects.some(o => o.type === 'raster');
+        let mode = null;
+        if (hasRaster) {
+            mode = await askImportColorMode();
+        }
+        const loadingMsg = appendMessage("Préparation de l'export…", 'ai');
+        try {
+            const svgOverrides = {};
+            if (hasRaster) {
+                const rasters = objects.filter(o => o.type === 'raster');
+                await Promise.all(rasters.map(async (obj) => {
+                    loadingMsg.textContent = `Vectorisation de "${obj.fileName}"…`;
+                    try {
+                        const { rawSvg } = await vectorizeRasterObject(obj, mode);
+                        const parsed = parseSvgIntrinsic(rawSvg);
+                        let inner = parsed.inner;
+                        if (mode === 'bw') inner = `<g fill="#000000">${inner}</g>`;
+                        svgOverrides[obj.id] = {
+                            ...obj, type: 'svg',
+                            innerSVG: inner, iw: parsed.iw, ih: parsed.ih, colorOverride: null
+                        };
+                    } catch (err) {
+                        loadingMsg.textContent = `Erreur vectorisation "${obj.fileName}" : ${err.message}. L'image sera incorporée telle quelle.`;
+                    }
+                }));
+            }
+            let body = '';
+            objects.forEach(o => { body += serializeObjectForExport(o, svgOverrides); });
+            const finalSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${MAT_W}cm" height="${MAT_H}cm" viewBox="0 0 ${MAT_W} ${MAT_H}">${body}</svg>`;
+            const blob = new Blob([finalSvg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `ia_cricut_project_${Date.now()}.svg`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            loadingMsg.textContent = hasRaster
+                ? "Export SVG prêt ! Les images ont été vectorisées à l'export."
+                : "Export SVG prêt !";
+        } catch (err) {
+            loadingMsg.textContent = "Erreur lors de l'export : " + err.message;
+        }
     });
 
     // ===================== Initialisation =====================
