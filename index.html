@@ -1909,6 +1909,12 @@ if(typeof define === 'function' && define.amd){
 
         <div class="actions">
             <button id="downloadBtn" class="btn btn-success" disabled style="flex: 2;">Télécharger pour Cricut (SVG)</button>
+            <div id="layerBtns" style="display:none; gap:4px; flex-shrink:0;">
+                <button id="layerTopBtn" title="Premier plan" style="border:1px solid #cbd5e1; background:#f8fafc; border-radius:7px; padding:6px 8px; cursor:pointer; font-size:14px;">⬆⬆</button>
+                <button id="layerUpBtn" title="Avancer d'un rang" style="border:1px solid #cbd5e1; background:#f8fafc; border-radius:7px; padding:6px 8px; cursor:pointer; font-size:14px;">⬆</button>
+                <button id="layerDownBtn" title="Reculer d'un rang" style="border:1px solid #cbd5e1; background:#f8fafc; border-radius:7px; padding:6px 8px; cursor:pointer; font-size:14px;">⬇</button>
+                <button id="layerBottomBtn" title="Arrière-plan" style="border:1px solid #cbd5e1; background:#f8fafc; border-radius:7px; padding:6px 8px; cursor:pointer; font-size:14px;">⬇⬇</button>
+            </div>
             <button id="deleteSelBtn" class="delete-sel-btn">🗑️ Supprimer</button>
             <button id="resetBtn" class="btn" style="background: #64748b; color: white; flex: 1;">Nouveau projet</button>
         </div>
@@ -2118,6 +2124,7 @@ if(typeof define === 'function' && define.amd){
     const zoomResetBtn = document.getElementById('zoomResetBtn');
     const zoomLabel = document.getElementById('zoomLabel');
     const deleteSelBtn = document.getElementById('deleteSelBtn');
+    const layerBtns = document.getElementById('layerBtns');
     const shapesPopover = document.getElementById('shapesPopover');
     const eraserPopover = document.getElementById('eraserPopover');
     const eraserSizeRange = document.getElementById('eraserSizeRange');
@@ -2605,6 +2612,7 @@ if(typeof define === 'function' && define.amd){
             'data-id': obj.id,
             'class': 'canvas-object',
             'transform': `rotate(${obj.rotation || 0} ${bbox.x + bbox.w / 2} ${bbox.y + bbox.h / 2})`,
+            'opacity': obj.opacity !== undefined ? obj.opacity : 1,
             'style': 'cursor: move;'
         });
         if (obj.type === 'shape') {
@@ -2988,13 +2996,21 @@ if(typeof define === 'function' && define.amd){
             else { cropState = null; cropPanel.style.display = 'none'; }
         }
         deleteSelBtn.style.display = selectedId ? 'block' : 'none';
+        if (layerBtns) layerBtns.style.display = selectedId ? 'flex' : 'none';
         const selObj = selectedId ? objects.find(o => o.id === selectedId) : null;
         const aiContextBar = document.getElementById('aiContextBar');
         const aiContextLabel = document.getElementById('aiContextLabel');
         if (aiContextBar && aiContextLabel) {
             if (selObj && selObj.type !== 'eraser') {
-                const typeLabel = { text: 'Texte', shape: 'Forme', polygon: 'Forme', line: 'Ligne', svg: 'Image vectorielle', raster: 'Image' };
-                aiContextLabel.textContent = `${typeLabel[selObj.type] || 'Objet'} sélectionné — demandez à l'IA de le modifier`;
+                const hints = {
+                    text: '✦ Texte sélectionné — l\'IA peut changer le contenu, la couleur, la taille, la police, l\'opacité ou la rotation',
+                    shape: '✦ Forme sélectionnée — l\'IA peut changer la couleur, l\'opacité ou la rotation',
+                    polygon: '✦ Polygone sélectionné — l\'IA peut changer la couleur, l\'opacité ou la rotation',
+                    line: '✦ Ligne sélectionnée — l\'IA peut changer la couleur, l\'épaisseur ou l\'opacité',
+                    svg: '✦ SVG sélectionné — l\'IA peut le retravail en design Cricut, teinter, ajuster opacité/rotation',
+                    raster: '✦ Image sélectionnée — l\'IA peut la transformer en design vectoriel Cricut découpable'
+                };
+                aiContextLabel.textContent = hints[selObj.type] || '✦ Objet sélectionné — l\'IA peut le modifier';
                 aiContextBar.style.display = 'block';
             } else {
                 aiContextBar.style.display = 'none';
@@ -3415,6 +3431,43 @@ if(typeof define === 'function' && define.amd){
         pushHistory();
     }
     deleteSelBtn.addEventListener('click', deleteSelected);
+
+    // ===================== Ordre des calques =====================
+    const layerTopBtn = document.getElementById('layerTopBtn');
+    const layerUpBtn  = document.getElementById('layerUpBtn');
+    const layerDownBtn  = document.getElementById('layerDownBtn');
+    const layerBottomBtn = document.getElementById('layerBottomBtn');
+
+    function moveLayer(delta) {
+        if (!selectedId) return;
+        const idx = objects.findIndex(o => o.id === selectedId);
+        if (idx < 0) return;
+        const target = idx + delta;
+        if (target < 0 || target >= objects.length) return;
+        const [obj] = objects.splice(idx, 1);
+        objects.splice(target, 0, obj);
+        renderMat();
+        pushHistory();
+    }
+
+    layerTopBtn.addEventListener('click', () => {
+        if (!selectedId) return;
+        const idx = objects.findIndex(o => o.id === selectedId);
+        if (idx < 0 || idx === objects.length - 1) return;
+        const [obj] = objects.splice(idx, 1);
+        objects.push(obj);
+        renderMat(); pushHistory();
+    });
+    layerUpBtn.addEventListener('click',     () => moveLayer(1));
+    layerDownBtn.addEventListener('click',   () => moveLayer(-1));
+    layerBottomBtn.addEventListener('click', () => {
+        if (!selectedId) return;
+        const idx = objects.findIndex(o => o.id === selectedId);
+        if (idx <= 0) return;
+        const [obj] = objects.splice(idx, 1);
+        objects.unshift(obj);
+        renderMat(); pushHistory();
+    });
 
     // ===================== Zoom =====================
     function setZoom(z) {
@@ -5652,14 +5705,15 @@ MODE 1 — CONVERSATION : Si l'utilisateur dit bonjour, pose une question géné
 MODE 2 — CRÉATION SVG : Si l'utilisateur demande de créer, dessiner ou générer une forme, un motif ou un design, génère UNIQUEMENT du code SVG valide et autonome (avec viewBox). Pas de texte, pas de markdown, pas d'explication. Le SVG doit être directement utilisable par une Cricut Maker.
 
 MODE 3 — MODIFICATION D'OBJET : Si le message contient "OBJET SÉLECTIONNÉ :" en préfixe, l'utilisateur veut modifier cet objet sur le plan de travail. Réponds UNIQUEMENT avec une ligne JSON préfixée par MODIFIER: contenant les propriétés à changer. Propriétés disponibles selon le type :
-- text : { "text": "...", "color": "#hex", "fontSize": 3.0, "fontFamily": "...", "bold": true, "italic": false }
-- shape/polygon : { "fill": "#hex" }
-- line : { "color": "#hex", "strokeWidth": 0.5 }
-- raster/svg : { "colorOverride": "#hex" }
-Exemple de réponse valide : MODIFIER:{"color":"#e74c3c","fontSize":4.5}
+- text : { "text": "...", "color": "#hex", "fontSize": 3.0, "fontFamily": "...", "bold": true, "italic": false, "opacity": 1.0, "rotation": 0 }
+- shape/polygon : { "fill": "#hex", "opacity": 1.0, "rotation": 0 }
+- line : { "color": "#hex", "strokeWidth": 0.5, "opacity": 1.0 }
+- raster/svg : { "colorOverride": "#hex", "opacity": 1.0, "rotation": 0 }
+Les valeurs "opacity" sont entre 0.0 (invisible) et 1.0 (opaque). Les valeurs "rotation" sont en degrés (0-360).
+Exemple de réponse valide : MODIFIER:{"color":"#e74c3c","fontSize":4.5,"opacity":0.8,"rotation":15}
 Ne retourne RIEN d'autre que cette ligne JSON préfixée.
 
-MODE 4 — MODIFICATION D'IMAGE : Si le message contient "IMAGE À MODIFIER :" en préfixe ET qu'une image est jointe, l'utilisateur veut modifier l'image existante. Génère UNIQUEMENT du code SVG valide qui reproduit et modifie l'image selon la demande. Pas de texte, pas de markdown, pas d'explication.`;
+MODE 4 — MODIFICATION D'IMAGE : Si le message contient "IMAGE À MODIFIER :" en préfixe ET qu'une image est jointe, l'utilisateur veut transformer cette image en design vectoriel Cricut selon sa demande. Génère UNIQUEMENT du code SVG valide qui s'inspire de l'image et applique les modifications demandées. Le SVG doit être adapté à une Cricut Maker : découpes nettes, formes géométriques claires, aplats de couleurs franches, sans dégradés complexes ni effets non découpables. Garde les silhouettes et formes reconnaissables de l'image source. Pas de texte, pas de markdown, pas d'explication.`;
 
     // Construit le contexte de l'objet sélectionné pour l'IA
     function buildSelectedObjectContext() {
@@ -5686,6 +5740,9 @@ MODE 4 — MODIFICATION D'IMAGE : Si le message contient "IMAGE À MODIFIER :" e
         } else if (obj.type === 'raster') {
             ctx.fileName = obj.fileName;
         }
+        // Propriétés communes
+        ctx.opacity = obj.opacity !== undefined ? obj.opacity : 1;
+        ctx.rotation = obj.rotation || 0;
         return ctx;
     }
 
@@ -5711,6 +5768,15 @@ MODE 4 — MODIFICATION D'IMAGE : Si le message contient "IMAGE À MODIFIER :" e
         } else if (obj.type === 'svg' || obj.type === 'raster') {
             if (changes.colorOverride) { obj.colorOverride = changes.colorOverride; applied.push(`teinte → ${changes.colorOverride}`); }
         }
+        // Propriétés communes à tous les types
+        if (changes.opacity !== undefined) {
+            const op = Math.max(0, Math.min(1, parseFloat(changes.opacity)));
+            if (!isNaN(op)) { obj.opacity = op; applied.push(`opacité → ${Math.round(op * 100)}%`); }
+        }
+        if (changes.rotation !== undefined) {
+            const rot = parseFloat(changes.rotation);
+            if (!isNaN(rot)) { obj.rotation = rot % 360; applied.push(`rotation → ${obj.rotation}°`); }
+        }
         renderMat();
         pushHistory();
         return applied.length > 0 ? `Modifications appliquées : ${applied.join(', ')}.` : "Aucune propriété reconnue dans la réponse.";
@@ -5735,10 +5801,10 @@ MODE 4 — MODIFICATION D'IMAGE : Si le message contient "IMAGE À MODIFIER :" e
         appendMessage(userInput.value.trim(), 'user');
         userInput.value = '';
 
-        // Détecter si une image raster est sélectionnée → mode modification d'image
-        const selObj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        // Détecter si une image (raster ou SVG) est sélectionnée → mode modification d'image
+        const selObj = objects.find(o => o.id === selectedId && (o.type === 'raster' || o.type === 'svg'));
         if (selObj) {
-            const loadingDiv = appendMessage("L'IA analyse et modifie l'image…", 'ai');
+            const loadingDiv = appendMessage("L'IA analyse et retravaille l'image en design Cricut…", 'ai');
             await handleGenerationWithImage(prompt, selObj, apiKey, loadingDiv);
             return;
         }
@@ -5761,11 +5827,23 @@ MODE 4 — MODIFICATION D'IMAGE : Si le message contient "IMAGE À MODIFIER :" e
         sendBtn.textContent = '⏳';
 
         try {
-            // Extraire le base64 et le mimeType du dataUrl
-            const match = obj.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-            if (!match) throw new Error("Format d'image non reconnu.");
-            const mimeType = match[1];
-            const base64Data = match[2];
+            let mimeType, base64Data;
+
+            if (obj.type === 'svg') {
+                // Convertir le SVG en PNG pour l'envoyer à Gemini
+                const fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${obj.iw} ${obj.ih}">${obj.innerSVG}</svg>`;
+                const pngUrl = await svgToPngDataUrl(fullSvg, 1024, Math.round(1024 * obj.ih / obj.iw));
+                const svgMatch = pngUrl.match(/^data:([^;]+);base64,(.+)$/);
+                if (!svgMatch) throw new Error("Impossible de convertir le SVG en image.");
+                mimeType = svgMatch[1];
+                base64Data = svgMatch[2];
+            } else {
+                // Extraire le base64 et le mimeType du dataUrl raster
+                const match = obj.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+                if (!match) throw new Error("Format d'image non reconnu.");
+                mimeType = match[1];
+                base64Data = match[2];
+            }
 
             const model = geminiModelSelect.value || 'gemini-2.5-flash';
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
