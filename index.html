@@ -1499,6 +1499,8 @@ if(typeof define === 'function' && define.amd){
         <button class="tool-rail-btn" id="toolLine" title="Lignes et courbes"><span class="icon">✏️</span>Lignes</button>
         <button class="tool-rail-btn" id="toolColor" title="Couleurs"><span class="icon">🎨</span>Couleurs</button>
         <button class="tool-rail-btn" id="toolCrop" title="Rogner une image sélectionnée"><span class="icon">✂️</span>Rogner</button>
+        <button class="tool-rail-btn" id="toolSelRect" title="Sélection rectangulaire — copier ou supprimer une zone"><span class="icon">⬚</span>Sél. rect</button>
+        <button class="tool-rail-btn" id="toolSelLasso" title="Sélection libre (lasso) — copier ou supprimer une zone"><span class="icon">⬡</span>Sél. libre</button>
         <button class="tool-rail-btn" id="toolMagic" title="Sélection magique — supprimer le fond d'une image"><span class="icon">🪄</span>Sélection</button>
         <button class="tool-rail-btn" id="toolRetouche" title="Retouche d'image"><span class="icon">🖌️</span>Retouche</button>
         <button class="tool-rail-btn" id="toolImages" title="Importer une image ou un DXF"><span class="icon">🖼️</span>Images</button>
@@ -1822,6 +1824,16 @@ if(typeof define === 'function' && define.amd){
         <button id="cropRestoreBtn" style="display:none; width:100%; background:#fff; color:#dc2626; border:1px solid #fca5a5; border-radius:6px; padding:7px; font-size:12px; cursor:pointer;">↩ Rétablir l'image d'origine</button>
     </div>
 
+    <!-- Panneau Sélection Rectangulaire / Lasso -->
+    <div id="selectionPanel" style="display:none; position:fixed; z-index:260; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 8px 20px rgba(0,0,0,.15); padding:10px; gap:8px; flex-direction:column; width:210px;">
+        <div style="font-size:12px; font-weight:600; color:#1e293b;" id="selectionPanelTitle">Tracez une zone sur l'image.</div>
+        <div style="display:flex; gap:6px;">
+            <button id="selCopyBtn" style="flex:1; background:#3b82f6; color:#fff; border:none; border-radius:6px; padding:8px; font-size:12px; cursor:pointer; font-weight:bold;" disabled>📋 Copier</button>
+            <button id="selDeleteBtn" style="flex:1; background:#ef4444; color:#fff; border:none; border-radius:6px; padding:8px; font-size:12px; cursor:pointer; font-weight:bold;" disabled>✂️ Supprimer</button>
+        </div>
+        <button id="selCancelBtn" style="width:100%; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; border-radius:6px; padding:7px; font-size:12px; cursor:pointer;">✕ Annuler</button>
+    </div>
+
     <!-- Panneau Sélection Magique -->
     <div id="magicPanel" style="display:none; position:fixed; z-index:260; background:#fff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.18); padding:14px; flex-direction:column; gap:10px; width:230px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1886,7 +1898,7 @@ if(typeof define === 'function' && define.amd){
                 <div style="margin-left: auto; display: flex; gap: 6px;">
                     <button id="undoBtn" class="btn" style="padding: 4px 10px; font-size: 12px; background: #64748b; color: #fff;" title="Annuler (Ctrl+Z)">↩ Annuler</button>
                     <button id="redoBtn" class="btn" style="padding: 4px 10px; font-size: 12px; background: #64748b; color: #fff;" title="Rétablir (Ctrl+Y)">↪ Rétablir</button>
-                    <button id="resetOriginalBtn" class="btn" style="padding: 4px 10px; font-size: 12px; background: #f59e0b; color: #fff;" title="Revenir au projet original">⟲ Original</button>
+                    <button id="resetOriginalBtn" class="btn" style="padding: 4px 10px; font-size: 12px; background: #f59e0b; color: #fff;" title="Tout nettoyer — revenir au projet original">🗑️ Tout nettoyer</button>
                 </div>
             </div>
             <div class="ruler-row">
@@ -1914,6 +1926,7 @@ if(typeof define === 'function' && define.amd){
                 <button id="layerUpBtn" title="Avancer d'un rang" style="border:1px solid #cbd5e1; background:#f8fafc; border-radius:7px; padding:6px 8px; cursor:pointer; font-size:14px;">⬆</button>
                 <button id="layerDownBtn" title="Reculer d'un rang" style="border:1px solid #cbd5e1; background:#f8fafc; border-radius:7px; padding:6px 8px; cursor:pointer; font-size:14px;">⬇</button>
                 <button id="layerBottomBtn" title="Arrière-plan" style="border:1px solid #cbd5e1; background:#f8fafc; border-radius:7px; padding:6px 8px; cursor:pointer; font-size:14px;">⬇⬇</button>
+                <button id="mergeDownBtn" title="Fusionner avec l'image du dessous" style="display:none; border:1px solid #a5b4fc; background:#eef2ff; color:#4338ca; border-radius:7px; padding:6px 8px; cursor:pointer; font-size:12px; font-weight:600; white-space:nowrap;">⊕ Fusionner</button>
             </div>
             <button id="deleteSelBtn" class="delete-sel-btn">🗑️ Supprimer</button>
             <button id="resetBtn" class="btn" style="background: #64748b; color: white; flex: 1;">Nouveau projet</button>
@@ -2125,6 +2138,7 @@ if(typeof define === 'function' && define.amd){
     const zoomLabel = document.getElementById('zoomLabel');
     const deleteSelBtn = document.getElementById('deleteSelBtn');
     const layerBtns = document.getElementById('layerBtns');
+    const mergeDownBtn = document.getElementById('mergeDownBtn');
     const shapesPopover = document.getElementById('shapesPopover');
     const eraserPopover = document.getElementById('eraserPopover');
     const eraserSizeRange = document.getElementById('eraserSizeRange');
@@ -2205,6 +2219,13 @@ if(typeof define === 'function' && define.amd){
     const cropPanel = document.getElementById('cropPanel');
     const cropApplyBtn = document.getElementById('cropApplyBtn');
     const cropCancelBtn = document.getElementById('cropCancelBtn');
+    const selectionPanel = document.getElementById('selectionPanel');
+    const selectionPanelTitle = document.getElementById('selectionPanelTitle');
+    const selCopyBtn = document.getElementById('selCopyBtn');
+    const selDeleteBtn = document.getElementById('selDeleteBtn');
+    const selCancelBtn = document.getElementById('selCancelBtn');
+    const toolSelRect = document.getElementById('toolSelRect');
+    const toolSelLasso = document.getElementById('toolSelLasso');
     const projectsPanel = document.getElementById('projectsPanel');
     const projectNameInput = document.getElementById('projectNameInput');
     const projectSaveBtn = document.getElementById('projectSaveBtn');
@@ -2319,6 +2340,10 @@ if(typeof define === 'function' && define.amd){
         }
     }
     let cropState = null;
+    let selRectMode = false;
+    let selLassoMode = false;
+    let selectionState = null; // { targetId, mode:'rect'|'lasso', startPt, endPt, points[], done }
+    let selDrawing = false;
     let lastClickTime = 0;
     let lastClickId = null;
     let selectedSourceColor = null;
@@ -2953,6 +2978,169 @@ if(typeof define === 'function' && define.amd){
         return g;
     }
 
+    function renderSelectionOverlay(state) {
+        const g = svgEl('g', { class: 'sel-overlay' });
+        if (!state) return g;
+        const color = '#6366f1';
+        const da = `${3 / pxPerCm()} ${3 / pxPerCm()}`;
+        if (state.mode === 'rect' && state.startPt && state.endPt) {
+            const x = Math.min(state.startPt.x, state.endPt.x);
+            const y = Math.min(state.startPt.y, state.endPt.y);
+            const w = Math.abs(state.endPt.x - state.startPt.x);
+            const h = Math.abs(state.endPt.y - state.startPt.y);
+            g.appendChild(svgEl('rect', { x, y, width: w, height: h,
+                fill: 'rgba(99,102,241,0.10)', stroke: color, 'stroke-width': 1.5,
+                'stroke-dasharray': da, 'vector-effect': 'non-scaling-stroke' }));
+            const hs = 7 / pxPerCm();
+            [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([cx,cy]) => {
+                g.appendChild(svgEl('rect', { x: cx-hs/2, y: cy-hs/2, width: hs, height: hs,
+                    fill: color, stroke: '#fff', 'stroke-width': 1,
+                    'vector-effect': 'non-scaling-stroke' }));
+            });
+        } else if (state.mode === 'lasso' && state.points && state.points.length > 1) {
+            const d = 'M ' + state.points.map(p => `${p.x} ${p.y}`).join(' L ') + ' Z';
+            g.appendChild(svgEl('path', { d, fill: 'rgba(99,102,241,0.10)',
+                stroke: color, 'stroke-width': 1.5,
+                'stroke-dasharray': da, 'vector-effect': 'non-scaling-stroke' }));
+        }
+        return g;
+    }
+
+    function cancelSelection() {
+        selRectMode = false;
+        selLassoMode = false;
+        selectionState = null;
+        selDrawing = false;
+        selectionPanel.style.display = 'none';
+        toolSelRect.classList.remove('active');
+        toolSelLasso.classList.remove('active');
+        setCanvasCursor(null);
+        renderMat();
+    }
+
+    // Convertit un point SVG (cm) en coordonnées pixel dans l'image
+    function svgPtToImgPx(pt, obj, imgNW, imgNH) {
+        return {
+            x: Math.round((pt.x - obj.x) / obj.w * imgNW),
+            y: Math.round((pt.y - obj.y) / obj.h * imgNH)
+        };
+    }
+
+    function applySelectionAction(action) {
+        if (!selectionState || !selectionState.done) return;
+        const obj = objects.find(o => o.id === selectionState.targetId);
+        if (!obj || obj.type !== 'raster') return;
+
+        const imgEl = new Image();
+        imgEl.onload = () => {
+            const NW = imgEl.naturalWidth, NH = imgEl.naturalHeight;
+
+            if (action === 'copy') {
+                // Créer un canvas aux dimensions de l'image source
+                const tmpCanvas = document.createElement('canvas');
+                tmpCanvas.width = NW; tmpCanvas.height = NH;
+                const tmpCtx = tmpCanvas.getContext('2d');
+                // Clipper sur la sélection puis dessiner
+                tmpCtx.save();
+                applySelPathToCtx(tmpCtx, obj, NW, NH);
+                tmpCtx.clip();
+                tmpCtx.drawImage(imgEl, 0, 0);
+                tmpCtx.restore();
+                // Calculer le bounding box en pixels pour recadrer
+                const bb = getSelBBoxPx(obj, NW, NH);
+                const outCanvas = document.createElement('canvas');
+                outCanvas.width = bb.w; outCanvas.height = bb.h;
+                outCanvas.getContext('2d').drawImage(tmpCanvas, bb.x, bb.y, bb.w, bb.h, 0, 0, bb.w, bb.h);
+                const dataUrl = outCanvas.toDataURL('image/png');
+                // Ajouter comme nouvel objet légèrement décalé
+                const scaleX = obj.w / NW, scaleY = obj.h / NH;
+                const newObj = {
+                    id: nextObjId++, type: 'raster',
+                    x: obj.x + bb.x * scaleX + 0.5,
+                    y: obj.y + bb.y * scaleY + 0.5,
+                    w: bb.w * scaleX, h: bb.h * scaleY,
+                    rotation: 0,
+                    dataUrl, originalDataUrl: dataUrl,
+                    fileName: 'selection.png',
+                    naturalW: bb.w, naturalH: bb.h,
+                    adjustments: {}
+                };
+                objects.push(newObj);
+                selectedId = newObj.id;
+                downloadBtn.disabled = false;
+                cancelSelection();
+                pushHistory();
+
+            } else if (action === 'delete') {
+                const canvas = document.createElement('canvas');
+                canvas.width = NW; canvas.height = NH;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(imgEl, 0, 0);
+                ctx.save();
+                applySelPathToCtx(ctx, obj, NW, NH);
+                ctx.clip();
+                ctx.clearRect(0, 0, NW, NH);
+                ctx.restore();
+                obj.dataUrl = canvas.toDataURL('image/png');
+                obj.originalDataUrl = obj.dataUrl;
+                cancelSelection();
+                pushHistory();
+            }
+        };
+        imgEl.src = obj.dataUrl;
+    }
+
+    // Trace le chemin de sélection sur un CanvasRenderingContext2D
+    function applySelPathToCtx(ctx, obj, NW, NH) {
+        ctx.beginPath();
+        if (selectionState.mode === 'rect') {
+            const x = Math.min(selectionState.startPt.x, selectionState.endPt.x);
+            const y = Math.min(selectionState.startPt.y, selectionState.endPt.y);
+            const w = Math.abs(selectionState.endPt.x - selectionState.startPt.x);
+            const h = Math.abs(selectionState.endPt.y - selectionState.startPt.y);
+            const p0 = svgPtToImgPx({x, y}, obj, NW, NH);
+            const p1 = svgPtToImgPx({x: x+w, y: y+h}, obj, NW, NH);
+            ctx.rect(p0.x, p0.y, p1.x - p0.x, p1.y - p0.y);
+        } else {
+            selectionState.points.forEach((pt, i) => {
+                const px = svgPtToImgPx(pt, obj, NW, NH);
+                i === 0 ? ctx.moveTo(px.x, px.y) : ctx.lineTo(px.x, px.y);
+            });
+            ctx.closePath();
+        }
+    }
+
+    // Bounding box en pixels de la sélection dans l'image
+    function getSelBBoxPx(obj, NW, NH) {
+        if (selectionState.mode === 'rect') {
+            const x = Math.min(selectionState.startPt.x, selectionState.endPt.x);
+            const y = Math.min(selectionState.startPt.y, selectionState.endPt.y);
+            const w = Math.abs(selectionState.endPt.x - selectionState.startPt.x);
+            const h = Math.abs(selectionState.endPt.y - selectionState.startPt.y);
+            const p0 = svgPtToImgPx({x, y}, obj, NW, NH);
+            const p1 = svgPtToImgPx({x: x+w, y: y+h}, obj, NW, NH);
+            return { x: Math.max(0,p0.x), y: Math.max(0,p0.y),
+                     w: Math.min(NW-p0.x, p1.x-p0.x), h: Math.min(NH-p0.y, p1.y-p0.y) };
+        } else {
+            const pxPts = selectionState.points.map(pt => svgPtToImgPx(pt, obj, NW, NH));
+            const minX = Math.max(0, Math.min(...pxPts.map(p=>p.x)));
+            const minY = Math.max(0, Math.min(...pxPts.map(p=>p.y)));
+            const maxX = Math.min(NW, Math.max(...pxPts.map(p=>p.x)));
+            const maxY = Math.min(NH, Math.max(...pxPts.map(p=>p.y)));
+            return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+        }
+    }
+
+    function positionSelPanel(obj) {
+        const svgRect = matSvg.getBoundingClientRect();
+        const px = pxPerCm();
+        const panelX = svgRect.left + (obj.x + obj.w) * px + 8;
+        const panelY = svgRect.top  + obj.y * px;
+        selectionPanel.style.left = Math.min(panelX, window.innerWidth - 225) + 'px';
+        selectionPanel.style.top  = Math.max(8, panelY) + 'px';
+        selectionPanel.style.display = 'flex';
+    }
+
     function buildGridDefs() {
         const defs = svgEl('defs', {});
         const pattern = svgEl('pattern', { id: 'gridMinor', width: 1, height: 1, patternUnits: 'userSpaceOnUse' });
@@ -2995,8 +3183,17 @@ if(typeof define === 'function' && define.amd){
             if (cropObj) matSvg.appendChild(renderCropOverlay(cropObj, cropState.rect));
             else { cropState = null; cropPanel.style.display = 'none'; }
         }
+        if (selectionState) {
+            matSvg.appendChild(renderSelectionOverlay(selectionState));
+        }
         deleteSelBtn.style.display = selectedId ? 'block' : 'none';
         if (layerBtns) layerBtns.style.display = selectedId ? 'flex' : 'none';
+        if (mergeDownBtn) {
+            const selObj = selectedId ? objects.find(o => o.id === selectedId) : null;
+            const idx = selObj ? objects.indexOf(selObj) : -1;
+            const hasBelowRaster = selObj && selObj.type === 'raster' && idx > 0 && objects[idx - 1].type === 'raster';
+            mergeDownBtn.style.display = hasBelowRaster ? 'block' : 'none';
+        }
         const selObj = selectedId ? objects.find(o => o.id === selectedId) : null;
         const aiContextBar = document.getElementById('aiContextBar');
         const aiContextLabel = document.getElementById('aiContextLabel');
@@ -3128,6 +3325,31 @@ if(typeof define === 'function' && define.amd){
     // ===================== Interactions souris/tactile =====================
     matSvg.addEventListener('pointerdown', e => {
         const pt = clientToCm(e.clientX, e.clientY);
+        if (selRectMode || selLassoMode) {
+            // Trouver l'image raster sous le curseur
+            const hit = [...objects].reverse().find(o =>
+                o.type === 'raster' &&
+                pt.x >= o.x && pt.x <= o.x + o.w &&
+                pt.y >= o.y && pt.y <= o.y + o.h
+            );
+            if (!hit) return;
+            selDrawing = true;
+            selectionState = {
+                targetId: hit.id,
+                mode: selRectMode ? 'rect' : 'lasso',
+                startPt: { ...pt }, endPt: { ...pt },
+                points: [{ ...pt }],
+                done: false
+            };
+            selCopyBtn.disabled = true;
+            selDeleteBtn.disabled = true;
+            selectionPanelTitle.textContent = selRectMode
+                ? 'Tracez un rectangle sur l\'image.'
+                : 'Dessinez librement sur l\'image.';
+            positionSelPanel(hit);
+            renderMat();
+            return;
+        }
         if (cropState) {
             const cropHandleEl = e.target.closest('[data-crop-handle]');
             const cropObj = objects.find(o => o.id === cropState.id);
@@ -3251,6 +3473,22 @@ if(typeof define === 'function' && define.amd){
     });
 
     window.addEventListener('pointermove', e => {
+        if (selDrawing && selectionState) {
+            const pt = clientToCm(e.clientX, e.clientY);
+            const obj = objects.find(o => o.id === selectionState.targetId);
+            if (obj) {
+                // Contraindre dans les limites de l'image
+                const cx = Math.min(Math.max(pt.x, obj.x), obj.x + obj.w);
+                const cy = Math.min(Math.max(pt.y, obj.y), obj.y + obj.h);
+                if (selectionState.mode === 'rect') {
+                    selectionState.endPt = { x: cx, y: cy };
+                } else {
+                    selectionState.points.push({ x: cx, y: cy });
+                }
+                renderMat();
+            }
+            return;
+        }
         if (cropState && dragState && (dragState.mode === 'crop' || dragState.mode === 'cropMove')) {
             const pt = clientToCm(e.clientX, e.clientY);
             const dx = pt.x - dragState.startPt.x, dy = pt.y - dragState.startPt.y;
@@ -3347,6 +3585,28 @@ if(typeof define === 'function' && define.amd){
     });
 
     window.addEventListener('pointerup', () => {
+        if (selDrawing && selectionState) {
+            selDrawing = false;
+            const hasArea = selectionState.mode === 'rect'
+                ? (Math.abs(selectionState.endPt.x - selectionState.startPt.x) > 0.2 &&
+                   Math.abs(selectionState.endPt.y - selectionState.startPt.y) > 0.2)
+                : selectionState.points.length > 5;
+            if (hasArea) {
+                selectionState.done = true;
+                selCopyBtn.disabled = false;
+                selDeleteBtn.disabled = false;
+                selectionPanelTitle.textContent = 'Zone sélectionnée.';
+            } else {
+                selectionState = null;
+                selCopyBtn.disabled = true;
+                selDeleteBtn.disabled = true;
+                selectionPanelTitle.textContent = selRectMode
+                    ? 'Tracez un rectangle sur l\'image.'
+                    : 'Dessinez librement sur l\'image.';
+            }
+            renderMat();
+            return;
+        }
         if (dragState && (dragState.mode === 'crop' || dragState.mode === 'cropMove')) {
             dragState = null;
             return;
@@ -3413,6 +3673,9 @@ if(typeof define === 'function' && define.amd){
         if (e.key === 'Escape' && cropState) {
             cancelCrop();
         }
+        if (e.key === 'Escape' && (selRectMode || selLassoMode)) {
+            cancelSelection();
+        }
         if ((e.ctrlKey || e.metaKey) && !inField) {
             const k = e.key.toLowerCase();
             if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
@@ -3431,6 +3694,47 @@ if(typeof define === 'function' && define.amd){
         pushHistory();
     }
     deleteSelBtn.addEventListener('click', deleteSelected);
+
+    // ===================== Outil Sélection rectangulaire / Lasso =====================
+    function activateSelTool(mode) {
+        cancelSelection();
+        if (mode === 'rect') {
+            selRectMode = true;
+            toolSelRect.classList.add('active');
+        } else {
+            selLassoMode = true;
+            toolSelLasso.classList.add('active');
+        }
+        // Désactiver les autres modes
+        if (eraserMode) setEraserMode(false);
+        if (lineMode) setLineMode(false);
+        if (cropState) { cropState = null; cropPanel.style.display = 'none'; }
+        selectedId = null;
+        // Afficher le panneau en haut du canvas comme invitation
+        const vp = canvasViewport.getBoundingClientRect();
+        selectionPanel.style.left = (vp.right - 220) + 'px';
+        selectionPanel.style.top  = (vp.top + 8) + 'px';
+        selectionPanelTitle.textContent = mode === 'rect'
+            ? 'Cliquez-glissez sur une image pour sélectionner.'
+            : 'Dessinez librement sur une image pour sélectionner.';
+        selCopyBtn.disabled = true;
+        selDeleteBtn.disabled = true;
+        selectionPanel.style.display = 'flex';
+        matSvg.style.cursor = 'crosshair';
+        matSvg.classList.add('tool-active');
+        renderMat();
+    }
+
+    toolSelRect.addEventListener('click', () => {
+        if (selRectMode) { cancelSelection(); } else { activateSelTool('rect'); }
+    });
+    toolSelLasso.addEventListener('click', () => {
+        if (selLassoMode) { cancelSelection(); } else { activateSelTool('lasso'); }
+    });
+
+    selCopyBtn.addEventListener('click',   () => applySelectionAction('copy'));
+    selDeleteBtn.addEventListener('click', () => applySelectionAction('delete'));
+    selCancelBtn.addEventListener('click', cancelSelection);
 
     // ===================== Ordre des calques =====================
     const layerTopBtn = document.getElementById('layerTopBtn');
@@ -3467,6 +3771,86 @@ if(typeof define === 'function' && define.amd){
         const [obj] = objects.splice(idx, 1);
         objects.unshift(obj);
         renderMat(); pushHistory();
+    });
+
+    mergeDownBtn.addEventListener('click', () => {
+        if (!selectedId) return;
+        const idx = objects.findIndex(o => o.id === selectedId);
+        if (idx <= 0) return;
+        const top = objects[idx];
+        const bot = objects[idx - 1];
+        if (top.type !== 'raster' || bot.type !== 'raster') return;
+
+        // Bounding box englobante en cm
+        const minX = Math.min(top.x, bot.x);
+        const minY = Math.min(top.y, bot.y);
+        const maxX = Math.max(top.x + top.w, bot.x + bot.w);
+        const maxY = Math.max(top.y + top.h, bot.y + bot.h);
+        const bw = maxX - minX, bh = maxY - minY;
+
+        // Résolution cible : ~96 px/cm, plafonné à 4096 px
+        const PX_PER_CM = Math.min(96, 4096 / Math.max(bw, bh));
+        const cw = Math.round(bw * PX_PER_CM);
+        const ch = Math.round(bh * PX_PER_CM);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        const ctx = canvas.getContext('2d');
+
+        // Dessine une image raster sur le canvas à sa position relative
+        function drawLayer(obj) {
+            return new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => {
+                    const dx = Math.round((obj.x - minX) * PX_PER_CM);
+                    const dy = Math.round((obj.y - minY) * PX_PER_CM);
+                    const dw = Math.round(obj.w * PX_PER_CM);
+                    const dh = Math.round(obj.h * PX_PER_CM);
+
+                    // Reproduit preserveAspectRatio="xMidYMid meet" comme le SVG
+                    const imgRatio = img.naturalWidth / img.naturalHeight;
+                    const boxRatio = dw / dh;
+                    let rw, rh, ox, oy;
+                    if (imgRatio > boxRatio) {
+                        rw = dw; rh = dw / imgRatio;
+                        ox = 0;  oy = (dh - rh) / 2;
+                    } else {
+                        rh = dh; rw = dh * imgRatio;
+                        ox = (dw - rw) / 2; oy = 0;
+                    }
+
+                    ctx.save();
+                    if (obj.opacity !== undefined && obj.opacity !== 1) ctx.globalAlpha = obj.opacity;
+                    if (obj.rotation) {
+                        const cx = dx + dw / 2, cy = dy + dh / 2;
+                        ctx.translate(cx, cy);
+                        ctx.rotate(obj.rotation * Math.PI / 180);
+                        ctx.drawImage(img, ox - dw / 2, oy - dh / 2, rw, rh);
+                    } else {
+                        ctx.drawImage(img, dx + ox, dy + oy, rw, rh);
+                    }
+                    ctx.restore();
+                    resolve();
+                };
+                img.src = obj.dataUrl;
+            });
+        }
+
+        drawLayer(bot).then(() => drawLayer(top)).then(() => {
+            const mergedUrl = canvas.toDataURL('image/png');
+            const merged = {
+                id: nextObjId++, type: 'raster',
+                x: minX, y: minY, w: bw, h: bh, rotation: 0,
+                dataUrl: mergedUrl, originalDataUrl: mergedUrl,
+                fileName: 'fusion.png',
+                naturalW: cw, naturalH: ch, adjustments: {}
+            };
+            // Remplace les deux objets par le résultat fusionné
+            objects.splice(idx - 1, 2, merged);
+            selectedId = merged.id;
+            renderMat();
+            pushHistory();
+        });
     });
 
     // ===================== Zoom =====================
@@ -6208,6 +6592,57 @@ MODE 4 — MODIFICATION D'IMAGE : Si le message contient "IMAGE À MODIFIER :" e
     setZoom(1);
     renderMat();
     pushHistory();
+
+    // ===================== Fenêtres flottantes déplaçables =====================
+    (function() {
+        function makeDraggable(panel, handle) {
+            if (!panel || !handle) return;
+            handle.style.cursor = 'grab';
+            let dragging = false, sX, sY, sL, sT;
+
+            handle.addEventListener('mousedown', e => {
+                if (['BUTTON','INPUT','SELECT','TEXTAREA','A'].includes(e.target.tagName)) return;
+                dragging = true;
+                const r = panel.getBoundingClientRect();
+                sX = e.clientX; sY = e.clientY;
+                sL = r.left;    sT = r.top;
+                panel.style.left   = sL + 'px';
+                panel.style.top    = sT + 'px';
+                panel.style.right  = 'auto';
+                panel.style.bottom = 'auto';
+                handle.style.cursor = 'grabbing';
+                e.preventDefault();
+            });
+            document.addEventListener('mousemove', e => {
+                if (!dragging) return;
+                panel.style.left = Math.max(0, Math.min(window.innerWidth  - panel.offsetWidth,  sL + e.clientX - sX)) + 'px';
+                panel.style.top  = Math.max(0, Math.min(window.innerHeight - panel.offsetHeight, sT + e.clientY - sY)) + 'px';
+            });
+            document.addEventListener('mouseup', () => {
+                if (!dragging) return;
+                dragging = false;
+                handle.style.cursor = 'grab';
+            });
+        }
+
+        function addDragBar(panel) {
+            if (!panel) return;
+            const bar = document.createElement('div');
+            // flex-basis:100% garantit que la barre occupe toute la largeur même dans un flex-wrap
+            bar.style.cssText = 'display:flex;align-items:center;justify-content:center;height:16px;flex-basis:100%;flex-shrink:0;margin-bottom:6px;border-radius:6px 6px 0 0;background:#f8fafc;border-bottom:1px solid #f1f5f9;cursor:grab;order:-999;';
+            bar.innerHTML = '<span style="color:#cbd5e1;font-size:13px;letter-spacing:4px;user-select:none;">• • •</span>';
+            panel.insertBefore(bar, panel.firstChild);
+            makeDraggable(panel, bar);
+        }
+
+        // Tous les panneaux flottants reçoivent la barre • • •
+        [
+            'retouchePanel', 'textPanel', 'projectsPanel',
+            'imageSearchPanel', 'googleSearchPanel', 'magicPanel',
+            'cropPanel', 'selectionPanel',
+            'shapesPopover', 'eraserPopover', 'linePopover', 'colorPopover'
+        ].forEach(id => addDragBar(document.getElementById(id)));
+    })();
 </script>
 </body>
 </html>
