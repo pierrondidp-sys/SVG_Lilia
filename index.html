@@ -136,6 +136,7 @@
         .ruler-left-inner { position: absolute; top: 0; left: 0; width: 100%; }
         .canvas-viewport { flex: 1; overflow: auto; background: #fafafa; position: relative; }
         .mat-svg { display: block; background: #ffffff; overflow: visible; }
+        .mat-svg.tool-active * { cursor: inherit !important; }
 
         .zoom-controls {
             position: absolute; bottom: 12px; right: 12px; background: #fff; border: 1px solid #e2e8f0;
@@ -1498,9 +1499,11 @@ if(typeof define === 'function' && define.amd){
         <button class="tool-rail-btn" id="toolLine" title="Lignes et courbes"><span class="icon">✏️</span>Lignes</button>
         <button class="tool-rail-btn" id="toolColor" title="Couleurs"><span class="icon">🎨</span>Couleurs</button>
         <button class="tool-rail-btn" id="toolCrop" title="Rogner une image sélectionnée"><span class="icon">✂️</span>Rogner</button>
+        <button class="tool-rail-btn" id="toolMagic" title="Sélection magique — supprimer le fond d'une image"><span class="icon">🪄</span>Sélection</button>
         <button class="tool-rail-btn" id="toolRetouche" title="Retouche d'image"><span class="icon">🖌️</span>Retouche</button>
         <button class="tool-rail-btn" id="toolImages" title="Importer une image ou un DXF"><span class="icon">🖼️</span>Images</button>
-        <button class="tool-rail-btn" id="toolSearch" title="Rechercher des images libres de droits"><span class="icon">🔍</span>Images web</button>
+        <button class="tool-rail-btn" id="toolSearch" title="Rechercher des images libres de droits (Pixabay)"><span class="icon">🔍</span>Images web</button>
+        <button class="tool-rail-btn" id="toolGoogleImages" title="Rechercher sur Google Images"><span class="icon">🌐</span>Google Img</button>
         <button class="tool-rail-btn" id="toolText" title="Ajouter du texte"><span class="icon">🅣</span>Texte</button>
         <button class="tool-rail-btn" id="toolMonogram" title="Bientôt disponible"><span class="icon">▦</span>Monogramme</button>
         <div class="tool-rail-sep"></div>
@@ -1550,35 +1553,83 @@ if(typeof define === 'function' && define.amd){
     </div>
 
     <!-- Popover outil Couleurs -->
-    <div id="colorPopover" class="shapes-popover" style="flex-direction: column; align-items: stretch; width: 240px; max-height: 70vh; overflow-y: auto;">
-        <div id="colorNoSelection" style="font-size: 12px; color: #64748b;">Sélectionnez un objet sur le plan de travail pour modifier sa couleur.</div>
-        <div id="colorEditRow" style="display: none; flex-direction: column; gap: 8px;">
-            <label style="font-size: 12px; color: #334155;">Couleur de l'objet sélectionné :</label>
-            <div style="display: flex; gap: 6px;">
-                <input type="color" id="colorPicker" value="#3b82f6" style="width: 40px; height: 36px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 2px; flex-shrink: 0;">
-                <input type="text" id="colorHexInput" value="#3B82F6" maxlength="7" placeholder="#RRGGBB" style="flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 13px; text-transform: uppercase;">
-                <button id="colorEyedropperBtn" title="Pipette : prélever une couleur à l'écran" style="width: 36px; height: 36px; flex-shrink: 0; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; cursor: pointer; font-size: 16px;">🎯</button>
-            </div>
-            <button id="colorResetBtn" style="display: none; width: 100%; padding: 6px; font-size: 12px; border-radius: 6px;">Couleur d'origine (image/IA)</button>
+    <div id="colorPopover" class="shapes-popover" style="flex-direction:column;align-items:stretch;width:285px;padding:10px;gap:8px;">
+        <div id="colorNoSelection" style="font-size:12px;color:#64748b;display:none;">Sélectionnez un objet sur le plan de travail pour modifier sa couleur.</div>
+        <div id="colorEditRow" style="display:none;flex-direction:column;gap:8px;">
 
-            <div id="multiColorSection" style="display: none; flex-direction: column; gap: 8px; border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 2px;">
-                <label style="font-size: 12px; color: #334155;">Couleurs détectées dans l'image :</label>
-                <div id="detectedColorsSwatches" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
-                <div id="replaceColorControls" style="display: none; flex-direction: column; gap: 6px; background: #f8fafc; border-radius: 8px; padding: 8px;">
-                    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #1e293b;">
-                        <span>Couleur sélectionnée :</span>
-                        <span id="sourceColorSwatch" style="width: 18px; height: 18px; border-radius: 4px; border: 1px solid #cbd5e1; flex-shrink: 0;"></span>
-                        <strong id="sourceColorLabel" style="font-family: monospace;"></strong>
-                    </div>
-                    <label style="font-size: 11px; color: #64748b;">Remplacer par :</label>
-                    <div style="display: flex; gap: 6px;">
-                        <input type="color" id="replaceColorPicker" value="#000000" style="width: 36px; height: 32px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 2px; flex-shrink: 0;">
-                        <input type="text" id="replaceColorHex" maxlength="7" placeholder="#RRGGBB" style="flex: 1; min-width: 0; padding: 5px 7px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 12px; text-transform: uppercase;">
-                        <button id="replaceColorEyedropperBtn" title="Pipette" style="width: 32px; height: 32px; flex-shrink: 0; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; cursor: pointer; font-size: 14px;">🎯</button>
-                    </div>
-                    <div style="display: flex; gap: 6px;">
-                        <button id="applyReplaceColorBtn" style="flex: 1; padding: 7px; font-size: 11.5px; border: none; border-radius: 6px; background: #10b981; color: #fff; cursor: pointer;">✓ Remplacer</button>
-                        <button id="eraseColorBtn" style="flex: 1; padding: 7px; font-size: 11.5px; border: none; border-radius: 6px; background: #fee2e2; color: #dc2626; cursor: pointer;">🧹 Effacer</button>
+            <!-- Pipette + Actuelle + Nouvelle -->
+            <div style="display:flex;align-items:flex-end;gap:8px;">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                    <span style="font-size:11px;color:#64748b;">Pipette</span>
+                    <button id="colorEyedropperBtn" title="Sélectionner une couleur dans l'image ou la forme" style="width:38px;height:38px;border:1px solid #cbd5e1;border-radius:6px;background:#f8fafc;cursor:pointer;font-size:18px;">🎯</button>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:3px;">
+                    <span style="font-size:11px;color:#64748b;">Actuelle</span>
+                    <div id="colorCurrentPreview" style="height:38px;border-radius:6px;border:1px solid #cbd5e1;background:#f1f5f9;"></div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:3px;">
+                    <span style="font-size:11px;color:#64748b;">Nouvelle</span>
+                    <div id="colorNewPreview" style="height:38px;border-radius:6px;border:1px solid #cbd5e1;background:#f1f5f9;"></div>
+                </div>
+            </div>
+
+            <!-- Champ hex -->
+            <div style="display:flex;gap:6px;align-items:center;">
+                <input type="color" id="colorPicker" value="#000000" style="width:36px;height:32px;border:1px solid #cbd5e1;border-radius:6px;cursor:pointer;padding:2px;flex-shrink:0;">
+                <input type="text" id="colorHexInput" maxlength="7" placeholder="#RRGGBB" style="flex:1;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-family:monospace;font-size:13px;text-transform:uppercase;">
+            </div>
+
+            <!-- Onglets Standard / Personnalisées -->
+            <div style="display:flex;border-bottom:1px solid #e2e8f0;">
+                <button id="colorTabStdBtn" style="flex:1;padding:6px 4px;border:none;background:none;font-size:12px;font-weight:600;color:#1e293b;border-bottom:2px solid #3b82f6;cursor:pointer;">Standard</button>
+                <button id="colorTabCustomBtn" style="flex:1;padding:6px 4px;border:none;background:none;font-size:12px;color:#64748b;border-bottom:2px solid transparent;cursor:pointer;">Personnalisées</button>
+            </div>
+
+            <!-- Onglet Standard : grille de couleurs -->
+            <div id="colorStdTab">
+                <div id="colorHexGrid" style="display:flex;flex-direction:column;gap:2px;"></div>
+            </div>
+
+            <!-- Onglet Personnalisées : curseurs HSL -->
+            <div id="colorCustomTab" style="display:none;flex-direction:column;gap:6px;">
+                <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#475569;">
+                    <span style="width:12px;">H</span>
+                    <input type="range" id="colorHue" min="0" max="360" value="0" style="flex:1;">
+                    <span id="colorHueVal" style="width:28px;text-align:right;font-family:monospace;">0°</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#475569;">
+                    <span style="width:12px;">S</span>
+                    <input type="range" id="colorSat" min="0" max="100" value="100" style="flex:1;">
+                    <span id="colorSatVal" style="width:28px;text-align:right;font-family:monospace;">100%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#475569;">
+                    <span style="width:12px;">L</span>
+                    <input type="range" id="colorLit" min="0" max="100" value="50" style="flex:1;">
+                    <span id="colorLitVal" style="width:28px;text-align:right;font-family:monospace;">50%</span>
+                </div>
+            </div>
+
+            <!-- Remplacer / Effacer -->
+            <div style="display:flex;gap:6px;margin-top:2px;">
+                <button id="colorReplaceBtn" style="flex:2;background:#10b981;color:#fff;border:none;border-radius:6px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;">✓ Remplacer</button>
+                <button id="colorEraseBtn" style="flex:1;background:#fff;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:9px;font-size:12px;cursor:pointer;">↩ Effacer</button>
+            </div>
+
+            <!-- Éléments cachés conservés pour compatibilité JS -->
+            <div style="display:none;">
+                <button id="colorResetBtn"></button>
+                <button id="colorOkBtn"></button>
+                <button id="colorCancelBtn"></button>
+                <div id="multiColorSection">
+                    <div id="detectedColorsSwatches"></div>
+                    <div id="replaceColorControls">
+                        <span id="sourceColorSwatch"></span>
+                        <strong id="sourceColorLabel"></strong>
+                        <input type="color" id="replaceColorPicker" value="#000000">
+                        <input type="text" id="replaceColorHex" maxlength="7">
+                        <button id="replaceColorEyedropperBtn">🎯</button>
+                        <button id="applyReplaceColorBtn">✓</button>
+                        <button id="eraseColorBtn">🧹</button>
                     </div>
                 </div>
             </div>
@@ -1593,7 +1644,7 @@ if(typeof define === 'function' && define.amd){
             <button id="imageSearchCloseBtn" title="Fermer">✕</button>
         </div>
         <div style="display:flex; gap:6px; padding:0 12px 8px; flex-shrink:0; align-items:center;">
-            <input type="text" id="pixabayKeyInput" placeholder="Clé API Pixabay (pixabay.com/api/docs)" style="flex:1;min-width:0;padding:5px 7px;border:1px solid #cbd5e1;border-radius:6px;font-size:11px;">
+            <input type="text" id="pixabayKeyInput" placeholder="Clé API Pixabay (pixabay.com/api/docs)" style="flex:1;min-width:0;padding:5px 7px;border:1px solid #cbd5e1;border-radius:6px;font-size:11px;-webkit-text-security:disc;" autocomplete="off">
             <select id="pixabayTypeFilter" style="padding:5px;border:1px solid #cbd5e1;border-radius:6px;font-size:11px;cursor:pointer;">
                 <option value="all">Tous types</option>
                 <option value="photo">Photos</option>
@@ -1609,6 +1660,29 @@ if(typeof define === 'function' && define.amd){
             <button id="imgNextBtn" style="border:1px solid #e2e8f0;background:#f8fafc;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;display:none;">Suiv. →</button>
         </div>
         <div class="image-search-disclaimer">⚠️ Images libres de droits via <strong>Pixabay</strong> (photos, illustrations, vecteurs). Clé gratuite sur pixabay.com/api/docs — sans CB.</div>
+    </div>
+
+    <!-- Panneau Google Images (lanceur + coller) -->
+    <div id="googleSearchPanel" class="image-search-panel" style="width:340px; max-height:none;">
+        <div class="image-search-header">
+            <input type="text" id="googleSearchInput" placeholder="Rechercher sur Google Images…">
+            <button id="googleSearchBtn" title="Ouvrir dans Google Images">🔍</button>
+            <button id="googleSearchCloseBtn" title="Fermer" style="background:#64748b;">✕</button>
+        </div>
+        <div style="padding:12px; display:flex; flex-direction:column; gap:10px; flex-shrink:0;">
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#1e40af;line-height:1.7;">
+                <strong>Mode d'emploi :</strong><br>
+                1. Tapez votre recherche puis cliquez 🔍<br>
+                2. Une fenêtre Google Images s'ouvre<br>
+                3. Clic droit sur l'image → <strong>Copier l'image</strong><br>
+                4. Revenez sur cet outil → l'image se colle automatiquement
+            </div>
+            <div id="googlePasteStatus" style="font-size:12px;color:#64748b;text-align:center;min-height:18px;"></div>
+            <div style="border:2px dashed #cbd5e1;border-radius:8px;padding:14px;text-align:center;font-size:12px;color:#94a3b8;cursor:pointer;transition:border-color 0.2s;" id="googlePasteZone">
+                📋 Ou collez manuellement (Ctrl+V)<br>ou glissez-déposez un fichier image
+            </div>
+        </div>
+        <div class="image-search-disclaimer">⚠️ Vérifiez les droits d'utilisation avant tout usage commercial.</div>
     </div>
 
     <!-- Panneau Projets (enregistrer / ouvrir) -->
@@ -1709,6 +1783,28 @@ if(typeof define === 'function' && define.amd){
                     <button class="rp-btn" id="rpRotate90CCW">↺ Rotation 90° G</button>
                 </div>
             </div>
+            <!-- Déformation -->
+            <div class="rp-section">
+                <div class="rp-title">Déformation</div>
+                <div id="rpWarpIdle">
+                    <div style="font-size:11px;color:#64748b;margin-bottom:8px;line-height:1.5;">Glissez les points de la grille pour déformer l'image librement.</div>
+                    <div class="rp-row">
+                        <label>Grille</label>
+                        <select id="rpWarpGrid" style="flex:1;padding:4px;border:1px solid #cbd5e1;border-radius:5px;font-size:11px;">
+                            <option value="3">3×3</option>
+                            <option value="4" selected>4×4</option>
+                            <option value="5">5×5</option>
+                            <option value="6">6×6</option>
+                        </select>
+                    </div>
+                    <button class="rp-btn" style="width:100%;margin-top:4px;" id="rpWarpStart">⬡ Activer la déformation</button>
+                </div>
+                <div id="rpWarpActive" style="display:none;flex-direction:column;gap:6px;">
+                    <div style="font-size:11px;color:#1d4ed8;background:#eff6ff;border-radius:6px;padding:7px;line-height:1.5;">Glissez les points bleus pour déformer. Cliquez <strong>Appliquer</strong> pour valider.</div>
+                    <button class="rp-apply" id="rpWarpApply">✓ Appliquer la déformation</button>
+                    <button class="rp-btn danger" style="width:100%;" id="rpWarpCancel">✕ Annuler</button>
+                </div>
+            </div>
             <!-- Réinitialiser -->
             <div class="rp-section">
                 <button class="rp-btn danger" style="width:100%;" id="rpReset">↩ Réinitialiser l'image originale</button>
@@ -1717,11 +1813,55 @@ if(typeof define === 'function' && define.amd){
     </div>
 
     <!-- Panneau de validation du rognage -->
-    <div id="cropPanel" style="display: none; position: fixed; z-index: 260; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,.15); padding: 10px; gap: 8px; flex-direction: column; width: 190px;">
+    <div id="cropPanel" style="display: none; position: fixed; z-index: 260; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,.15); padding: 10px; gap: 8px; flex-direction: column; width: 200px;">
         <div style="font-size: 12px; color: #334155;">Ajustez le cadre vert puis validez.</div>
         <div style="display: flex; gap: 6px;">
             <button id="cropApplyBtn" style="flex: 1; background: #10b981; color: #fff; border: none; border-radius: 6px; padding: 8px; font-size: 12px; cursor: pointer;">✓ Valider</button>
             <button id="cropCancelBtn" style="flex: 1; background: #64748b; color: #fff; border: none; border-radius: 6px; padding: 8px; font-size: 12px; cursor: pointer;">✕ Annuler</button>
+        </div>
+        <button id="cropRestoreBtn" style="display:none; width:100%; background:#fff; color:#dc2626; border:1px solid #fca5a5; border-radius:6px; padding:7px; font-size:12px; cursor:pointer;">↩ Rétablir l'image d'origine</button>
+    </div>
+
+    <!-- Panneau Sélection Magique -->
+    <div id="magicPanel" style="display:none; position:fixed; z-index:260; background:#fff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.18); padding:14px; flex-direction:column; gap:10px; width:230px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px; font-weight:600; color:#1e293b;">🪄 Sélection magique</span>
+            <button id="magicCloseBtn" style="border:none;background:none;font-size:16px;cursor:pointer;color:#94a3b8;">✕</button>
+        </div>
+        <div id="magicNoImg" style="font-size:12px; color:#94a3b8; text-align:center; padding:6px 0;">Sélectionnez une image sur le plan de travail.</div>
+        <div id="magicBody" style="display:none; flex-direction:column; gap:10px;">
+            <div style="font-size:11.5px; color:#475569; line-height:1.5; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px;">
+                <strong>Mode :</strong> <span id="magicModeLabel">Cliquez sur le fond à supprimer</span>
+            </div>
+            <!-- Sélecteur de mode -->
+            <div style="display:flex; gap:6px;">
+                <button id="magicModeBg" class="rp-btn active" style="flex:1; font-size:11px;" title="Cliquer sur le fond à supprimer">🏳️ Fond</button>
+                <button id="magicModeSubject" class="rp-btn" style="flex:1; font-size:11px;" title="Cliquer sur le sujet à garder">🎯 Sujet</button>
+            </div>
+            <!-- Tolérance -->
+            <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="font-size:11px; color:#64748b;">Tolérance</label>
+                    <span id="magicToleranceVal" style="font-size:11px; font-family:monospace; color:#334155;">35</span>
+                </div>
+                <input type="range" id="magicTolerance" min="1" max="120" step="1" value="35" style="width:100%;">
+            </div>
+            <!-- Lissage -->
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="magicSmooth" checked style="cursor:pointer;">
+                <label for="magicSmooth" style="font-size:11.5px; color:#334155; cursor:pointer;">Lisser les bords</label>
+            </div>
+            <!-- Aperçu du masque -->
+            <div style="font-size:11px; color:#64748b; text-align:center;">
+                <canvas id="magicPreviewCanvas" style="max-width:100%; border:1px solid #e2e8f0; border-radius:6px; display:none; image-rendering:pixelated;"></canvas>
+                <div id="magicPreviewLabel" style="margin-top:4px;"></div>
+            </div>
+            <!-- Actions -->
+            <div style="display:flex; gap:6px;">
+                <button id="magicApplyBtn" style="flex:1; background:#8b5cf6; color:#fff; border:none; border-radius:6px; padding:8px; font-size:12px; cursor:pointer; font-weight:bold;">✓ Appliquer</button>
+                <button id="magicResetBtn" style="flex:1; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; border-radius:6px; padding:8px; font-size:12px; cursor:pointer;">↩ Reset</button>
+            </div>
+            <div id="magicStatus" style="font-size:11px; color:#10b981; text-align:center; min-height:14px;"></div>
         </div>
     </div>
 
@@ -1808,8 +1948,11 @@ if(typeof define === 'function' && define.amd){
             ✦ <span id="aiContextLabel">Objet sélectionné — l'IA peut le modifier directement</span>
         </div>
         <div class="chat-input-area">
-            <textarea id="userInput" placeholder="Demander une modification ou un dessin à l'IA..."></textarea>
-            <button id="sendBtn">Créer</button>
+            <textarea id="userInput" placeholder="Décrire un dessin ou une image…"></textarea>
+            <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;width:80px;">
+                <button id="sendBtn" title="Générer un dessin vectoriel (SVG)" style="width:80px;height:38px;font-size:12px;font-weight:bold;white-space:nowrap;padding:0;">✏️ Créer</button>
+                <button id="imageGenBtn" title="Générer une image réaliste (PNG via Pollinations)" style="width:80px;height:38px;background:#7c3aed;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;white-space:nowrap;padding:0;">🖼️ Image</button>
+            </div>
         </div>
     </div>
 
@@ -1824,6 +1967,7 @@ if(typeof define === 'function' && define.amd){
                 <div class="modal-tabs">
                     <button class="tab-btn active" onclick="openTab(event, 'tab-files')">Outils Fichiers</button>
                     <button class="tab-btn" onclick="openTab(event, 'tab-config')">Clé d'API Gemini</button>
+                    <button class="tab-btn" onclick="openTab(event, 'tab-google')">🌐 Google Images</button>
                     <button class="tab-btn" onclick="openTab(event, 'tab-usage')">Demandes IA</button>
                 </div>
 
@@ -1839,7 +1983,8 @@ if(typeof define === 'function' && define.amd){
                         <li><strong>Formes modifiables :</strong> carré, rectangle, triangle, triangle rectangle, pentagone, hexagone, octogone, étoile, losange, flèche, bulle, nuage et cœur peuvent être déformées sommet par sommet. Double-cliquez la forme pour afficher ses points verts, puis glissez-les un par un. Double-cliquez à nouveau (ou Échap) pour quitter ce mode.</li>
                         <li><strong>Suppression :</strong> sélectionnez un objet puis touche Suppr/Retour, ou le bouton « Supprimer la sélection » en haut du plan de travail.</li>
                         <li><strong>Zoom :</strong> utilisez les boutons +/− en bas à droite du plan de travail.</li>
-                        <li><strong>Images web :</strong> moteur de recherche Pixabay (6 millions+ d'images libres de droits : photos, illustrations, vecteurs). Nécessite une clé API gratuite obtenue sur <strong>pixabay.com/api/docs</strong> (sans CB). Filtres par type, pagination (40 images/page).</li>
+                        <li><strong>Images web (🔍 Pixabay) :</strong> 6 millions+ d'images libres de droits (photos, illustrations, vecteurs). Clé API gratuite sur <strong>pixabay.com/api/docs</strong> (sans CB). Filtres par type, pagination (40 images/page).</li>
+                        <li><strong>Google Images (🌐 Google Img) :</strong> recherche sur Google Images via l'API Custom Search. Nécessite une clé API Google + un Search Engine ID — tous deux gratuits (100 req/jour). Voir l'onglet <strong>🌐 Google Images</strong> de ce guide pour le pas à pas complet.</li>
                         <li><strong>Images (PNG, JPG, BMP, GIF) :</strong> à chaque import, une fenêtre vous demande de choisir entre un contour noir et blanc (silhouette de découpe) ou la conservation des couleurs d'origine.</li>
                         <li><strong>Fichiers DXF :</strong> l'outil décode la géométrie CAO et l'ajoute aussi comme objet déplaçable.</li>
                         <li><strong>Téléchargement :</strong> exporte l'intégralité du plan de travail (tous les objets, à leur taille réelle en cm) en un seul fichier SVG prêt pour Cricut Design Space.</li>
@@ -1863,10 +2008,66 @@ if(typeof define === 'function' && define.amd){
                     </p>
                 </div>
 
+                <div id="tab-google" class="modal-tab-content">
+                    <h3>🌐 Google Images — Configuration pas à pas</h3>
+                    <p style="font-size:13px;color:#475569;margin:0 0 12px;">Deux clés sont nécessaires : une <strong>clé API Google</strong> et un <strong>Search Engine ID (cx)</strong>. Les deux sont gratuites et ne nécessitent pas de carte bancaire (quota : 100 recherches/jour).</p>
+
+                    <h4 style="margin:0 0 6px;color:#1e293b;">Étape 1 — Activer l'API Custom Search</h4>
+                    <ol>
+                        <li>Allez sur <a href="https://console.cloud.google.com/" target="_blank" style="color:#3b82f6;font-weight:bold;">console.cloud.google.com</a> et connectez-vous avec votre compte Google.</li>
+                        <li>En haut de la page, cliquez sur le sélecteur de projet puis <strong>« Nouveau projet »</strong>. Donnez-lui un nom (ex : <em>Cricut Image Search</em>) puis cliquez <strong>« Créer »</strong>.</li>
+                        <li>Dans la barre de recherche en haut, tapez <strong>« Custom Search API »</strong> et cliquez sur le résultat correspondant.</li>
+                        <li>Cliquez sur le bouton bleu <strong>« Activer »</strong>.</li>
+                    </ol>
+
+                    <h4 style="margin:12px 0 6px;color:#1e293b;">Étape 2 — Créer la clé API</h4>
+                    <ol>
+                        <li>Dans le menu de gauche, allez dans <strong>API et services → Identifiants</strong>.</li>
+                        <li>Cliquez <strong>« + Créer des identifiants »</strong> puis choisissez <strong>« Clé API »</strong>.</li>
+                        <li>La clé s'affiche sous la forme <code>AIzaSy…</code>. Copiez-la.</li>
+                        <li>Collez-la dans le champ <strong>« Clé API Google »</strong> du panneau 🌐 Google Img.</li>
+                    </ol>
+                    <p style="background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;padding:9px 12px;font-size:12.5px;color:#78350f;margin:8px 0 0;">
+                        ⚠️ Si vous avez déjà une clé Gemini (AI Studio), elle <strong>ne fonctionnera pas ici</strong> — Custom Search est une API distincte qui nécessite sa propre clé créée dans Google Cloud Console.
+                    </p>
+
+                    <h4 style="margin:14px 0 6px;color:#1e293b;">Étape 3 — Créer le moteur de recherche (Search Engine ID)</h4>
+                    <ol>
+                        <li>Allez sur <a href="https://programmablesearchengine.google.com/" target="_blank" style="color:#3b82f6;font-weight:bold;">programmablesearchengine.google.com</a> et connectez-vous.</li>
+                        <li>Cliquez <strong>« Ajouter »</strong> (ou « Get started »).</li>
+                        <li>Dans le champ <em>« Sites à rechercher »</em>, entrez <strong><code>*</code></strong> (astérisque) pour rechercher sur tout le web.</li>
+                        <li>Donnez un nom à votre moteur (ex : <em>Google Images Cricut</em>).</li>
+                        <li>Cliquez <strong>« Créer »</strong>.</li>
+                        <li>Sur la page suivante, cliquez <strong>« Personnaliser »</strong> (ou le nom de votre moteur dans la liste).</li>
+                        <li>Dans l'onglet <strong>« Fonctionnalités »</strong>, activez le bouton <strong>« Recherche d'images »</strong> (Image search). Sans cela, aucun résultat d'image ne sera retourné.</li>
+                        <li>Revenez à l'onglet <strong>« Vue d'ensemble »</strong> et copiez le champ <strong>« Identifiant du moteur de recherche »</strong> (format : <code>123456789012345678901:xxxxxxxxxxxx</code>).</li>
+                        <li>Collez-le dans le champ <strong>« Search Engine ID · cx »</strong> du panneau 🌐 Google Img.</li>
+                    </ol>
+
+                    <h4 style="margin:14px 0 6px;color:#1e293b;">Étape 4 — Utiliser le panneau</h4>
+                    <ol>
+                        <li>Cliquez sur le bouton <strong>🌐 Google Img</strong> dans la barre d'outils à gauche.</li>
+                        <li>Entrez votre clé API et votre Search Engine ID dans les champs (ils sont mémorisés automatiquement pour les prochaines sessions).</li>
+                        <li>Tapez votre recherche (ex : <em>papillon monarque</em>) et appuyez sur Entrée ou 🔍.</li>
+                        <li>Cliquez une image pour l'ajouter directement sur le plan de travail.</li>
+                    </ol>
+                    <p style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:9px 12px;font-size:12.5px;color:#166534;margin:8px 0 0;">
+                        ✅ Quota gratuit : <strong>100 recherches par jour</strong>, sans CB. Au-delà, Google facture 5 $ pour 1 000 requêtes supplémentaires.
+                    </p>
+                </div>
+
                 <div id="tab-usage" class="modal-tab-content">
                     <h3>Demander un motif vectoriel</h3>
                     <ol>
                         <li>Décrivez précisément votre idée (ex: *Silhouette de tortue marine épurée*). Le résultat est ajouté comme nouvel objet sur le plan de travail, déplaçable et redimensionnable comme les autres.</li>
+                    </ol>
+                    <h3>Générer une image réaliste (🖼️ Image)</h3>
+                    <ol>
+                        <li>Saisissez votre description dans le chat, puis cliquez sur le bouton <strong>🖼️ Image</strong> (violet) au lieu de « ✏️ Créer ».</li>
+                        <li>L'image est générée par <strong>Pollinations.ai</strong> (moteur FLUX) — entièrement <strong>gratuit, sans clé API</strong>, sans inscription. Nécessite uniquement une connexion internet.</li>
+                        <li>La génération prend environ 10 à 30 secondes.</li>
+                        <li>L'image générée (PNG) s'ajoute sur le plan de travail comme n'importe quelle image importée.</li>
+                        <li>Exemple : <em>« Carte de la Guadeloupe avec les îles, style aquarelle »</em> → cliquez 🖼️ Image.</li>
                     </ol>
                 </div>
             </div>
@@ -1895,6 +2096,7 @@ if(typeof define === 'function' && define.amd){
     const chatMessages = document.getElementById('chatMessages');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
+    const imageGenBtn = document.getElementById('imageGenBtn');
     const downloadBtn = document.getElementById('downloadBtn');
     const resetBtn = document.getElementById('resetBtn');
     const fileImporter = document.getElementById('fileImporter');
@@ -1970,6 +2172,7 @@ if(typeof define === 'function' && define.amd){
     const toolLine = document.getElementById('toolLine');
     const toolColor = document.getElementById('toolColor');
     const toolCrop = document.getElementById('toolCrop');
+    const toolMagic = document.getElementById('toolMagic');
     const toolRetouche = document.getElementById('toolRetouche');
     const retouchePanel = document.getElementById('retouchePanel');
     const retouchePanelCloseBtn = document.getElementById('retouchePanelCloseBtn');
@@ -2020,6 +2223,94 @@ if(typeof define === 'function' && define.amd){
     let selectedId = null;
     let dragState = null;
     let nodeEditId = null;
+    let warpEditId = null;
+
+    // ===== Curseurs personnalisés =====
+    function makeCursor(svgContent, hotX, hotY) {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">${svgContent}</svg>`;
+        return `url("data:image/svg+xml,${encodeURIComponent(svg)}") ${hotX} ${hotY}, auto`;
+    }
+    const CURSORS = {
+        eraser: makeCursor(`
+            <g transform="translate(16,15) rotate(-42) translate(-12,-7)">
+                <rect x="0" y="0" width="24" height="14" rx="3" fill="#f1f5f9"/>
+                <rect x="11" y="0" width="13" height="14" rx="0 3 3 0" fill="#fca5a5"/>
+                <rect x="0" y="0" width="24" height="14" rx="3" fill="none" stroke="#1f2937" stroke-width="1.8"/>
+                <line x1="11" y1="0" x2="11" y2="14" stroke="#1f2937" stroke-width="1.4"/>
+            </g>
+            <line x1="3" y1="29" x2="29" y2="29" stroke="#1f2937" stroke-width="2" stroke-linecap="round"/>
+        `, 3, 29),
+        pencil: makeCursor(`
+            <g transform="translate(3,29) rotate(-45)">
+                <rect x="-3.5" y="-22" width="7" height="16" rx="1" fill="#fde68a" stroke="#92400e" stroke-width="1.2"/>
+                <polygon points="-3.5,-6 3.5,-6 0,0" fill="#fef3c7" stroke="#92400e" stroke-width="1.2"/>
+                <polygon points="-2.5,0 2.5,0 0,2.5" fill="#1e293b"/>
+                <rect x="-3.5" y="-22" width="7" height="4" rx="1" fill="#94a3b8" stroke="#64748b" stroke-width="1"/>
+            </g>
+        `, 3, 29),
+        magicWand: makeCursor(`
+            <line x1="3" y1="29" x2="22" y2="10" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="3" cy="29" r="2.5" fill="#7c3aed"/>
+            <circle cx="26" cy="6" r="3" fill="#fbbf24"/>
+            <circle cx="28" cy="17" r="1.5" fill="#fbbf24"/>
+            <circle cx="19" cy="4" r="1.5" fill="#fbbf24"/>
+            <circle cx="30" cy="24" r="1" fill="#fbbf24"/>
+        `, 3, 29),
+        eyedropper: makeCursor(`
+            <rect x="17" y="1" width="8" height="11" rx="2.5" transform="rotate(45,21,6.5)" fill="#6366f1" stroke="#4338ca" stroke-width="1.2"/>
+            <rect x="7" y="10" width="13" height="9" rx="1" transform="rotate(45,13.5,14.5)" fill="#818cf8" stroke="#4338ca" stroke-width="1"/>
+            <line x1="4" y1="25" x2="8" y2="21" stroke="#4338ca" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="3" cy="27" r="3" fill="#6366f1" opacity="0.65" stroke="#4338ca" stroke-width="1"/>
+        `, 3, 27),
+        crop: makeCursor(`
+            <line x1="8" y1="1" x2="8" y2="31" stroke="#334155" stroke-width="1.5"/>
+            <line x1="1" y1="8" x2="31" y2="8" stroke="#334155" stroke-width="1.5"/>
+            <line x1="24" y1="1" x2="24" y2="31" stroke="#334155" stroke-width="1.5"/>
+            <line x1="1" y1="24" x2="31" y2="24" stroke="#334155" stroke-width="1.5"/>
+            <rect x="5" y="5" width="6" height="6" fill="#10b981" rx="1"/>
+            <rect x="21" y="5" width="6" height="6" fill="#10b981" rx="1"/>
+            <rect x="5" y="21" width="6" height="6" fill="#10b981" rx="1"/>
+            <rect x="21" y="21" width="6" height="6" fill="#10b981" rx="1"/>
+        `, 16, 16),
+        text: makeCursor(`
+            <line x1="16" y1="3" x2="16" y2="29" stroke="#1e293b" stroke-width="2.2" stroke-linecap="round"/>
+            <line x1="10" y1="3" x2="22" y2="3" stroke="#1e293b" stroke-width="2.2" stroke-linecap="round"/>
+            <line x1="10" y1="29" x2="22" y2="29" stroke="#1e293b" stroke-width="2.2" stroke-linecap="round"/>
+        `, 16, 16),
+        warp: makeCursor(`
+            <line x1="8" y1="8" x2="24" y2="8" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3 2"/>
+            <line x1="8" y1="24" x2="24" y2="24" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3 2"/>
+            <line x1="8" y1="8" x2="8" y2="24" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3 2"/>
+            <line x1="24" y1="8" x2="24" y2="24" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3 2"/>
+            <circle cx="8" cy="8" r="3" fill="#3b82f6" stroke="#1d4ed8" stroke-width="1.2"/>
+            <circle cx="24" cy="8" r="3" fill="#3b82f6" stroke="#1d4ed8" stroke-width="1.2"/>
+            <circle cx="8" cy="24" r="3" fill="#3b82f6" stroke="#1d4ed8" stroke-width="1.2"/>
+            <circle cx="24" cy="24" r="3" fill="#3b82f6" stroke="#1d4ed8" stroke-width="1.2"/>
+            <circle cx="16" cy="16" r="2.5" fill="#3b82f6" stroke="#1d4ed8" stroke-width="1" opacity="0.6"/>
+        `, 16, 16),
+        paintbrush: makeCursor(`
+            <g transform="translate(2,30) rotate(-45)">
+                <rect x="-3" y="-24" width="6" height="18" rx="1.5" fill="#c4b5fd" stroke="#7c3aed" stroke-width="1.2"/>
+                <polygon points="-3,-6 3,-6 0,0" fill="#7c3aed"/>
+                <circle cx="0" cy="2" r="2.5" fill="#10b981"/>
+                <rect x="-3" y="-24" width="6" height="4" rx="1" fill="#1e293b"/>
+            </g>
+        `, 2, 30),
+        search: makeCursor(`
+            <circle cx="13" cy="13" r="9" fill="none" stroke="#334155" stroke-width="2.5"/>
+            <line x1="20" y1="20" x2="29" y2="29" stroke="#334155" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="10" cy="10" r="4" fill="#cbd5e1" opacity="0.5"/>
+        `, 13, 13),
+    };
+    function setCanvasCursor(type) {
+        if (type) {
+            matSvg.style.cursor = CURSORS[type] || 'default';
+            matSvg.classList.add('tool-active');
+        } else {
+            matSvg.style.cursor = '';
+            matSvg.classList.remove('tool-active');
+        }
+    }
     let cropState = null;
     let lastClickTime = 0;
     let lastClickId = null;
@@ -2355,7 +2646,17 @@ if(typeof define === 'function' && define.amd){
                 href: obj.dataUrl, preserveAspectRatio: 'xMidYMid meet'
             });
             if (cssFilter) img.setAttribute('style', `filter: ${cssFilter};`);
-            if (obj.cropBox) {
+            // Si des points de contour existent, clipper l'image sur la forme
+            if (obj.contourPoints && obj.contourPoints.length > 2) {
+                const clipId = `contour-clip-${obj.id}`;
+                const defs = svgEl('defs', {});
+                const clipPath = svgEl('clipPath', { id: clipId });
+                const d = 'M ' + obj.contourPoints.map(p => `${p.x} ${p.y}`).join(' L ') + ' Z';
+                clipPath.appendChild(svgEl('path', { d }));
+                defs.appendChild(clipPath);
+                g.appendChild(defs);
+                img.setAttribute('clip-path', `url(#${clipId})`);
+            } else if (obj.cropBox) {
                 const clipId = `clip-${obj.id}`;
                 const defs = svgEl('defs', {});
                 const clipPath = svgEl('clipPath', { id: clipId });
@@ -2429,6 +2730,205 @@ if(typeof define === 'function' && define.amd){
         return g;
     }
 
+    // Extrait le contour principal d'une image raster via ImageTracer
+    async function extractImageContour(obj) {
+        return new Promise((resolve) => {
+            // Options : N&B, chemin simplifié, peu de couleurs
+            const options = {
+                ltres: 1, qtres: 1, pathomit: 12,
+                colorsampling: 0, numberofcolors: 2,
+                scale: 1, roundcoords: 2, viewbox: false
+            };
+            const dataUrl = obj.dataUrl || (obj.type === 'svg' ? null : null);
+            if (!dataUrl) { resolve(); return; }
+
+            ImageTracer.imageToTracedata(dataUrl, function(tracedata) {
+                try {
+                    const iw = tracedata.width, ih = tracedata.height;
+                    // Trouver le plus grand path (le contour principal de l'objet)
+                    let bestPath = null, bestLen = 0;
+                    tracedata.layers.forEach(layer => {
+                        layer.forEach(path => {
+                            if (path.segments && path.segments.length > bestLen) {
+                                bestLen = path.segments.length;
+                                bestPath = path;
+                            }
+                        });
+                    });
+                    if (!bestPath) { resolve(); return; }
+
+                    // Convertir les segments en points dans l'espace du canvas (cm)
+                    const pts = [];
+                    bestPath.segments.forEach(seg => {
+                        // Point de départ x1,y1 (normalisé vers espace cm de l'objet)
+                        const px = obj.x + (seg.x1 / iw) * obj.w;
+                        const py = obj.y + (seg.y1 / ih) * obj.h;
+                        pts.push({ x: px, y: py });
+                        // Pour les courbes quadratiques, ajouter aussi le point de contrôle
+                        if (seg.type === 'Q') {
+                            pts.push({
+                                x: obj.x + (seg.x2 / iw) * obj.w,
+                                y: obj.y + (seg.y2 / ih) * obj.h,
+                                control: true
+                            });
+                        }
+                    });
+
+                    // Dé-duplication et simplification : garder max ~80 points
+                    const maxPts = 80;
+                    let simplified = pts;
+                    if (pts.length > maxPts) {
+                        const step = pts.length / maxPts;
+                        simplified = [];
+                        for (let i = 0; i < maxPts; i++) {
+                            simplified.push(pts[Math.round(i * step)]);
+                        }
+                    }
+                    obj.contourPoints = simplified;
+                    resolve();
+                } catch(e) { resolve(); }
+            }, options);
+        });
+    }
+
+    function renderImageContourHandles(obj) {
+        const hs = 9 / pxPerCm();
+        const g = svgEl('g', { class: 'node-edit-overlay' });
+
+        if (!obj.contourPoints || obj.contourPoints.length === 0) {
+            // En attente d'extraction : afficher un message animé
+            const bbox = getObjBBox(obj);
+            const cx = bbox.x + bbox.w / 2, cy = bbox.y + bbox.h / 2;
+            const txt = svgEl('text', {
+                x: cx, y: cy, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+                fill: '#10b981', 'font-size': 1.2, 'vector-effect': 'non-scaling-stroke'
+            });
+            txt.textContent = '⏳ Analyse du contour…';
+            g.appendChild(txt);
+            return g;
+        }
+
+        const pts = obj.contourPoints;
+        // Tracé du contour édité
+        if (pts.length > 1) {
+            const d = 'M ' + pts.map(p => `${p.x} ${p.y}`).join(' L ') + ' Z';
+            g.appendChild(svgEl('path', {
+                d, fill: 'rgba(16,185,129,0.08)', stroke: '#10b981',
+                'stroke-width': 1, 'stroke-dasharray': '3 2',
+                'vector-effect': 'non-scaling-stroke'
+            }));
+        }
+
+        // Points éditables
+        pts.forEach((p, idx) => {
+            const isControl = p.control;
+            g.appendChild(svgEl('circle', {
+                cx: p.x, cy: p.y, r: isControl ? hs / 3 : hs / 2,
+                fill: isControl ? '#f59e0b' : '#10b981',
+                stroke: '#fff', 'stroke-width': 1.5,
+                'vector-effect': 'non-scaling-stroke',
+                'data-contour-index': idx, 'data-id': obj.id,
+                style: 'cursor: pointer;'
+            }));
+        });
+        return g;
+    }
+
+    function initWarpGrid(obj, n) {
+        const cols = n + 1, rows = n + 1;
+        const pts = [];
+        for (let r = 0; r < rows; r++)
+            for (let c = 0; c < cols; c++)
+                pts.push({ x: obj.x + (c / n) * obj.w, y: obj.y + (r / n) * obj.h });
+        obj.warpPoints = { cols, rows, pts };
+    }
+
+    function renderWarpHandles(obj) {
+        const g = svgEl('g', { class: 'warp-overlay' });
+        const { cols, rows, pts } = obj.warpPoints;
+        const hs = 7 / pxPerCm();
+        // Grid lines
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const i = r * cols + c;
+                if (c < cols - 1) {
+                    const j = r * cols + c + 1;
+                    g.appendChild(svgEl('line', { x1: pts[i].x, y1: pts[i].y, x2: pts[j].x, y2: pts[j].y, stroke: '#3b82f6', 'stroke-width': 1, 'stroke-dasharray': '2 2', 'vector-effect': 'non-scaling-stroke', 'pointer-events': 'none' }));
+                }
+                if (r < rows - 1) {
+                    const j = (r + 1) * cols + c;
+                    g.appendChild(svgEl('line', { x1: pts[i].x, y1: pts[i].y, x2: pts[j].x, y2: pts[j].y, stroke: '#3b82f6', 'stroke-width': 1, 'stroke-dasharray': '2 2', 'vector-effect': 'non-scaling-stroke', 'pointer-events': 'none' }));
+                }
+            }
+        }
+        // Control points
+        pts.forEach((p, idx) => {
+            g.appendChild(svgEl('circle', {
+                cx: p.x, cy: p.y, r: hs,
+                fill: '#3b82f6', stroke: '#fff', 'stroke-width': 1.5,
+                'vector-effect': 'non-scaling-stroke',
+                'data-warp-index': idx, 'data-id': obj.id,
+                style: 'cursor: grab;'
+            }));
+        });
+        return g;
+    }
+
+    function applyWarpDeformation(obj) {
+        return new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => {
+                const iw = img.naturalWidth, ih = img.naturalHeight;
+                const canvas = document.createElement('canvas');
+                canvas.width = iw; canvas.height = ih;
+                const ctx = canvas.getContext('2d');
+                const { cols, rows, pts } = obj.warpPoints;
+
+                function drawTriangle(sx0,sy0,sx1,sy1,sx2,sy2, dx0,dy0,dx1,dy1,dx2,dy2) {
+                    const det = sx0*(sy1-sy2)+sx1*(sy2-sy0)+sx2*(sy0-sy1);
+                    if (Math.abs(det) < 1e-6) return;
+                    const a=(dx0*(sy1-sy2)+dx1*(sy2-sy0)+dx2*(sy0-sy1))/det;
+                    const b=(dx0*(sx2-sx1)+dx1*(sx0-sx2)+dx2*(sx1-sx0))/det;
+                    const c=(dx0*(sx1*sy2-sx2*sy1)+dx1*(sx2*sy0-sx0*sy2)+dx2*(sx0*sy1-sx1*sy0))/det;
+                    const d=(dy0*(sy1-sy2)+dy1*(sy2-sy0)+dy2*(sy0-sy1))/det;
+                    const e=(dy0*(sx2-sx1)+dy1*(sx0-sx2)+dy2*(sx1-sx0))/det;
+                    const f=(dy0*(sx1*sy2-sx2*sy1)+dy1*(sx2*sy0-sx0*sy2)+dy2*(sx0*sy1-sx1*sy0))/det;
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.moveTo(dx0,dy0); ctx.lineTo(dx1,dy1); ctx.lineTo(dx2,dy2);
+                    ctx.closePath(); ctx.clip();
+                    ctx.setTransform(a,d,b,e,c,f);
+                    ctx.drawImage(img,0,0);
+                    ctx.restore();
+                }
+
+                for (let r = 0; r < rows-1; r++) {
+                    for (let c = 0; c < cols-1; c++) {
+                        const iTL=r*cols+c, iTR=r*cols+c+1, iBL=(r+1)*cols+c, iBR=(r+1)*cols+c+1;
+                        // Original positions in image pixels
+                        const oTL={x:(c/(cols-1))*iw,   y:(r/(rows-1))*ih};
+                        const oTR={x:((c+1)/(cols-1))*iw,y:(r/(rows-1))*ih};
+                        const oBL={x:(c/(cols-1))*iw,   y:((r+1)/(rows-1))*ih};
+                        const oBR={x:((c+1)/(cols-1))*iw,y:((r+1)/(rows-1))*ih};
+                        // Displaced positions in image pixels (from cm → pixel)
+                        const dTL={x:(pts[iTL].x-obj.x)/obj.w*iw, y:(pts[iTL].y-obj.y)/obj.h*ih};
+                        const dTR={x:(pts[iTR].x-obj.x)/obj.w*iw, y:(pts[iTR].y-obj.y)/obj.h*ih};
+                        const dBL={x:(pts[iBL].x-obj.x)/obj.w*iw, y:(pts[iBL].y-obj.y)/obj.h*ih};
+                        const dBR={x:(pts[iBR].x-obj.x)/obj.w*iw, y:(pts[iBR].y-obj.y)/obj.h*ih};
+                        // Triangle 1: TL, TR, BL
+                        drawTriangle(oTL.x,oTL.y,oTR.x,oTR.y,oBL.x,oBL.y, dTL.x,dTL.y,dTR.x,dTR.y,dBL.x,dBL.y);
+                        // Triangle 2: TR, BR, BL
+                        drawTriangle(oTR.x,oTR.y,oBR.x,oBR.y,oBL.x,oBL.y, dTR.x,dTR.y,dBR.x,dBR.y,dBL.x,dBL.y);
+                    }
+                }
+                obj.dataUrl = canvas.toDataURL('image/png');
+                delete obj.warpPoints;
+                resolve();
+            };
+            img.src = obj.dataUrl;
+        });
+    }
+
     function renderCropOverlay(obj, rect) {
         const hs = 9 / pxPerCm();
         const g = svgEl('g', { class: 'crop-overlay' });
@@ -2474,7 +2974,13 @@ if(typeof define === 'function' && define.amd){
         if (nodeEditId) {
             const editObj = objects.find(o => o.id === nodeEditId);
             if (editObj && editObj.type === 'polygon') matSvg.appendChild(renderNodeHandles(editObj));
+            else if (editObj && (editObj.type === 'raster' || editObj.type === 'svg')) matSvg.appendChild(renderImageContourHandles(editObj));
             else nodeEditId = null;
+        }
+        if (warpEditId) {
+            const warpObj = objects.find(o => o.id === warpEditId);
+            if (warpObj && warpObj.warpPoints) matSvg.appendChild(renderWarpHandles(warpObj));
+            else warpEditId = null;
         }
         if (cropState) {
             const cropObj = objects.find(o => o.id === cropState.id);
@@ -2503,6 +3009,7 @@ if(typeof define === 'function' && define.amd){
             }
         }
         if (retouchePanel.style.display === 'flex') syncRetouchePanel();
+        if (typeof magicPanel !== 'undefined' && magicPanel.style.display === 'flex') syncMagicPanel();
         renderRulers();
         if (colorPopover.style.display === 'flex') syncColorPopover();
     }
@@ -2637,16 +3144,32 @@ if(typeof define === 'function' && define.amd){
             renderMat();
             return;
         }
+        const warpEl = e.target.closest('[data-warp-index]');
         const nodeEl = e.target.closest('[data-node-index]');
+        const contourEl = e.target.closest('[data-contour-index]');
         const rotateEl = e.target.closest('[data-rotate]');
         const handleEl = e.target.closest('[data-handle]');
         const objEl = e.target.closest('.canvas-object');
-        if (nodeEl) {
+        if (warpEl) {
+            const id = Number(warpEl.dataset.id);
+            const idx = Number(warpEl.dataset.warpIndex);
+            const obj = objects.find(o => o.id === id);
+            dragState = { mode: 'warp', id, warpIndex: idx, startPt: pt, startPts: obj.warpPoints.pts.map(p => ({ ...p })) };
+            dragMoved = false;
+            return;
+        } else if (nodeEl) {
             const id = Number(nodeEl.dataset.id);
             const idx = Number(nodeEl.dataset.nodeIndex);
             selectedId = id;
             const obj = objects.find(o => o.id === id);
             dragState = { mode: 'node', id, nodeIndex: idx, startPt: pt, start: { points: obj.points.map(p => ({ ...p })) } };
+            dragMoved = false;
+        } else if (contourEl) {
+            const id = Number(contourEl.dataset.id);
+            const idx = Number(contourEl.dataset.contourIndex);
+            selectedId = id;
+            const obj = objects.find(o => o.id === id);
+            dragState = { mode: 'contour', id, contourIndex: idx, startPt: pt, startPoints: obj.contourPoints.map(p => ({ ...p })) };
             dragMoved = false;
         } else if (rotateEl) {
             const id = Number(rotateEl.dataset.id);
@@ -2688,10 +3211,18 @@ if(typeof define === 'function' && define.amd){
                     renderMat();
                     return;
                 }
+                if (obj.type === 'raster' || obj.type === 'svg') {
+                    // Double-clic sur image : ne rien faire (les images ne sont pas déformables nœud par nœud)
+                    selectedId = obj.id;
+                    renderMat();
+                    return;
+                }
             }
             if (id !== nodeEditId) nodeEditId = null;
             selectedId = id;
-            const start = (obj.type === 'eraser' || obj.type === 'line' || obj.type === 'polygon') ? { ...obj, points: obj.points.map(p => ({ ...p })) } : { ...obj };
+            const start = (obj.type === 'eraser' || obj.type === 'line' || obj.type === 'polygon')
+                ? { ...obj, points: obj.points.map(p => ({ ...p })) }
+                : { ...obj, contourPoints: obj.contourPoints ? obj.contourPoints.map(p => ({ ...p })) : undefined };
             dragState = { mode: 'move', id, startPt: pt, start };
             dragMoved = false;
         } else {
@@ -2758,10 +3289,20 @@ if(typeof define === 'function' && define.amd){
             } else {
                 obj.x = dragState.start.x + dx;
                 obj.y = dragState.start.y + dy;
+                // Déplacer aussi les points de contour si l'image est en mode édition
+                if (dragState.start.contourPoints) {
+                    obj.contourPoints = dragState.start.contourPoints.map(p => ({ x: p.x + dx, y: p.y + dy }));
+                }
             }
         } else if (dragState.mode === 'node') {
             const orig = dragState.start.points[dragState.nodeIndex];
             obj.points[dragState.nodeIndex] = { x: orig.x + dx, y: orig.y + dy };
+        } else if (dragState.mode === 'contour') {
+            const orig = dragState.startPoints[dragState.contourIndex];
+            obj.contourPoints[dragState.contourIndex] = { x: orig.x + dx, y: orig.y + dy };
+        } else if (dragState.mode === 'warp') {
+            const orig = dragState.startPts[dragState.warpIndex];
+            obj.warpPoints.pts[dragState.warpIndex] = { x: orig.x + dx, y: orig.y + dy };
         } else if (dragState.mode === 'rotate') {
             const curAngle = Math.atan2(pt.y - dragState.center.y, pt.x - dragState.center.x) * 180 / Math.PI;
             obj.rotation = dragState.startRotation + (curAngle - dragState.startAngle);
@@ -2795,9 +3336,32 @@ if(typeof define === 'function' && define.amd){
             return;
         }
         if (currentEraserObj) {
+            // Effacement réel : brûler le trait de gomme dans les images raster qu'il touche
+            const eraserObj = currentEraserObj;
             currentEraserObj = null;
-            downloadBtn.disabled = objects.length === 0;
-            pushHistory();
+
+            // Trouver toutes les images raster sous le tracé de gomme
+            const bbox = getObjBBox(eraserObj);
+            const rasterTargets = objects.filter(o =>
+                o.type === 'raster' &&
+                o.x < bbox.x + bbox.w && o.x + o.w > bbox.x &&
+                o.y < bbox.y + bbox.h && o.y + o.h > bbox.y
+            );
+
+            if (rasterTargets.length > 0) {
+                // Effacer les pixels dans chaque image touchée
+                Promise.all(rasterTargets.map(obj => eraseOnRaster(obj, eraserObj))).then(() => {
+                    // Supprimer l'objet gomme (il ne doit pas rester)
+                    objects = objects.filter(o => o.id !== eraserObj.id);
+                    downloadBtn.disabled = objects.length === 0;
+                    renderMat();
+                    pushHistory();
+                });
+            } else {
+                // Pas d'image sous la gomme : garder le trait blanc (comportement original)
+                downloadBtn.disabled = objects.length === 0;
+                pushHistory();
+            }
         }
         if (currentLineObj) {
             currentLineObj = null;
@@ -2821,6 +3385,13 @@ if(typeof define === 'function' && define.amd){
         }
         if (e.key === 'Escape' && nodeEditId) {
             nodeEditId = null;
+            renderMat();
+        }
+        if (e.key === 'Escape' && warpEditId) {
+            const obj = objects.find(o => o.id === warpEditId);
+            if (obj) delete obj.warpPoints;
+            warpEditId = null;
+            warpUIState(false);
             renderMat();
         }
         if (e.key === 'Escape' && cropState) {
@@ -2966,6 +3537,7 @@ if(typeof define === 'function' && define.amd){
         textPanel.style.left = (rect.right + 6) + 'px';
         textPanel.style.top = Math.max(10, rect.top - 50) + 'px';
         textPanel.style.display = 'flex';
+        setCanvasCursor('text');
         syncTextPanel(obj || null);
     }
 
@@ -3012,7 +3584,7 @@ if(typeof define === 'function' && define.amd){
         renderMat();
     });
     textContentArea.addEventListener('change', () => { const obj = objects.find(o => o.id === textPanelObjId); if (obj) pushHistory(); });
-    textPanelCloseBtn.addEventListener('click', () => { textPanel.style.display = 'none'; });
+    textPanelCloseBtn.addEventListener('click', () => { textPanel.style.display = 'none'; setCanvasCursor(null); });
 
     // ===================== Retouche d'image =====================
 
@@ -3061,6 +3633,59 @@ if(typeof define === 'function' && define.amd){
                 resolve();
             };
             img.onerror = () => reject(new Error("Impossible de charger l'image."));
+            img.src = obj.dataUrl;
+        });
+    }
+
+    // Efface les pixels d'une image raster là où passe le trait de gomme
+    function eraseOnRaster(obj, eraserObj) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                // Facteur de conversion : cm → pixels image
+                const scaleX = img.naturalWidth / obj.w;
+                const scaleY = img.naturalHeight / obj.h;
+
+                // Dessiner le trait de gomme en destination-out (efface les pixels)
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                // Convertir la largeur de gomme (cm) en pixels image
+                ctx.lineWidth = eraserObj.strokeWidth * ((scaleX + scaleY) / 2);
+
+                const pts = eraserObj.points;
+                if (pts.length === 1) {
+                    // Point unique → cercle
+                    ctx.beginPath();
+                    const px = (pts[0].x - obj.x) * scaleX;
+                    const py = (pts[0].y - obj.y) * scaleY;
+                    ctx.arc(px, py, ctx.lineWidth / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.beginPath();
+                    const p0x = (pts[0].x - obj.x) * scaleX;
+                    const p0y = (pts[0].y - obj.y) * scaleY;
+                    ctx.moveTo(p0x, p0y);
+                    for (let i = 1; i < pts.length; i++) {
+                        const px = (pts[i].x - obj.x) * scaleX;
+                        const py = (pts[i].y - obj.y) * scaleY;
+                        ctx.lineTo(px, py);
+                    }
+                    ctx.stroke();
+                }
+
+                ctx.globalCompositeOperation = 'source-over';
+                obj.dataUrl = canvas.toDataURL('image/png');
+                resolve();
+            };
+            img.onerror = () => resolve();
             img.src = obj.dataUrl;
         });
     }
@@ -3128,7 +3753,338 @@ if(typeof define === 'function' && define.amd){
         if (retouchePanel.style.display === 'flex') { retouchePanel.style.display = 'none'; return; }
         openRetouchePanel();
     });
-    retouchePanelCloseBtn.addEventListener('click', () => { retouchePanel.style.display = 'none'; });
+    retouchePanelCloseBtn.addEventListener('click', () => {
+        if (warpEditId) {
+            const obj = objects.find(o => o.id === warpEditId);
+            if (obj) delete obj.warpPoints;
+            warpEditId = null;
+            warpUIState(false);
+            renderMat();
+        }
+        retouchePanel.style.display = 'none';
+    });
+
+    // ===================== Sélection Magique =====================
+    const magicPanel = document.getElementById('magicPanel');
+    const magicNoImg = document.getElementById('magicNoImg');
+    const magicBody = document.getElementById('magicBody');
+    const magicCloseBtn = document.getElementById('magicCloseBtn');
+    const magicTolerance = document.getElementById('magicTolerance');
+    const magicToleranceVal = document.getElementById('magicToleranceVal');
+    const magicSmooth = document.getElementById('magicSmooth');
+    const magicApplyBtn = document.getElementById('magicApplyBtn');
+    const magicResetBtn = document.getElementById('magicResetBtn');
+    const magicStatus = document.getElementById('magicStatus');
+    const magicPreviewCanvas = document.getElementById('magicPreviewCanvas');
+    const magicPreviewLabel = document.getElementById('magicPreviewLabel');
+    const magicModeBg = document.getElementById('magicModeBg');
+    const magicModeSubject = document.getElementById('magicModeSubject');
+    const magicModeLabel = document.getElementById('magicModeLabel');
+
+    let magicMode = 'bg'; // 'bg' = cliquer sur fond à effacer | 'subject' = cliquer sur sujet à garder
+    let magicActive = false;
+    let magicCanvas = null;   // canvas interne avec les pixels de l'image
+    let magicMask = null;     // Uint8Array : 1 = gardé, 0 = supprimé
+    let magicObjId = null;
+
+    function openMagicPanel() {
+        const rect = toolMagic.getBoundingClientRect();
+        magicPanel.style.top = Math.max(10, rect.top) + 'px';
+        magicPanel.style.left = (rect.right + 8) + 'px';
+        magicPanel.style.display = 'flex';
+        setCanvasCursor('magicWand');
+        syncMagicPanel();
+    }
+
+    function syncMagicPanel() {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (obj) {
+            magicNoImg.style.display = 'none';
+            magicBody.style.display = 'flex';
+            // Si nouvelle image différente, reconstruire le canvas interne
+            if (!magicCanvas || magicCanvas._objId !== obj.id) {
+                magicObjId = obj.id;
+                buildMagicCanvas(obj);
+            } else {
+                magicObjId = obj.id;
+            }
+        } else {
+            magicNoImg.style.display = 'block';
+            magicBody.style.display = 'none';
+            // Garder magicObjId si l'objet existe encore (désélection sans changement)
+            if (!objects.find(o => o.id === magicObjId && o.type === 'raster')) {
+                magicObjId = null;
+            }
+        }
+        // Curseur baguette sur le canvas SVG
+        matSvg.style.cursor = magicActive ? 'crosshair' : '';
+    }
+
+    function buildMagicCanvas(obj) {
+        const img = new Image();
+        img.onload = () => {
+            magicCanvas = document.createElement('canvas');
+            magicCanvas.width = img.naturalWidth;
+            magicCanvas.height = img.naturalHeight;
+            magicCanvas._objId = obj.id;
+            magicCanvas.getContext('2d').drawImage(img, 0, 0);
+            // Masque initial : tout gardé
+            magicMask = new Uint8Array(img.naturalWidth * img.naturalHeight).fill(1);
+            magicStatus.textContent = '';
+            updateMagicPreview();
+        };
+        img.src = obj.dataUrl;
+    }
+
+    function updateMagicPreview() {
+        if (!magicCanvas || !magicMask) return;
+        const w = magicCanvas.width, h = magicCanvas.height;
+        const srcCtx = magicCanvas.getContext('2d');
+        const srcData = srcCtx.getImageData(0, 0, w, h);
+
+        // Affichage miniature
+        const scale = Math.min(1, 196 / Math.max(w, h));
+        magicPreviewCanvas.width = Math.round(w * scale);
+        magicPreviewCanvas.height = Math.round(h * scale);
+        magicPreviewCanvas.style.display = 'block';
+        const pCtx = magicPreviewCanvas.getContext('2d');
+
+        // Damier transparent
+        const tileSize = 8;
+        for (let y = 0; y < magicPreviewCanvas.height; y += tileSize) {
+            for (let x = 0; x < magicPreviewCanvas.width; x += tileSize) {
+                pCtx.fillStyle = ((Math.floor(x / tileSize) + Math.floor(y / tileSize)) % 2 === 0) ? '#e2e8f0' : '#ffffff';
+                pCtx.fillRect(x, y, tileSize, tileSize);
+            }
+        }
+
+        // Dessiner image avec masque
+        const previewData = pCtx.createImageData(magicPreviewCanvas.width, magicPreviewCanvas.height);
+        for (let py = 0; py < magicPreviewCanvas.height; py++) {
+            for (let px = 0; px < magicPreviewCanvas.width; px++) {
+                const sx = Math.round(px / scale), sy = Math.round(py / scale);
+                const si = (sy * w + sx) * 4;
+                const pi = (py * magicPreviewCanvas.width + px) * 4;
+                const kept = magicMask[sy * w + sx];
+                previewData.data[pi]     = srcData.data[si];
+                previewData.data[pi + 1] = srcData.data[si + 1];
+                previewData.data[pi + 2] = srcData.data[si + 2];
+                previewData.data[pi + 3] = kept ? srcData.data[si + 3] : 0;
+            }
+        }
+        pCtx.putImageData(previewData, 0, 0);
+
+        // Comptage pixels supprimés
+        let removed = 0;
+        for (let i = 0; i < magicMask.length; i++) { if (!magicMask[i]) removed++; }
+        const pct = Math.round(removed / magicMask.length * 100);
+        magicPreviewLabel.textContent = pct > 0 ? `${pct}% supprimé` : 'Cliquez sur l\'image pour sélectionner';
+    }
+
+    // Flood fill + croissance par tolérance couleur
+    function floodFillMask(seedX, seedY, tolerance, removeRegion) {
+        if (!magicCanvas) return;
+        const w = magicCanvas.width, h = magicCanvas.height;
+        const ctx = magicCanvas.getContext('2d');
+        const imgData = ctx.getImageData(0, 0, w, h).data;
+
+        const si = (seedY * w + seedX) * 4;
+        const seedR = imgData[si], seedG = imgData[si + 1], seedB = imgData[si + 2], seedA = imgData[si + 3];
+
+        // BFS flood fill
+        const visited = new Uint8Array(w * h);
+        const queue = [seedY * w + seedX];
+        visited[seedY * w + seedX] = 1;
+
+        const tol = tolerance;
+        function colorDist(i) {
+            const dr = imgData[i] - seedR, dg = imgData[i+1] - seedG;
+            const db = imgData[i+2] - seedB, da = imgData[i+3] - seedA;
+            return Math.sqrt(dr*dr + dg*dg + db*db + da*da * 0.5);
+        }
+
+        let head = 0;
+        while (head < queue.length) {
+            const idx = queue[head++];
+            const x = idx % w, y = Math.floor(idx / w);
+            const neighbors = [];
+            if (x > 0)     neighbors.push(idx - 1);
+            if (x < w - 1) neighbors.push(idx + 1);
+            if (y > 0)     neighbors.push(idx - w);
+            if (y < h - 1) neighbors.push(idx + w);
+            for (const n of neighbors) {
+                if (visited[n]) continue;
+                visited[n] = 1;
+                if (colorDist(n * 4) <= tol * 2.55) {
+                    queue.push(n);
+                }
+            }
+        }
+
+        // Appliquer au masque
+        if (removeRegion) {
+            // Mode fond : supprimer la région flood-fillee
+            for (let i = 0; i < w * h; i++) {
+                if (visited[i]) magicMask[i] = 0;
+            }
+        } else {
+            // Mode sujet : garder UNIQUEMENT la région flood-fillee (supprimer tout le reste)
+            for (let i = 0; i < w * h; i++) {
+                if (!visited[i]) magicMask[i] = 0;
+                else magicMask[i] = 1;
+            }
+        }
+
+        // Lissage optionnel des bords
+        if (magicSmooth.checked) {
+            smoothMaskBorders(w, h);
+        }
+
+        updateMagicPreview();
+    }
+
+    function smoothMaskBorders(w, h) {
+        // Erosion légère puis dilation pour adoucir les bords
+        const tmp = new Uint8Array(magicMask);
+        for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+                const i = y * w + x;
+                // Si pixel gardé mais entouré de plus de 2 pixels supprimés → supprimer
+                if (tmp[i] === 1) {
+                    const neighbors = [tmp[i-1], tmp[i+1], tmp[i-w], tmp[i+w]];
+                    const supprimés = neighbors.filter(v => v === 0).length;
+                    if (supprimés >= 3) magicMask[i] = 0;
+                }
+            }
+        }
+    }
+
+    function applyMagicMask() {
+        const obj = objects.find(o => o.id === magicObjId);
+        if (!obj || !magicCanvas || !magicMask) return;
+
+        const w = magicCanvas.width, h = magicCanvas.height;
+        const ctx = magicCanvas.getContext('2d');
+        const imgData = ctx.getImageData(0, 0, w, h);
+
+        // Appliquer le masque : pixels supprimés → alpha = 0
+        for (let i = 0; i < w * h; i++) {
+            if (!magicMask[i]) imgData.data[i * 4 + 3] = 0;
+        }
+
+        // Exporter en PNG avec transparence
+        const outCanvas = document.createElement('canvas');
+        outCanvas.width = w; outCanvas.height = h;
+        outCanvas.getContext('2d').putImageData(imgData, 0, 0);
+        obj.dataUrl = outCanvas.toDataURL('image/png');
+        obj.originalDataUrl = obj.dataUrl;
+
+        renderMat();
+        pushHistory();
+        magicStatus.textContent = '✅ Fond supprimé !';
+        // Reconstruire le canvas interne avec la nouvelle image
+        buildMagicCanvas(obj);
+    }
+
+    // Capture du clic sur l'image en mode magic
+    function handleMagicClick(e) {
+        if (!magicActive || !magicCanvas) return;
+        const obj = objects.find(o => o.id === magicObjId);
+        if (!obj) return;
+
+        // Convertir coordonnées écran → cm → pixels image
+        const pt = clientToCm(e.clientX, e.clientY);
+        const px = Math.round(((pt.x - obj.x) / obj.w) * magicCanvas.width);
+        const py = Math.round(((pt.y - obj.y) / obj.h) * magicCanvas.height);
+        if (px < 0 || py < 0 || px >= magicCanvas.width || py >= magicCanvas.height) {
+            magicStatus.textContent = '⚠️ Cliquez directement sur l\'image.';
+            return;
+        }
+
+        const tol = parseInt(magicTolerance.value);
+        magicStatus.textContent = '⏳ Analyse en cours…';
+        // Léger délai pour laisser le DOM se mettre à jour
+        setTimeout(() => {
+            floodFillMask(px, py, tol, magicMode === 'bg');
+            magicStatus.textContent = magicMode === 'bg'
+                ? '✂️ Zone sélectionnée. Cliquez encore ou Appliquer.'
+                : '🎯 Sujet sélectionné. Cliquez encore ou Appliquer.';
+        }, 10);
+    }
+
+    magicCloseBtn.addEventListener('click', () => {
+        magicPanel.style.display = 'none';
+        magicActive = false;
+        setCanvasCursor(null);
+        toolMagic.classList.remove('active');
+        setCanvasCursor(null);
+    });
+
+    toolMagic.addEventListener('click', () => {
+        if (magicPanel.style.display === 'flex') {
+            magicPanel.style.display = 'none';
+            magicActive = false;
+            toolMagic.classList.remove('active');
+            setCanvasCursor(null);
+            return;
+        }
+        magicActive = true;
+        toolMagic.classList.add('active');
+        openMagicPanel();
+    });
+
+    magicModeBg.addEventListener('click', () => {
+        magicMode = 'bg';
+        magicModeBg.classList.add('active');
+        magicModeSubject.classList.remove('active');
+        magicModeLabel.textContent = 'Cliquez sur le fond à supprimer';
+    });
+
+    magicModeSubject.addEventListener('click', () => {
+        magicMode = 'subject';
+        magicModeSubject.classList.add('active');
+        magicModeBg.classList.remove('active');
+        magicModeLabel.textContent = 'Cliquez sur le sujet à garder';
+    });
+
+    magicTolerance.addEventListener('input', () => {
+        magicToleranceVal.textContent = magicTolerance.value;
+    });
+
+    magicApplyBtn.addEventListener('click', applyMagicMask);
+
+    magicResetBtn.addEventListener('click', () => {
+        const obj = objects.find(o => o.id === magicObjId);
+        if (obj) {
+            buildMagicCanvas(obj);
+            magicStatus.textContent = 'Masque réinitialisé.';
+        }
+    });
+
+    // Intercepter les clics canvas SVG pour la sélection magique
+    matSvg.addEventListener('pointerdown', (e) => {
+        if (!magicActive) return;
+        // Trouver l'objet image sous le curseur (selectedId ou magicObjId)
+        const targetId = magicObjId || selectedId;
+        const obj = objects.find(o => o.id === targetId && o.type === 'raster');
+        if (!obj) {
+            magicStatus.textContent = '⚠️ Sélectionnez d\'abord une image sur le plan de travail.';
+            return;
+        }
+        magicObjId = obj.id;
+        // S'assurer que le canvas interne est prêt
+        if (!magicCanvas || magicCanvas._objId !== obj.id) {
+            buildMagicCanvas(obj);
+            magicStatus.textContent = '⏳ Chargement de l\'image…';
+            // Réessayer après chargement
+            setTimeout(() => handleMagicClick(e), 400);
+            return;
+        }
+        handleMagicClick(e);
+        e.stopPropagation();
+    }, true); // capture phase = prioritaire sur tous les autres listeners
+
+
 
     // Sliders non-destructifs
     function bindSlider(el, key, valId) {
@@ -3291,6 +4247,48 @@ if(typeof define === 'function' && define.amd){
         pushHistory();
         syncRetouchePanel();
         appendMessage("Image réinitialisée à son état d'origine.", 'ai');
+    });
+
+    // ===== Déformation (Warp) =====
+    const rpWarpGrid   = document.getElementById('rpWarpGrid');
+    const rpWarpIdle   = document.getElementById('rpWarpIdle');
+    const rpWarpActive = document.getElementById('rpWarpActive');
+
+    function warpUIState(active) {
+        rpWarpIdle.style.display   = active ? 'none'  : 'block';
+        rpWarpActive.style.display = active ? 'flex'  : 'none';
+    }
+
+    document.getElementById('rpWarpStart').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (!obj) { appendMessage('Sélectionnez une image pour activer la déformation.', 'ai'); return; }
+        const n = parseInt(rpWarpGrid.value, 10);
+        initWarpGrid(obj, n);
+        warpEditId = obj.id;
+        warpUIState(true);
+        setCanvasCursor('warp');
+        renderMat();
+    });
+
+    document.getElementById('rpWarpApply').addEventListener('click', async () => {
+        const obj = objects.find(o => o.id === warpEditId);
+        if (!obj || !obj.warpPoints) return;
+        await applyWarpDeformation(obj);
+        warpEditId = null;
+        warpUIState(false);
+        setCanvasCursor(null);
+        renderMat();
+        pushHistory();
+        appendMessage('Déformation appliquée.', 'ai');
+    });
+
+    document.getElementById('rpWarpCancel').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === warpEditId);
+        if (obj) delete obj.warpPoints;
+        warpEditId = null;
+        warpUIState(false);
+        setCanvasCursor(null);
+        renderMat();
     });
 
     function comingSoon(name) {
@@ -3485,6 +4483,9 @@ if(typeof define === 'function' && define.amd){
         if (!projectsPanel.contains(e.target) && e.target !== toolProjects && !toolProjects.contains(e.target)) {
             projectsPanel.style.display = 'none';
         }
+        if (eraserMode && !eraserPopover.contains(e.target) && e.target !== toolEraser && !toolEraser.contains(e.target)) {
+            setEraserMode(false);
+        }
     });
 
     // ===================== Gomme =====================
@@ -3492,7 +4493,7 @@ if(typeof define === 'function' && define.amd){
         eraserMode = on;
         toolEraser.classList.toggle('active', on);
         if (on && lineMode) setLineMode(false);
-        matSvg.style.cursor = on ? 'crosshair' : '';
+        if (on) setCanvasCursor('eraser'); else setCanvasCursor(null);
         if (on) {
             const rect = toolEraser.getBoundingClientRect();
             eraserPopover.style.left = (rect.right + 6) + 'px';
@@ -3516,7 +4517,7 @@ if(typeof define === 'function' && define.amd){
         lineMode = on;
         toolLine.classList.toggle('active', on);
         if (on && eraserMode) setEraserMode(false);
-        matSvg.style.cursor = on ? 'crosshair' : '';
+        if (on) setCanvasCursor('pencil'); else setCanvasCursor(null);
         if (on) {
             const rect = toolLine.getBoundingClientRect();
             linePopover.style.left = (rect.right + 6) + 'px';
@@ -3756,25 +4757,31 @@ if(typeof define === 'function' && define.amd){
             colorNoSelection.textContent = "Sélectionnez un objet sur le plan de travail pour modifier sa couleur.";
             return;
         }
+        colorNoSelection.style.display = 'none';
         colorEditRow.style.display = 'flex';
-        let current = '#000000';
+        let current = null;
         if (obj.type === 'shape' || obj.type === 'polygon') current = obj.fill;
         else if (obj.type === 'text') current = obj.color || '#000000';
         else if (obj.type === 'line') current = obj.color;
         else if (obj.type === 'svg') current = obj.colorOverride || '#000000';
-        else if (obj.type === 'raster') current = '#000000';
-        colorPicker.value = current;
-        if (document.activeElement !== colorHexInput) colorHexInput.value = current.toUpperCase();
-        colorResetBtn.style.display = obj.type === 'svg' ? 'block' : 'none';
-        renderDetectedSwatches(obj);
+        // raster : pas de couleur unique, la pipette sera utilisée
+        if (current) setActuelle(current);
+        else {
+            const cp = document.getElementById('colorCurrentPreview');
+            if (cp) { cp.style.background = '#f1f5f9'; cp.title = ''; }
+            colorCurrent = null;
+        }
+        if (colorNew) setNouvelle(colorNew);
     }
     toolColor.addEventListener('click', () => {
         const isOpen = colorPopover.style.display === 'flex';
         if (isOpen) { colorPopover.style.display = 'none'; return; }
+        colorNew = null;
         const rect = toolColor.getBoundingClientRect();
         colorPopover.style.left = (rect.right + 6) + 'px';
-        colorPopover.style.top = rect.top + 'px';
+        colorPopover.style.top  = rect.top + 'px';
         colorPopover.style.display = 'flex';
+        buildColorHexGrid();
         syncColorPopover();
     });
 
@@ -3782,6 +4789,7 @@ if(typeof define === 'function' && define.amd){
     function cancelCrop() {
         cropState = null;
         cropPanel.style.display = 'none';
+        setCanvasCursor(null);
         renderMat();
     }
     toolCrop.addEventListener('click', () => {
@@ -3795,56 +4803,247 @@ if(typeof define === 'function' && define.amd){
         if (lineMode) setLineMode(false);
         nodeEditId = null;
         cropState = { id: obj.id, rect: { x: obj.x, y: obj.y, w: obj.w, h: obj.h } };
+        setCanvasCursor('crop');
         const rect = toolCrop.getBoundingClientRect();
         cropPanel.style.left = (rect.right + 6) + 'px';
         cropPanel.style.top = rect.top + 'px';
         cropPanel.style.display = 'flex';
+        syncCropRestoreBtn();
         renderMat();
     });
     cropCancelBtn.addEventListener('click', cancelCrop);
+
+    const cropRestoreBtn = document.getElementById('cropRestoreBtn');
+
+    cropRestoreBtn.addEventListener('click', () => {
+        const obj = objects.find(o => o.id === (cropState && cropState.id || selectedId));
+        if (!obj) return;
+        if (obj.beforeCrop) {
+            Object.assign(obj, obj.beforeCrop);
+            delete obj.beforeCrop;
+            delete obj.cropBox;
+        } else if (obj.originalDataUrl) {
+            const snap = obj.beforeCrop || {};
+            obj.dataUrl = obj.originalDataUrl;
+            if (snap.iw) { obj.iw = snap.iw; obj.ih = snap.ih; }
+        }
+        cropRestoreBtn.style.display = 'none';
+        cancelCrop();
+        pushHistory();
+    });
+
+    // Affiche/masque le bouton Rétablir selon si l'objet a déjà été rogné
+    function syncCropRestoreBtn() {
+        const obj = objects.find(o => o.id === selectedId);
+        cropRestoreBtn.style.display = (obj && (obj.beforeCrop || obj.cropBox)) ? 'block' : 'none';
+    }
+
     cropApplyBtn.addEventListener('click', () => {
         if (!cropState) return;
         const obj = objects.find(o => o.id === cropState.id);
-        if (obj) {
-            const relX = (cropState.rect.x - obj.x) / obj.w;
-            const relY = (cropState.rect.y - obj.y) / obj.h;
-            const relW = cropState.rect.w / obj.w;
-            const relH = cropState.rect.h / obj.h;
+        if (!obj) { cancelCrop(); return; }
+
+        const relX = (cropState.rect.x - obj.x) / obj.w;
+        const relY = (cropState.rect.y - obj.y) / obj.h;
+        const relW = cropState.rect.w / obj.w;
+        const relH = cropState.rect.h / obj.h;
+
+        if (obj.type === 'raster') {
+            // Sauvegarder l'état avant rognage pour Rétablir
+            if (!obj.beforeCrop) {
+                obj.beforeCrop = { dataUrl: obj.dataUrl, iw: obj.iw, ih: obj.ih, x: obj.x, y: obj.y, w: obj.w, h: obj.h };
+            }
+            const imgEl = new Image();
+            imgEl.onload = () => {
+                const srcX = Math.round(relX * imgEl.naturalWidth);
+                const srcY = Math.round(relY * imgEl.naturalHeight);
+                const srcW = Math.max(1, Math.round(relW * imgEl.naturalWidth));
+                const srcH = Math.max(1, Math.round(relH * imgEl.naturalHeight));
+                const canvas = document.createElement('canvas');
+                canvas.width = srcW; canvas.height = srcH;
+                canvas.getContext('2d').drawImage(imgEl, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
+                obj.dataUrl = canvas.toDataURL('image/png');
+                obj.iw = srcW; obj.ih = srcH;
+                obj.x = cropState.rect.x; obj.y = cropState.rect.y;
+                obj.w = cropState.rect.w; obj.h = cropState.rect.h;
+                delete obj.cropBox;
+                cropState = null;
+                cropPanel.style.display = 'none';
+                setCanvasCursor(null);
+                renderMat();
+                pushHistory();
+            };
+            imgEl.src = obj.dataUrl;
+        } else if (obj.type === 'svg') {
+            if (!obj.beforeCrop) {
+                obj.beforeCrop = { colorOverride: obj.colorOverride, cropBox: obj.cropBox ? {...obj.cropBox} : null, x: obj.x, y: obj.y, w: obj.w, h: obj.h };
+            }
             obj.cropBox = {
                 x: relX * obj.iw, y: relY * obj.ih,
                 w: Math.max(1, relW * obj.iw), h: Math.max(1, relH * obj.ih)
             };
             obj.x = cropState.rect.x; obj.y = cropState.rect.y;
             obj.w = cropState.rect.w; obj.h = cropState.rect.h;
+            cropState = null;
+            cropPanel.style.display = 'none';
+            setCanvasCursor(null);
+            renderMat();
             pushHistory();
         }
-        cropState = null;
-        cropPanel.style.display = 'none';
-        renderMat();
     });
-    colorPicker.addEventListener('input', () => {
-        applyColorToSelection(colorPicker.value);
-        colorHexInput.value = colorPicker.value.toUpperCase();
-    });
-    colorPicker.addEventListener('change', () => pushHistory());
+    // ===== Outil Couleurs =====
+    let colorCurrent = null; // couleur "Actuelle" (source, sélectionnée par pipette)
+    let colorNew     = null; // couleur "Nouvelle" (choisie dans la palette)
 
+    function hslToHex(h, s, l) {
+        s /= 100; l /= 100;
+        const k = n => (n + h / 30) % 12;
+        const a = s * Math.min(l, 1 - l);
+        const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+        const toHex = x => Math.round(x * 255).toString(16).padStart(2, '0');
+        return '#' + toHex(f(0)) + toHex(f(8)) + toHex(f(4));
+    }
+
+    function hexToHsl(hex) {
+        let r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255;
+        const max = Math.max(r,g,b), min = Math.min(r,g,b);
+        let h, s, l = (max+min)/2;
+        if (max === min) { h = s = 0; }
+        else {
+            const d = max - min;
+            s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+            switch(max) {
+                case r: h = ((g-b)/d + (g<b?6:0))/6; break;
+                case g: h = ((b-r)/d + 2)/6; break;
+                case b: h = ((r-g)/d + 4)/6; break;
+            }
+        }
+        return [Math.round(h*360), Math.round(s*100), Math.round(l*100)];
+    }
+
+    function setActuelle(color) {
+        colorCurrent = color;
+        const el = document.getElementById('colorCurrentPreview');
+        if (el) { el.style.background = color; el.title = color.toUpperCase(); }
+    }
+
+    function setNouvelle(color) {
+        colorNew = color;
+        const el = document.getElementById('colorNewPreview');
+        if (el) { el.style.background = color; el.title = color.toUpperCase(); }
+        try { colorPicker.value = color; } catch(e) {}
+        colorHexInput.value = color.toUpperCase();
+        // Sync curseurs HSL
+        const [h,s,l] = hexToHsl(color);
+        const hEl = document.getElementById('colorHue'), sEl = document.getElementById('colorSat'), lEl = document.getElementById('colorLit');
+        if (hEl) { hEl.value = h; document.getElementById('colorHueVal').textContent = h+'°'; }
+        if (sEl) { sEl.value = s; document.getElementById('colorSatVal').textContent = s+'%'; }
+        if (lEl) { lEl.value = l; document.getElementById('colorLitVal').textContent = l+'%'; }
+    }
+
+    function buildColorHexGrid() {
+        const container = document.getElementById('colorHexGrid');
+        if (!container) return;
+        container.innerHTML = '';
+        const HUES = [0, 28, 55, 83, 110, 138, 165, 193, 220, 248, 275, 303, 330];
+        const ROWS = [{l:18,s:85},{l:32,s:90},{l:48,s:88},{l:63,s:82},{l:76,s:72},{l:88,s:55}];
+        // CELL px = taille exacte (outline ne modifie pas le layout)
+        const CELL = 18, GAP = 2, OFFSET = CELL / 2 + GAP / 2;
+
+        function makeCell(color) {
+            const d = document.createElement('div');
+            d.style.cssText = `width:${CELL}px;height:${CELL}px;background:${color};border-radius:50%;cursor:pointer;flex-shrink:0;box-sizing:border-box;transition:transform .1s;`;
+            d.title = color;
+            d.addEventListener('mouseenter', () => { d.style.outline = '2px solid #1e293b'; d.style.outlineOffset = '1px'; d.style.transform = 'scale(1.15)'; });
+            d.addEventListener('mouseleave', () => { d.style.outline = ''; d.style.outlineOffset = ''; d.style.transform = ''; });
+            d.addEventListener('click', (e) => { e.stopPropagation(); setNouvelle(color); });
+            return d;
+        }
+        ROWS.forEach(({l, s}, row) => {
+            const rowEl = document.createElement('div');
+            rowEl.style.cssText = `display:flex;gap:${GAP}px;margin-left:${row%2===1?OFFSET:0}px;`;
+            const count = row%2===1 ? HUES.length-1 : HUES.length;
+            for (let col = 0; col < count; col++) {
+                const hue = row%2===1 ? (HUES[col]+HUES[col+1])/2 : HUES[col];
+                rowEl.appendChild(makeCell(hslToHex(hue, s, l)));
+            }
+            container.appendChild(rowEl);
+        });
+        const grayRow = document.createElement('div');
+        grayRow.style.cssText = `display:flex;gap:${GAP}px;margin-top:6px;`;
+        for (let i = 0; i < 11; i++)
+            grayRow.appendChild(makeCell(hslToHex(0, 0, Math.round(i/10*100))));
+        container.appendChild(grayRow);
+    }
+
+    // Références DOM
+    const colorTabStdBtn  = document.getElementById('colorTabStdBtn');
+    const colorTabCustomBtn = document.getElementById('colorTabCustomBtn');
+    const colorStdTab     = document.getElementById('colorStdTab');
+    const colorCustomTab  = document.getElementById('colorCustomTab');
+
+    // Onglets
+    function switchColorTab(tab) {
+        const isStd = tab === 'std';
+        colorStdTab.style.display    = isStd ? 'block' : 'none';
+        colorCustomTab.style.display = isStd ? 'none'  : 'flex';
+        colorTabStdBtn.style.cssText    += `;border-bottom-color:${isStd?'#3b82f6':'transparent'};color:${isStd?'#1e293b':'#64748b'};font-weight:${isStd?'600':'normal'};`;
+        colorTabCustomBtn.style.cssText += `;border-bottom-color:${isStd?'transparent':'#3b82f6'};color:${isStd?'#64748b':'#1e293b'};font-weight:${isStd?'normal':'600'};`;
+    }
+    colorTabStdBtn.addEventListener('click',    () => switchColorTab('std'));
+    colorTabCustomBtn.addEventListener('click', () => switchColorTab('custom'));
+
+    // Champ hex et colorPicker → Nouvelle
+    colorPicker.addEventListener('input', () => setNouvelle(colorPicker.value));
     colorHexInput.addEventListener('input', () => {
         let v = colorHexInput.value.trim();
-        if (v && !v.startsWith('#')) v = '#' + v;
-        if (isValidHex(v)) {
-            colorPicker.value = v;
-            applyColorToSelection(v);
-        }
+        if (!v.startsWith('#')) v = '#' + v;
+        if (isValidHex(v)) setNouvelle(v);
     });
     colorHexInput.addEventListener('change', () => {
         let v = colorHexInput.value.trim();
-        if (v && !v.startsWith('#')) v = '#' + v;
-        if (isValidHex(v)) {
-            colorHexInput.value = v.toUpperCase();
-            pushHistory();
+        if (!v.startsWith('#')) v = '#' + v;
+        if (!isValidHex(v)) colorHexInput.value = (colorNew || '#000000').toUpperCase();
+        else colorHexInput.value = v.toUpperCase();
+    });
+
+    // Curseurs HSL → Nouvelle
+    ['colorHue','colorSat','colorLit'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            const h = +document.getElementById('colorHue').value;
+            const s = +document.getElementById('colorSat').value;
+            const l = +document.getElementById('colorLit').value;
+            document.getElementById('colorHueVal').textContent = h+'°';
+            document.getElementById('colorSatVal').textContent = s+'%';
+            document.getElementById('colorLitVal').textContent = l+'%';
+            setNouvelle(hslToHex(h, s, l));
+        });
+    });
+
+    // Remplacer
+    document.getElementById('colorReplaceBtn').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj || !colorNew) return;
+        if (obj.type === 'raster' && colorCurrent) {
+            rasterReplaceColor(obj, colorCurrent, colorNew).then(() => { renderMat(); pushHistory(); syncColorPopover(); });
         } else {
-            colorHexInput.value = colorPicker.value.toUpperCase();
+            applyColorToSelection(colorNew);
+            pushHistory();
+            setActuelle(colorNew);
         }
+    });
+
+    // Effacer → revenir à l'original
+    document.getElementById('colorEraseBtn').addEventListener('click', () => {
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj) return;
+        if (obj.type === 'raster' && obj.originalDataUrl) {
+            obj.dataUrl = obj.originalDataUrl;
+            obj.adjustments = {};
+        } else if (obj.type === 'svg') {
+            obj.colorOverride = null;
+        }
+        renderMat(); pushHistory(); syncColorPopover();
     });
 
     async function pickColorFromScreen() {
@@ -3866,55 +5065,45 @@ if(typeof define === 'function' && define.amd){
         if (!hex) return;
         const obj = objects.find(o => o.id === selectedId);
         if (!obj) return;
+
         if (obj.type === 'raster') {
+            // Pour une image : trouver la couleur réelle la plus proche dans les pixels
             const palette = await sampleRasterColors(obj, 32);
-            if (palette.length === 0) {
-                appendMessage(`Couleur prélevée : ${hex.toUpperCase()}, mais impossible d'analyser cette image.`, 'ai');
-                return;
-            }
-            const [tr, tg, tb] = hexToRgbArr(hex);
-            let best = palette[0], bestDist = Infinity;
-            palette.forEach(c => {
-                const [r, g, b] = hexToRgbArr(c);
-                const d = colorDistance(r, g, b, tr, tg, tb);
-                if (d < bestDist) { bestDist = d; best = c; }
-            });
-            multiColorSection.style.display = 'flex';
-            await renderDetectedSwatches(obj);
-            selectSourceColor(best);
-            const msg = best !== hex
-                ? `Couleur prélevée : ${hex.toUpperCase()} → teinte la plus proche dans l'image : ${best.toUpperCase()} (tolérance ${COLOR_TOLERANCE}). Remplacez ou effacez.`
-                : `Couleur ${hex.toUpperCase()} sélectionnée dans l'image. Remplacez ou effacez.`;
-            appendMessage(msg, 'ai');
-        } else if (obj.type === 'svg' && !obj.colorOverride) {
-            const matched = closestDetectedColor(obj, hex);
-            if (!matched) {
-                appendMessage(`Couleur prélevée : ${hex.toUpperCase()}, mais aucune couleur exploitable n'a été détectée dans cette image.`, 'ai');
-                return;
-            }
-            multiColorSection.style.display = 'flex';
-            selectSourceColor(matched);
-            if (matched !== hex) {
-                appendMessage(`Couleur prélevée : ${hex.toUpperCase()} → couleur correspondante : ${matched.toUpperCase()}. Remplacez ou effacez.`, 'ai');
+            if (palette.length > 0) {
+                const [tr, tg, tb] = hexToRgbArr(hex);
+                let best = palette[0], bestDist = Infinity;
+                palette.forEach(c => {
+                    const [r,g,b] = hexToRgbArr(c);
+                    const d = colorDistance(r,g,b,tr,tg,tb);
+                    if (d < bestDist) { bestDist = d; best = c; }
+                });
+                setActuelle(best);
+                if (best !== hex)
+                    appendMessage(`Pipette : ${hex.toUpperCase()} → couleur la plus proche dans l'image : ${best.toUpperCase()}. Choisissez maintenant la Nouvelle couleur.`, 'ai');
+                else
+                    appendMessage(`Couleur Actuelle : ${best.toUpperCase()}. Choisissez maintenant la Nouvelle couleur.`, 'ai');
             } else {
-                appendMessage(`Couleur ${hex.toUpperCase()} sélectionnée. Remplacez ou effacez.`, 'ai');
+                setActuelle(hex);
             }
         } else {
-            colorPicker.value = hex;
-            colorHexInput.value = hex.toUpperCase();
-            applyColorToSelection(hex);
-            pushHistory();
+            // Forme, texte, SVG : la couleur prélevée devient directement "Actuelle"
+            setActuelle(hex);
+            appendMessage(`Couleur Actuelle : ${hex.toUpperCase()}. Choisissez maintenant la Nouvelle couleur.`, 'ai');
         }
     });
 
     colorResetBtn.addEventListener('click', () => {
         const obj = objects.find(o => o.id === selectedId);
-        if (obj && obj.type === 'svg') {
+        if (!obj) return;
+        if (obj.type === 'svg') {
             obj.colorOverride = null;
-            renderMat();
-            pushHistory();
-            syncColorPopover();
+        } else if (obj.type === 'raster' && obj.originalDataUrl) {
+            obj.dataUrl = obj.originalDataUrl;
+            obj.adjustments = {};
         }
+        renderMat();
+        pushHistory();
+        syncColorPopover();
     });
 
     // ----- Remplacement / effacement d'une couleur au sein d'une image multicolore -----
@@ -3999,7 +5188,8 @@ if(typeof define === 'function' && define.amd){
 
     toolSearch.addEventListener('click', () => {
         const isOpen = imageSearchPanel.style.display === 'flex';
-        if (isOpen) { imageSearchPanel.style.display = 'none'; return; }
+        if (isOpen) { imageSearchPanel.style.display = 'none'; setCanvasCursor(null); return; }
+        setCanvasCursor('search');
         const rect = toolSearch.getBoundingClientRect();
         imageSearchPanel.style.left = (rect.right + 6) + 'px';
         imageSearchPanel.style.top = Math.max(10, rect.top - 100) + 'px';
@@ -4069,6 +5259,176 @@ if(typeof define === 'function' && define.amd){
     pixabayTypeFilter.addEventListener('change', () => { if (pixabayLastQuery) runImageSearch(1); });
     imgPrevBtn.addEventListener('click', () => runImageSearch(pixabayCurrentPage - 1));
     imgNextBtn.addEventListener('click', () => runImageSearch(pixabayCurrentPage + 1));
+
+    // ===== Google Images (lanceur + coller) =====
+    const toolGoogleImages     = document.getElementById('toolGoogleImages');
+    const googleSearchPanel    = document.getElementById('googleSearchPanel');
+    const googleSearchInput    = document.getElementById('googleSearchInput');
+    const googleSearchBtn      = document.getElementById('googleSearchBtn');
+    const googleSearchCloseBtn = document.getElementById('googleSearchCloseBtn');
+    const googlePasteStatus    = document.getElementById('googlePasteStatus');
+    const googlePasteZone      = document.getElementById('googlePasteZone');
+
+    toolGoogleImages.addEventListener('click', () => {
+        const isOpen = googleSearchPanel.style.display === 'flex';
+        if (isOpen) { googleSearchPanel.style.display = 'none'; setCanvasCursor(null); return; }
+        imageSearchPanel.style.display = 'none';
+        setCanvasCursor('search');
+        const rect = toolGoogleImages.getBoundingClientRect();
+        googleSearchPanel.style.left = (rect.right + 6) + 'px';
+        googleSearchPanel.style.top  = Math.max(10, rect.top - 60) + 'px';
+        googleSearchPanel.style.display = 'flex';
+        googleSearchInput.focus();
+    });
+
+    googleSearchCloseBtn.addEventListener('click', () => { googleSearchPanel.style.display = 'none'; stopClipboardPoll(); });
+
+    document.addEventListener('click', e => {
+        if (!googleSearchPanel.contains(e.target) && e.target !== toolGoogleImages && !toolGoogleImages.contains(e.target)) {
+            googleSearchPanel.style.display = 'none';
+        }
+    }, true);
+
+    let googleImgPopup = null;
+
+    function openGoogleImages() {
+        const q = googleSearchInput.value.trim();
+        const url = q
+            ? `https://www.google.com/search?q=${encodeURIComponent(q)}&tbm=isch`
+            : 'https://images.google.com/';
+        const pw = Math.min(1100, screen.width - 80);
+        const ph = Math.min(780, screen.height - 80);
+        const pl = Math.round((screen.width  - pw) / 2);
+        const pt = Math.round((screen.height - ph) / 2);
+        googleImgPopup = window.open(url, 'googleImgSearch',
+            `width=${pw},height=${ph},left=${pl},top=${pt},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`);
+        googlePasteStatus.textContent = '📋 Copiez une image → elle s\'ajoutera automatiquement.';
+        startClipboardPoll();
+    }
+
+    function closeGooglePopupIfOpen() {
+        if (googleImgPopup && !googleImgPopup.closed) {
+            if (confirm('Voulez-vous fermer la fenêtre Google Images ?')) {
+                googleImgPopup.close();
+                googleImgPopup = null;
+            }
+        }
+    }
+
+    googleSearchBtn.addEventListener('click', openGoogleImages);
+    googleSearchInput.addEventListener('keydown', e => { if (e.key === 'Enter') openGoogleImages(); });
+
+    // ── Auto-collage presse-papiers ──
+    let clipboardBaseline = null;
+    let clipboardReadBusy = false;
+
+    async function clipboardPermissionGranted() {
+        if (!navigator.permissions) return false;
+        try {
+            const perm = await navigator.permissions.query({ name: 'clipboard-read' });
+            return perm.state === 'granted';
+        } catch (_) { return false; }
+    }
+
+    async function tryAutoPaste() {
+        if (googleSearchPanel.style.display !== 'flex') return;
+        if (!navigator.clipboard?.read) return;
+        if (clipboardReadBusy) return;
+        // Ne lire le presse-papiers QUE si la permission est déjà accordée
+        // → évite la boucle infinie permission → focus → permission
+        if (!(await clipboardPermissionGranted())) return;
+        clipboardReadBusy = true;
+        try {
+            const items = await navigator.clipboard.read();
+            for (const item of items) {
+                const imgType = item.types.find(t => t.startsWith('image/'));
+                if (imgType) {
+                    const blob = await item.getType(imgType);
+                    const key  = `${imgType}:${blob.size}`;
+                    if (key !== clipboardBaseline) {
+                        clipboardBaseline = key;
+                        googlePasteStatus.textContent = "Ajout automatique de l'image…";
+                        const file = new File([blob], 'image-google.png', { type: imgType });
+                        handleImageData(file);
+                    }
+                    break;
+                }
+            }
+        } catch (_) {}
+        clipboardReadBusy = false;
+    }
+
+    window.addEventListener('focus', tryAutoPaste);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) tryAutoPaste(); });
+
+    // Bouton pour autoriser une fois manuellement (user gesture requis)
+    async function requestClipboardPermission() {
+        if (!navigator.clipboard?.read) return;
+        try {
+            await navigator.clipboard.read(); // déclenche la boîte UNE seule fois
+            googlePasteStatus.textContent = '✅ Autorisation accordée — collage automatique actif.';
+        } catch (_) {
+            googlePasteStatus.textContent = 'Permission refusée — utilisez Ctrl+V.';
+        }
+    }
+
+    function startClipboardPoll() { clipboardBaseline = null; }
+    function stopClipboardPoll()  { /* rien */ }
+
+    async function handleImageData(file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const dataUrl = e.target.result;
+            const img = new Image();
+            img.onload = () => {
+                addRasterObject(dataUrl, file.name || 'image-google', img.naturalWidth || 400, img.naturalHeight || 400);
+                googlePasteStatus.textContent = '✅ Image ajoutée ! Copiez-en une autre ou fermez.';
+                appendMessage("Image collée depuis Google Images. Elle sera vectorisée à l'export.", 'ai');
+                closeGooglePopupIfOpen();
+            };
+            img.src = dataUrl;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Ctrl+V global
+    document.addEventListener('paste', e => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                e.preventDefault();
+                const file = item.getAsFile();
+                if (file) {
+                    googlePasteStatus.textContent = "Ajout de l'image…";
+                    googleSearchPanel.style.display = 'flex';
+                    handleImageData(file);
+                }
+                break;
+            }
+        }
+    });
+
+    // Glisser-déposer sur la zone
+    googlePasteZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        googlePasteZone.style.borderColor = '#3b82f6';
+        googlePasteZone.style.background  = '#eff6ff';
+    });
+    googlePasteZone.addEventListener('dragleave', () => {
+        googlePasteZone.style.borderColor = '#cbd5e1';
+        googlePasteZone.style.background  = '';
+    });
+    googlePasteZone.addEventListener('drop', e => {
+        e.preventDefault();
+        googlePasteZone.style.borderColor = '#cbd5e1';
+        googlePasteZone.style.background  = '';
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            googlePasteStatus.textContent = "Ajout de l'image…";
+            handleImageData(file);
+        }
+    });
 
     async function insertPixabayImage(item) {
         imageSearchStatus.textContent = "Ajout de l'image en cours…";
@@ -4285,7 +5645,7 @@ if(typeof define === 'function' && define.amd){
     });
 
     // ===================== Assistant IA Gemini =====================
-    const SYSTEM_INSTRUCTION = `Tu es l'assistant IA de l'outil "Cricut IA & File Maker". Tu as trois modes selon le message reçu :
+    const SYSTEM_INSTRUCTION = `Tu es l'assistant IA de l'outil "Cricut IA & File Maker". Tu as quatre modes selon le message reçu :
 
 MODE 1 — CONVERSATION : Si l'utilisateur dit bonjour, pose une question générale, demande des conseils ou fait une remarque, réponds naturellement en français, en texte simple, sans balises ni code.
 
@@ -4297,7 +5657,9 @@ MODE 3 — MODIFICATION D'OBJET : Si le message contient "OBJET SÉLECTIONNÉ :"
 - line : { "color": "#hex", "strokeWidth": 0.5 }
 - raster/svg : { "colorOverride": "#hex" }
 Exemple de réponse valide : MODIFIER:{"color":"#e74c3c","fontSize":4.5}
-Ne retourne RIEN d'autre que cette ligne JSON préfixée.`;
+Ne retourne RIEN d'autre que cette ligne JSON préfixée.
+
+MODE 4 — MODIFICATION D'IMAGE : Si le message contient "IMAGE À MODIFIER :" en préfixe ET qu'une image est jointe, l'utilisateur veut modifier l'image existante. Génère UNIQUEMENT du code SVG valide qui reproduit et modifie l'image selon la demande. Pas de texte, pas de markdown, pas d'explication.`;
 
     // Construit le contexte de l'objet sélectionné pour l'IA
     function buildSelectedObjectContext() {
@@ -4373,7 +5735,15 @@ Ne retourne RIEN d'autre que cette ligne JSON préfixée.`;
         appendMessage(userInput.value.trim(), 'user');
         userInput.value = '';
 
-        // Injecter le contexte de l'objet sélectionné si pertinent
+        // Détecter si une image raster est sélectionnée → mode modification d'image
+        const selObj = objects.find(o => o.id === selectedId && o.type === 'raster');
+        if (selObj) {
+            const loadingDiv = appendMessage("L'IA analyse et modifie l'image…", 'ai');
+            await handleGenerationWithImage(prompt, selObj, apiKey, loadingDiv);
+            return;
+        }
+
+        // Sinon : mode texte classique (SVG ou modification d'objet)
         const objCtx = buildSelectedObjectContext();
         let fullPrompt = prompt;
         if (objCtx) {
@@ -4384,6 +5754,82 @@ Ne retourne RIEN d'autre que cette ligne JSON préfixée.`;
         await handleGenerationWithText(fullPrompt, apiKey, loadingDiv, 0);
     }
 
+    // Envoie l'image sélectionnée à Gemini pour modification (multimodal)
+    async function handleGenerationWithImage(prompt, obj, apiKey, loadingDiv) {
+        apiRequestInProgress = true;
+        sendBtn.disabled = true;
+        sendBtn.textContent = '⏳';
+
+        try {
+            // Extraire le base64 et le mimeType du dataUrl
+            const match = obj.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+            if (!match) throw new Error("Format d'image non reconnu.");
+            const mimeType = match[1];
+            const base64Data = match[2];
+
+            const model = geminiModelSelect.value || 'gemini-2.5-flash';
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { text: `IMAGE À MODIFIER : ${prompt}` },
+                            { inlineData: { mimeType, data: base64Data } }
+                        ]
+                    }],
+                    systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+                    generationConfig: { temperature: 0.2 }
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data?.error?.message || `Erreur HTTP ${response.status}`);
+            if (!data.candidates?.length) throw new Error('Réponse vide de l\'IA.');
+
+            const parts = data.candidates[0].content?.parts || [];
+            const allText = parts.filter(p => p.text && !p.thought).map(p => p.text).join('').trim()
+                || parts.filter(p => p.text).map(p => p.text).join('').trim();
+
+            if (!allText) throw new Error('L\'IA n\'a retourné aucun contenu.');
+
+            let svgResponse = allText.replaceAll('```xml','').replaceAll('```svg','').replaceAll('```','').trim();
+
+            if (svgResponse.includes('<svg')) {
+                // Remplacer l'image existante par le SVG modifié
+                const startIdx = svgResponse.indexOf('<svg');
+                const endIdx = svgResponse.lastIndexOf('</svg>') + 6;
+                const svgCode = svgResponse.substring(startIdx, endIdx);
+                try {
+                    const pngDataUrl = await svgToPngDataUrl(svgCode, 1024, 1024);
+                    // Remplacer l'image existante au lieu d'en créer une nouvelle
+                    obj.dataUrl = pngDataUrl;
+                    obj.originalDataUrl = pngDataUrl;
+                    delete obj.contourPoints;
+                    renderMat();
+                    pushHistory();
+                    loadingDiv.innerText = "✅ Image modifiée par l'IA.";
+                } catch (err) {
+                    loadingDiv.innerText = "Erreur de conversion : " + err.message;
+                }
+            } else {
+                // Réponse textuelle
+                loadingDiv.remove();
+                appendMessage(svgResponse, 'ai');
+            }
+        } catch (err) {
+            const msg = err.message || '';
+            if (msg.toLowerCase().includes('quota') || msg.includes('429')) {
+                loadingDiv.innerText = "⚠️ Quota dépassé. Attendez quelques minutes.";
+            } else {
+                loadingDiv.innerText = "Erreur : " + msg;
+            }
+        }
+        unlock();
+    }
+
     async function handleGenerationWithText(prompt, apiKey, loadingDiv, retryCount) {
         if (!apiKey) apiKey = apiKeyInput.value.trim().replaceAll("\r","").replaceAll("\n","").replaceAll("\t","").replaceAll(" ","");
         if (!loadingDiv) loadingDiv = appendMessage("L'IA traite votre demande...", 'ai');
@@ -4392,7 +5838,9 @@ Ne retourne RIEN d'autre que cette ligne JSON préfixée.`;
             // Max 1 relance automatique pour éviter toute boucle
             loadingDiv.innerText = "⚠️ Quota dépassé après relance. Attendez quelques minutes ou vérifiez votre quota sur ai.dev/rate-limit.";
             sendBtn.disabled = false;
-            sendBtn.textContent = 'Créer';
+            sendBtn.textContent = '✏️ Créer';
+            imageGenBtn.disabled = false;
+            imageGenBtn.textContent = '🖼️ Image';
             apiRequestInProgress = false;
             return;
         }
@@ -4457,7 +5905,7 @@ Ne retourne RIEN d'autre que cette ligne JSON préfixée.`;
                 try {
                     const pngDataUrl = await svgToPngDataUrl(svgCode, 1024, 1024);
                     addRasterObject(pngDataUrl, 'ia-gemini.png', 1024, 1024);
-                    loadingDiv.innerText = "Image IA ajoutée sur le plan de travail (PNG). Elle sera vectorisée à l'export.";
+                    loadingDiv.innerText = "Image IA ajoutée sur le plan de travail (PNG).";
                 } catch (err) {
                     loadingDiv.innerText = "Erreur de conversion PNG : " + err.message;
                 }
@@ -4516,7 +5964,87 @@ Ne retourne RIEN d'autre que cette ligne JSON préfixée.`;
     function unlock() {
         apiRequestInProgress = false;
         sendBtn.disabled = false;
-        sendBtn.textContent = 'Créer';
+        sendBtn.textContent = '✏️ Créer';
+        imageGenBtn.disabled = false;
+        imageGenBtn.textContent = '🖼️ Image';
+    }
+
+    // ===================== Génération d'image via Pollinations.ai (gratuit, sans clé) =====================
+    imageGenBtn.addEventListener('click', handleImageGeneration);
+
+    async function handleImageGeneration() {
+        if (apiRequestInProgress) return;
+        const prompt = userInput.value.trim();
+        if (!prompt) return;
+
+        appendMessage(prompt, 'user');
+        userInput.value = '';
+        apiRequestInProgress = true;
+        sendBtn.disabled = true;
+        imageGenBtn.disabled = true;
+        imageGenBtn.textContent = '⏳';
+
+        const loadingDiv = appendMessage("🎨 Génération de l'image via Pollinations.ai…", 'ai');
+
+        try {
+            // Pollinations.ai : API gratuite, sans clé, retourne une image PNG directement
+            const seed = Math.floor(Math.random() * 999999);
+            const encodedPrompt = encodeURIComponent(prompt);
+            const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true&model=flux`;
+
+            // On charge l'image via un élément <img> (contourne les restrictions CORS sur file://)
+            const dataUrl = await new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+
+                // Timeout de 60s (génération peut prendre du temps)
+                const timeout = setTimeout(() => reject(new Error("Délai dépassé (60s). Réessayez.")), 60000);
+
+                img.onload = () => {
+                    clearTimeout(timeout);
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.naturalWidth || 1024;
+                        canvas.height = img.naturalHeight || 1024;
+                        canvas.getContext('2d').drawImage(img, 0, 0);
+                        resolve({ dataUrl: canvas.toDataURL('image/png'), w: canvas.width, h: canvas.height });
+                    } catch {
+                        // Si canvas bloqué par CORS, on utilise l'URL directe
+                        resolve({ dataUrl: imageUrl, w: 1024, h: 1024, direct: true });
+                    }
+                };
+                img.onerror = () => {
+                    clearTimeout(timeout);
+                    reject(new Error("Impossible de charger l'image générée. Vérifiez votre connexion internet."));
+                };
+
+                loadingDiv.innerText = "🎨 Génération en cours (10-30s)…";
+                img.src = imageUrl;
+            });
+
+            if (dataUrl.direct) {
+                // Fallback : injecter via fetch si canvas a bloqué
+                const resp = await fetch(imageUrl);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const blob = await resp.blob();
+                const fr = new FileReader();
+                const finalDataUrl = await new Promise((res, rej) => {
+                    fr.onload = () => res(fr.result);
+                    fr.onerror = rej;
+                    fr.readAsDataURL(blob);
+                });
+                addRasterObject(finalDataUrl, 'ia-pollinations.png', 1024, 1024);
+            } else {
+                addRasterObject(dataUrl.dataUrl, 'ia-pollinations.png', dataUrl.w, dataUrl.h);
+            }
+
+            loadingDiv.innerText = "✅ Image générée par Pollinations.ai (FLUX) et ajoutée sur le plan de travail.";
+
+        } catch (err) {
+            loadingDiv.innerText = `Erreur génération image : ${err.message}`;
+        }
+
+        unlock();
     }
 
     function appendMessage(text, sender) {
