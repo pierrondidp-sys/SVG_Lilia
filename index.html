@@ -1726,6 +1726,25 @@ if(typeof define === 'function' && define.amd){
                 </div>
             </div>
             <div>
+                <div class="text-panel-label">Courbe : <span id="curveVal">0</span></div>
+                <div class="text-size-row">
+                    <input type="range" id="curveRange" min="-100" max="100" step="1" value="0">
+                    <button id="curveResetBtn" title="Rendre droit" style="border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:11px;flex-shrink:0;">Droit</button>
+                </div>
+                <div class="text-size-row" style="margin-top:6px;gap:4px;">
+                    <button class="curve-preset" data-curve="60" style="flex:1;border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;padding:6px 2px;cursor:pointer;font-size:15px;" title="Arc vers le haut (dôme)">⌒</button>
+                    <button class="curve-preset" data-curve="100" style="flex:1;border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;padding:6px 2px;cursor:pointer;font-size:15px;" title="Cercle complet (haut)">◠</button>
+                    <button class="curve-preset" data-curve="-60" style="flex:1;border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;padding:6px 2px;cursor:pointer;font-size:15px;" title="Arc vers le bas (creux)">⌣</button>
+                    <button class="curve-preset" data-curve="-100" style="flex:1;border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;padding:6px 2px;cursor:pointer;font-size:15px;" title="Cercle complet (bas)">◡</button>
+                </div>
+            </div>
+            <div>
+                <div class="text-panel-label">Espacement lettres : <span id="letterSpacingVal">0.0 cm</span></div>
+                <div class="text-size-row">
+                    <input type="range" id="letterSpacingRange" min="0" max="3" step="0.05" value="0">
+                </div>
+            </div>
+            <div>
                 <div class="text-panel-label">Couleur</div>
                 <div class="text-color-row">
                     <input type="color" id="textColorPicker" value="#000000">
@@ -2216,6 +2235,11 @@ if(typeof define === 'function' && define.amd){
     const textColorPicker = document.getElementById('textColorPicker');
     const textColorHex = document.getElementById('textColorHex');
     const textContentArea = document.getElementById('textContentArea');
+    const curveRange = document.getElementById('curveRange');
+    const curveVal = document.getElementById('curveVal');
+    const curveResetBtn = document.getElementById('curveResetBtn');
+    const letterSpacingRange = document.getElementById('letterSpacingRange');
+    const letterSpacingVal = document.getElementById('letterSpacingVal');
     const cropPanel = document.getElementById('cropPanel');
     const cropApplyBtn = document.getElementById('cropApplyBtn');
     const cropCancelBtn = document.getElementById('cropCancelBtn');
@@ -2597,7 +2621,9 @@ if(typeof define === 'function' && define.amd){
             fontFamily: currentTextFont,
             bold: currentTextBold,
             italic: currentTextItalic,
-            color: currentTextColor
+            color: currentTextColor,
+            curve: 0,          // -100 .. 100 : courbure (0 = ligne droite)
+            letterSpacing: 0   // espacement additionnel entre lettres (cm)
         };
         objects.push(obj);
         selectedId = obj.id;
@@ -2624,11 +2650,81 @@ if(typeof define === 'function' && define.amd){
             const minY = Math.min(...ys), maxY = Math.max(...ys);
             return { x: minX, y: minY, w: Math.max(0.01, maxX - minX), h: Math.max(0.01, maxY - minY) };
         }
+        if (obj.type === 'text' && Math.abs(obj.curve || 0) >= 0.5) {
+            // Étend la boîte pour englober l'arc + la hauteur des lettres.
+            const cx = obj.x + obj.w / 2;
+            const cy = obj.y + obj.h / 2;
+            const c = Math.max(-100, Math.min(100, obj.curve));
+            const sweep = (Math.abs(c) / 100) * 2 * Math.PI;
+            const R = obj.w / Math.max(sweep, 0.0001);
+            const up = c > 0;
+            const circleCy = up ? cy + R : cy - R;
+            const pad = (obj.fontSize || obj.h) * 1.1;
+            // Points extrêmes de l'arc échantillonnés.
+            let minX = obj.x, maxX = obj.x + obj.w, minY = cy, maxY = cy;
+            const a0 = up ? -Math.PI / 2 - sweep / 2 : Math.PI / 2 - sweep / 2;
+            const N = 24;
+            for (let i = 0; i <= N; i++) {
+                const a = a0 + (sweep) * (i / N);
+                const px = cx + R * Math.cos(a);
+                const py = circleCy + R * Math.sin(a);
+                if (px < minX) minX = px; if (px > maxX) maxX = px;
+                if (py < minY) minY = py; if (py > maxY) maxY = py;
+            }
+            minX -= pad; maxX += pad;
+            if (up) { minY -= pad; } else { maxY += pad; }
+            return { x: minX, y: minY, w: Math.max(0.01, maxX - minX), h: Math.max(0.01, maxY - minY) };
+        }
         return { x: obj.x, y: obj.y, w: obj.w, h: obj.h };
     }
 
     function stripFillAttrs(svgFragment) {
         return svgFragment.replace(/\sfill="[^"]*"/gi, '').replace(/\sfill='[^']*'/gi, '');
+    }
+
+    // Construit un arc de cercle pour poser le texte dessus.
+    // curve ∈ [-100, 100]. 0 => droit (non appelé ici). Positif => bombé vers le haut
+    // (sourire / haut de cercle). Négatif => creusé vers le bas (bas de cercle).
+    function buildTextArcPath(obj) {
+        const cx = obj.x + obj.w / 2;
+        const cy = obj.y + obj.h / 2;
+        const width = obj.w;
+        const c = Math.max(-100, Math.min(100, obj.curve || 0));
+        // Angle balayé par l'arc : de ~0 à 2π (360°) au maximum.
+        const sweep = (Math.abs(c) / 100) * 2 * Math.PI;
+        // Rayon calculé pour que la corde de l'arc corresponde à peu près à la largeur.
+        // Pour un arc d'angle sweep, longueur ≈ width => R = width / sweep.
+        const R = width / Math.max(sweep, 0.0001);
+        const up = c > 0; // true = arc bombé vers le haut
+
+        // Centre du cercle : placé au-dessus (arc bas) ou en dessous (arc haut) du texte,
+        // de sorte que le sommet de l'arc passe par le centre vertical de la boîte.
+        const circleCx = cx;
+        const circleCy = up ? cy + R : cy - R;
+
+        // Angles de début/fin (repère SVG : y vers le bas). Le point médian de l'arc est
+        // au sommet (haut) ou au creux (bas) du cercle.
+        let a0, a1;
+        if (up) {
+            // sommet du cercle = angle -90° ; l'arc s'étend symétriquement autour.
+            a0 = -Math.PI / 2 - sweep / 2;
+            a1 = -Math.PI / 2 + sweep / 2;
+        } else {
+            // creux = angle +90° ; on parcourt dans le sens qui garde le texte à l'endroit.
+            a0 = Math.PI / 2 + sweep / 2;
+            a1 = Math.PI / 2 - sweep / 2;
+        }
+
+        const p0x = circleCx + R * Math.cos(a0);
+        const p0y = circleCy + R * Math.sin(a0);
+        const p1x = circleCx + R * Math.cos(a1);
+        const p1y = circleCy + R * Math.sin(a1);
+
+        const largeArc = sweep > Math.PI ? 1 : 0;
+        // sweep-flag : 1 pour arc bombé haut, 0 pour arc bas (sens de parcours du path).
+        const sweepFlag = up ? 1 : 1;
+        const d = `M ${p0x} ${p0y} A ${R} ${R} 0 ${largeArc} ${sweepFlag} ${p1x} ${p1y}`;
+        return { d, baseline: up ? 'auto' : 'hanging' };
     }
 
     function renderObjectGroup(obj) {
@@ -2650,16 +2746,45 @@ if(typeof define === 'function' && define.amd){
                 g.appendChild(svgEl('polygon', { points: pts, fill: obj.fill }));
             }
         } else if (obj.type === 'text') {
-            const t = svgEl('text', {
-                x: obj.x, y: obj.y + obj.h * 0.85,
+            const commonAttrs = {
                 'font-size': obj.fontSize,
                 'font-family': obj.fontFamily || "'Segoe UI', Arial, sans-serif",
                 'font-weight': obj.bold ? 'bold' : 'normal',
                 'font-style': obj.italic ? 'italic' : 'normal',
                 fill: obj.color || '#000000'
-            });
-            t.textContent = obj.text;
-            g.appendChild(t);
+            };
+            if (obj.letterSpacing) commonAttrs['letter-spacing'] = obj.letterSpacing;
+
+            const curve = obj.curve || 0;
+            if (Math.abs(curve) < 0.5) {
+                // ----- Texte droit -----
+                const t = svgEl('text', {
+                    ...commonAttrs,
+                    x: obj.x, y: obj.y + obj.h * 0.85
+                });
+                t.textContent = obj.text;
+                g.appendChild(t);
+            } else {
+                // ----- Texte courbé le long d'un arc -----
+                const arc = buildTextArcPath(obj);
+                const pathId = `textarc-${obj.id}`;
+                const defs = svgEl('defs', {});
+                defs.appendChild(svgEl('path', { id: pathId, d: arc.d, fill: 'none', stroke: 'none' }));
+                g.appendChild(defs);
+
+                const t = svgEl('text', {
+                    ...commonAttrs,
+                    'text-anchor': 'middle'
+                });
+                const tp = document.createElementNS('http://www.w3.org/2000/svg', 'textPath');
+                tp.setAttribute('href', `#${pathId}`);
+                tp.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#${pathId}`);
+                tp.setAttribute('startOffset', '50%');
+                tp.setAttribute('dominant-baseline', arc.baseline);
+                tp.textContent = obj.text;
+                t.appendChild(tp);
+                g.appendChild(t);
+            }
         } else if (obj.type === 'svg') {
             let innerContent = obj.innerSVG;
             if (obj.colorOverride) {
@@ -3953,6 +4078,12 @@ if(typeof define === 'function' && define.amd){
         fontSizeVal.textContent = size.toFixed(1) + ' cm';
         textContentArea.value = obj ? obj.text : '';
         textContentArea.style.fontFamily = obj ? (obj.fontFamily || 'Segoe UI') : currentTextFont;
+        const curve = obj ? (obj.curve || 0) : 0;
+        curveRange.value = curve;
+        curveVal.textContent = curve;
+        const ls = obj ? (obj.letterSpacing || 0) : 0;
+        letterSpacingRange.value = ls;
+        letterSpacingVal.textContent = ls.toFixed(2) + ' cm';
     }
 
     function applyTextProp(prop, val) {
@@ -4021,6 +4152,35 @@ if(typeof define === 'function' && define.amd){
         renderMat();
     });
     textContentArea.addEventListener('change', () => { const obj = objects.find(o => o.id === textPanelObjId); if (obj) pushHistory(); });
+
+    curveRange.addEventListener('input', () => {
+        const val = parseInt(curveRange.value, 10);
+        curveVal.textContent = val;
+        const obj = objects.find(o => o.id === textPanelObjId);
+        if (obj) { obj.curve = val; renderMat(); }
+    });
+    curveRange.addEventListener('change', () => { const obj = objects.find(o => o.id === textPanelObjId); if (obj) pushHistory(); });
+    curveResetBtn.addEventListener('click', () => {
+        curveRange.value = 0; curveVal.textContent = '0';
+        const obj = objects.find(o => o.id === textPanelObjId);
+        if (obj) { obj.curve = 0; renderMat(); pushHistory(); }
+    });
+    document.querySelectorAll('.curve-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const val = parseInt(btn.getAttribute('data-curve'), 10);
+            curveRange.value = val; curveVal.textContent = val;
+            const obj = objects.find(o => o.id === textPanelObjId);
+            if (obj) { obj.curve = val; renderMat(); pushHistory(); }
+        });
+    });
+    letterSpacingRange.addEventListener('input', () => {
+        const val = parseFloat(letterSpacingRange.value);
+        letterSpacingVal.textContent = val.toFixed(2) + ' cm';
+        const obj = objects.find(o => o.id === textPanelObjId);
+        if (obj) { obj.letterSpacing = val; renderMat(); }
+    });
+    letterSpacingRange.addEventListener('change', () => { const obj = objects.find(o => o.id === textPanelObjId); if (obj) pushHistory(); });
+
     textPanelCloseBtn.addEventListener('click', () => { textPanel.style.display = 'none'; setCanvasCursor(null); });
 
     // ===================== Retouche d'image =====================
