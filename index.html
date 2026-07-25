@@ -41,6 +41,26 @@
         .shapes-popover button.line-mode-btn { width: auto; height: auto; font-size: 11px; line-height: 1.2; text-align: center; display: flex; align-items: center; justify-content: center; min-height: 36px; padding: 6px 4px; }
         .line-mode-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
 
+        /* ===== Boutons uniformisés des fenêtres d'outils ===== */
+        /* Croix de fermeture en haut à droite (commune à tous les panneaux) */
+        .tool-panel-close {
+            width: 26px !important; height: 26px !important; min-height: 0 !important;
+            border: none !important; background: none !important; color: #94a3b8 !important;
+            font-size: 16px !important; line-height: 1 !important; cursor: pointer;
+            border-radius: 6px !important; padding: 0 !important; flex: 0 0 auto !important;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .tool-panel-close:hover { background: #f1f5f9 !important; color: #ef4444 !important; border: none !important; }
+        /* Bouton « Désactiver l'outil » en bas (panneaux à mode actif) */
+        .tool-panel-disable {
+            width: 100% !important; height: auto !important; min-height: 0 !important;
+            margin-top: 4px; padding: 8px !important; font-size: 12px !important;
+            border-radius: 6px !important; border: 1px solid #e2e8f0 !important;
+            background: #f1f5f9 !important; color: #475569 !important; cursor: pointer;
+            font-weight: 500;
+        }
+        .tool-panel-disable:hover { background: #fee2e2 !important; color: #dc2626 !important; border-color: #fca5a5 !important; }
+
         .image-search-panel {
             position: fixed; width: 360px; max-height: 540px;
             background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
@@ -1535,13 +1555,21 @@ if(typeof define === 'function' && define.amd){
 
     <!-- Popover réglage gomme -->
     <div id="eraserPopover" class="shapes-popover" style="flex-direction: column; align-items: stretch; width: 170px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+            <span style="font-size:12px; font-weight:600; color:#1e293b;">Gomme</span>
+            <button class="tool-panel-close" title="Fermer et désactiver l'outil" onclick="window.setEraserMode(false)">✕</button>
+        </div>
         <label style="font-size: 12px; color: #334155;">Taille de la gomme : <span id="eraserSizeLabel">1.0 cm</span></label>
         <input type="range" id="eraserSizeRange" min="0.2" max="4" step="0.1" value="1">
-        <button id="eraserOffBtn" style="margin-top: 4px; width: 100%; height: auto; padding: 6px; font-size: 12px; border-radius: 6px;">Désactiver la gomme</button>
+        <button id="eraserOffBtn" class="tool-panel-disable">Désactiver l'outil</button>
     </div>
 
     <!-- Popover outil Lignes / Courbes -->
     <div id="linePopover" class="shapes-popover" style="flex-direction: column; align-items: stretch; width: 195px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+            <span style="font-size:12px; font-weight:600; color:#1e293b;">Lignes / Courbes</span>
+            <button class="tool-panel-close" title="Fermer et désactiver l'outil" onclick="window.setLineMode(false)">✕</button>
+        </div>
         <label style="font-size: 12px; color: #334155;">Mode :</label>
         <div style="display: flex; gap: 6px;">
             <button id="lineModeStraightBtn" class="line-mode-btn active" style="flex: 1;">Ligne droite</button>
@@ -1551,7 +1579,7 @@ if(typeof define === 'function' && define.amd){
         <input type="color" id="lineColorPicker" value="#1e293b" style="width: 100%; height: 32px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 2px;">
         <label style="font-size: 12px; color: #334155;">Épaisseur : <span id="lineWidthLabel">0.20 cm</span></label>
         <input type="range" id="lineWidthRange" min="0.05" max="2" step="0.05" value="0.2">
-        <button id="lineOffBtn" style="margin-top: 4px; width: 100%; height: auto; padding: 6px; font-size: 12px; border-radius: 6px;">Désactiver l'outil</button>
+        <button id="lineOffBtn" class="tool-panel-disable">Désactiver l'outil</button>
     </div>
 
     <!-- Popover outil Couleurs -->
@@ -1677,11 +1705,11 @@ if(typeof define === 'function' && define.amd){
                 1. Tapez votre recherche puis cliquez 🔍<br>
                 2. Une fenêtre Google Images s'ouvre<br>
                 3. Clic droit sur l'image → <strong>Copier l'image</strong><br>
-                4. Revenez sur cet outil → l'image se colle automatiquement
+                4. Revenez sur cet outil → <strong>cliquez dans la zone ci-dessous</strong> (ou Ctrl+V)
             </div>
             <div id="googlePasteStatus" style="font-size:12px;color:#64748b;text-align:center;min-height:18px;"></div>
-            <div style="border:2px dashed #cbd5e1;border-radius:8px;padding:14px;text-align:center;font-size:12px;color:#94a3b8;cursor:pointer;transition:border-color 0.2s;" id="googlePasteZone">
-                📋 Ou collez manuellement (Ctrl+V)<br>ou glissez-déposez un fichier image
+            <div style="border:2px dashed #3b82f6;border-radius:8px;padding:16px;text-align:center;font-size:13px;color:#3b82f6;cursor:pointer;transition:all 0.2s;font-weight:600;" id="googlePasteZone">
+                📥 Cliquez ici pour coller l'image copiée<br><span style="font-size:11px;color:#94a3b8;font-weight:400;">ou Ctrl+V · ou glissez-déposez un fichier image</span>
             </div>
         </div>
         <div class="image-search-disclaimer">⚠️ Vérifiez les droits d'utilisation avant tout usage commercial.</div>
@@ -1693,7 +1721,8 @@ if(typeof define === 'function' && define.amd){
             <input type="text" id="projectNameInput" placeholder="Nom du projet à enregistrer...">
             <div class="projects-header-buttons">
                 <button id="projectSaveBtn" title="Enregistrer le projet en cours">💾 Enregistrer</button>
-                <button id="projectsCloseBtn" title="Fermer">✕</button>
+                <button id="projectOpenSvgBtn" title="Ouvrir un fichier SVG enregistré sur votre ordinateur" style="background:#3b82f6;">📂 Ouvrir un SVG</button>
+                <button id="projectsCloseBtn" title="Fermer" style="flex:0 0 auto;background:#64748b;width:40px;">✕</button>
             </div>
         </div>
         <div id="projectsStatus" class="projects-status"></div>
@@ -1835,29 +1864,34 @@ if(typeof define === 'function' && define.amd){
 
     <!-- Panneau de validation du rognage -->
     <div id="cropPanel" style="display: none; position: fixed; z-index: 260; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,.15); padding: 10px; gap: 8px; flex-direction: column; width: 200px;">
-        <div style="font-size: 12px; color: #334155;">Ajustez le cadre vert puis validez.</div>
-        <div style="display: flex; gap: 6px;">
-            <button id="cropApplyBtn" style="flex: 1; background: #10b981; color: #fff; border: none; border-radius: 6px; padding: 8px; font-size: 12px; cursor: pointer;">✓ Valider</button>
-            <button id="cropCancelBtn" style="flex: 1; background: #64748b; color: #fff; border: none; border-radius: 6px; padding: 8px; font-size: 12px; cursor: pointer;">✕ Annuler</button>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12px; font-weight:600; color:#1e293b;">Rogner</span>
+            <button class="tool-panel-close" title="Fermer et désactiver l'outil" onclick="window.cancelCrop()">✕</button>
         </div>
+        <div style="font-size: 12px; color: #334155;">Ajustez le cadre vert puis validez.</div>
+        <button id="cropApplyBtn" style="width:100%; background: #10b981; color: #fff; border: none; border-radius: 6px; padding: 8px; font-size: 12px; cursor: pointer;">✓ Valider le rognage</button>
         <button id="cropRestoreBtn" style="display:none; width:100%; background:#fff; color:#dc2626; border:1px solid #fca5a5; border-radius:6px; padding:7px; font-size:12px; cursor:pointer;">↩ Rétablir l'image d'origine</button>
+        <button id="cropCancelBtn" class="tool-panel-disable">Désactiver l'outil</button>
     </div>
 
     <!-- Panneau Sélection Rectangulaire / Lasso -->
     <div id="selectionPanel" style="display:none; position:fixed; z-index:260; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 8px 20px rgba(0,0,0,.15); padding:10px; gap:8px; flex-direction:column; width:210px;">
-        <div style="font-size:12px; font-weight:600; color:#1e293b;" id="selectionPanelTitle">Tracez une zone sur l'image.</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12px; font-weight:600; color:#1e293b;" id="selectionPanelTitle">Tracez une zone sur l'image.</span>
+            <button class="tool-panel-close" title="Fermer et désactiver l'outil" onclick="window.cancelSelection()">✕</button>
+        </div>
         <div style="display:flex; gap:6px;">
             <button id="selCopyBtn" style="flex:1; background:#3b82f6; color:#fff; border:none; border-radius:6px; padding:8px; font-size:12px; cursor:pointer; font-weight:bold;" disabled>📋 Copier</button>
             <button id="selDeleteBtn" style="flex:1; background:#ef4444; color:#fff; border:none; border-radius:6px; padding:8px; font-size:12px; cursor:pointer; font-weight:bold;" disabled>✂️ Supprimer</button>
         </div>
-        <button id="selCancelBtn" style="width:100%; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; border-radius:6px; padding:7px; font-size:12px; cursor:pointer;">✕ Annuler</button>
+        <button id="selCancelBtn" class="tool-panel-disable">Désactiver l'outil</button>
     </div>
 
     <!-- Panneau Sélection Magique -->
     <div id="magicPanel" style="display:none; position:fixed; z-index:260; background:#fff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.18); padding:14px; flex-direction:column; gap:10px; width:230px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <span style="font-size:13px; font-weight:600; color:#1e293b;">🪄 Sélection magique</span>
-            <button id="magicCloseBtn" style="border:none;background:none;font-size:16px;cursor:pointer;color:#94a3b8;">✕</button>
+            <button id="magicCloseBtn" class="tool-panel-close" title="Fermer et désactiver l'outil">✕</button>
         </div>
         <div id="magicNoImg" style="font-size:12px; color:#94a3b8; text-align:center; padding:6px 0;">Sélectionnez une image sur le plan de travail.</div>
         <div id="magicBody" style="display:none; flex-direction:column; gap:10px;">
@@ -1894,6 +1928,7 @@ if(typeof define === 'function' && define.amd){
             </div>
             <div id="magicStatus" style="font-size:11px; color:#10b981; text-align:center; min-height:14px;"></div>
         </div>
+        <button id="magicDisableBtn" class="tool-panel-disable">Désactiver l'outil</button>
     </div>
 
     <!-- ===== ZONE DE TRAVAIL (CENTRE) ===== -->
@@ -1963,7 +1998,7 @@ if(typeof define === 'function' && define.amd){
             </svg>
         </div>
 
-        <input type="file" id="fileImporter" accept=".png, .jpg, .jpeg, .bmp, .gif, .dxf">
+        <input type="file" id="fileImporter" accept=".png, .jpg, .jpeg, .bmp, .gif, .dxf, .svg">
 
         <div class="chat-header" style="display: flex; align-items: center; gap: 10px;">
             <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPCEtLSBGaWwgLS0+CiAgPHBhdGggZD0iTTYgNTAgQyAxNiA0MCwgMTAgMzAsIDIyIDI2IiBmaWxsPSJub25lIiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPCEtLSBBaWd1aWxsZSAtLT4KICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSAzMCAyOCkiPgogICAgPHJlY3QgeD0iMjgiIHk9IjYiIHdpZHRoPSIzIiBoZWlnaHQ9IjM0IiByeD0iMS41IiBmaWxsPSIjOTRhM2I4Ii8+CiAgICA8cG9seWdvbiBwb2ludHM9IjI5LjUsNCAyNiwxMiAzMywxMiIgZmlsbD0iIzk0YTNiOCIvPgogICAgPGVsbGlwc2UgY3g9IjI5LjUiIGN5PSIzNCIgcng9IjIuNCIgcnk9IjMuNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjQ3NDhiIiBzdHJva2Utd2lkdGg9IjEuMiIvPgogIDwvZz4KICA8IS0tIETDqSDDoCBjb3VkcmUgKHRoaW1ibGUpIC0tPgogIDxnPgogICAgPHBhdGggZD0iTTIyIDYyIEMgMjAgNDYsIDIyIDM0LCAzMiAzMCBDIDQyIDM0LCA0NCA0NiwgNDIgNjIgWiIgZmlsbD0iI2Y1OWUwYiIgc3Ryb2tlPSIjYjQ1MzA5IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogICAgPGVsbGlwc2UgY3g9IjMyIiBjeT0iMzAiIHJ4PSIxMCIgcnk9IjQiIGZpbGw9IiNmYmJmMjQiIHN0cm9rZT0iI2I0NTMwOSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwhLS0gbW90aWZzIGFsdsOpb2xlcyAtLT4KICAgIDxjaXJjbGUgY3g9IjI2IiBjeT0iNDAiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzOCIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzOCIgY3k9IjQwIiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjI0IiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMzAiIGN5PSI0NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIzNiIgY3k9IjQ2IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iMjIiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgICA8Y2lyY2xlIGN4PSIyOCIgY3k9IjU1IiByPSIxLjMiIGZpbGw9IiNiNDUzMDkiLz4KICAgIDxjaXJjbGUgY3g9IjM0IiBjeT0iNTUiIHI9IjEuMyIgZmlsbD0iI2I0NTMwOSIvPgogICAgPGNpcmNsZSBjeD0iNDAiIGN5PSI1NiIgcj0iMS4zIiBmaWxsPSIjYjQ1MzA5Ii8+CiAgPC9nPgo8L3N2Zz4K" alt="" style="width: 24px; height: 24px; flex-shrink: 0;">
@@ -2253,6 +2288,7 @@ if(typeof define === 'function' && define.amd){
     const projectsPanel = document.getElementById('projectsPanel');
     const projectNameInput = document.getElementById('projectNameInput');
     const projectSaveBtn = document.getElementById('projectSaveBtn');
+    const projectOpenSvgBtn = document.getElementById('projectOpenSvgBtn');
     const projectsCloseBtn = document.getElementById('projectsCloseBtn');
     const projectsStatus = document.getElementById('projectsStatus');
     const projectsList = document.getElementById('projectsList');
@@ -2404,6 +2440,9 @@ if(typeof define === 'function' && define.amd){
         const doc = new DOMParser().parseFromString(svgString, 'image/svg+xml');
         const svg = doc.querySelector('svg');
         let iw = 200, ih = 200;
+        // Dimensions physiques réelles (en cm) si le SVG en précise — cas des
+        // fichiers exportés par cet outil, dont width/height sont en cm.
+        let realWcm = null, realHcm = null;
         if (svg) {
             const vb = svg.getAttribute('viewBox');
             if (vb) {
@@ -2415,9 +2454,21 @@ if(typeof define === 'function' && define.amd){
                 if (wAttr) iw = wAttr;
                 if (hAttr) ih = hAttr;
             }
+            // Convertir width/height physiques en cm (unités cm ou mm reconnues).
+            const rawW = (svg.getAttribute('width')  || '').trim();
+            const rawH = (svg.getAttribute('height') || '').trim();
+            const toCm = (raw) => {
+                const m = raw.match(/^([\d.]+)\s*(cm|mm)$/i);
+                if (!m) return null;
+                const val = parseFloat(m[1]);
+                if (!(val > 0)) return null;
+                return m[2].toLowerCase() === 'mm' ? val / 10 : val;
+            };
+            realWcm = toCm(rawW);
+            realHcm = toCm(rawH);
         }
         const inner = svg ? svg.innerHTML : svgString;
-        return { inner, iw, ih };
+        return { inner, iw, ih, realWcm, realHcm };
     }
 
     function addSvgObject(svgString, forceFill) {
@@ -2427,10 +2478,18 @@ if(typeof define === 'function' && define.amd){
         const parsed = parseSvgIntrinsic(svgString);
         let inner = parsed.inner;
         if (forceFill) inner = `<g fill="${forceFill}">${inner}</g>`;
-        const maxDim = 10; // cm
         let w, h;
-        if (parsed.iw >= parsed.ih) { w = maxDim; h = maxDim * (parsed.ih / parsed.iw); }
-        else { h = maxDim; w = maxDim * (parsed.iw / parsed.ih); }
+        if (parsed.realWcm && parsed.realHcm) {
+            // Le SVG précise sa taille physique (fichier exporté par l'outil) :
+            // on la conserve telle quelle pour éviter tout changement d'échelle.
+            w = parsed.realWcm;
+            h = parsed.realHcm;
+        } else {
+            // SVG externe sans échelle physique : ajuster à 10 cm de côté max.
+            const maxDim = 10; // cm
+            if (parsed.iw >= parsed.ih) { w = maxDim; h = maxDim * (parsed.ih / parsed.iw); }
+            else { h = maxDim; w = maxDim * (parsed.iw / parsed.ih); }
+        }
         const obj = {
             id: nextObjId++, type: 'svg',
             x: (MAT_W - w) / 2, y: (MAT_H - h) / 2, w, h, rotation: 0,
@@ -3142,6 +3201,7 @@ if(typeof define === 'function' && define.amd){
         setCanvasCursor(null);
         renderMat();
     }
+    window.cancelSelection = cancelSelection;
 
     // Convertit un point SVG (cm) en coordonnées pixel dans l'image
     function svgPtToImgPx(pt, obj, imgNW, imgNH) {
@@ -4609,13 +4669,16 @@ if(typeof define === 'function' && define.amd){
         }, 10);
     }
 
-    magicCloseBtn.addEventListener('click', () => {
+    function closeMagic() {
         magicPanel.style.display = 'none';
         magicActive = false;
         setCanvasCursor(null);
         toolMagic.classList.remove('active');
-        setCanvasCursor(null);
-    });
+    }
+    window.closeMagic = closeMagic;
+    magicCloseBtn.addEventListener('click', closeMagic);
+    const magicDisableBtn = document.getElementById('magicDisableBtn');
+    if (magicDisableBtn) magicDisableBtn.addEventListener('click', closeMagic);
 
     toolMagic.addEventListener('click', () => {
         if (magicPanel.style.display === 'flex') {
@@ -5027,11 +5090,19 @@ if(typeof define === 'function' && define.amd){
     });
     projectsCloseBtn.addEventListener('click', () => { projectsPanel.style.display = 'none'; });
     projectSaveBtn.addEventListener('click', saveCurrentProject);
+    projectOpenSvgBtn.addEventListener('click', () => fileImporter.click());
     projectNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveCurrentProject(); });
     toolImages.addEventListener('click', () => fileImporter.click());
     toolText.addEventListener('click', () => {
         if (textPanel.style.display === 'flex' && !textPanelObjId) {
             textPanel.style.display = 'none';
+            return;
+        }
+        // Si un objet texte est déjà sélectionné, ouvrir son édition
+        // plutôt que de créer un nouveau texte.
+        const selObj = objects.find(o => o.id === selectedId);
+        if (selObj && selObj.type === 'text') {
+            editTextObject(selObj.id);
             return;
         }
         addText();
@@ -5103,6 +5174,7 @@ if(typeof define === 'function' && define.amd){
         }
     }
     toolEraser.addEventListener('click', () => setEraserMode(!eraserMode));
+    window.setEraserMode = setEraserMode;
     eraserOffBtn.addEventListener('click', () => setEraserMode(false));
     eraserSizeRange.addEventListener('input', () => {
         eraserWidth = parseFloat(eraserSizeRange.value);
@@ -5127,6 +5199,7 @@ if(typeof define === 'function' && define.amd){
         }
     }
     toolLine.addEventListener('click', () => setLineMode(!lineMode));
+    window.setLineMode = setLineMode;
     lineOffBtn.addEventListener('click', () => setLineMode(false));
     lineColorPicker.addEventListener('input', () => { lineColor = lineColorPicker.value; });
     lineWidthRange.addEventListener('input', () => {
@@ -5389,6 +5462,7 @@ if(typeof define === 'function' && define.amd){
         setCanvasCursor(null);
         renderMat();
     }
+    window.cancelCrop = cancelCrop;
     toolCrop.addEventListener('click', () => {
         if (cropState) { cancelCrop(); return; }
         const obj = objects.find(o => o.id === selectedId);
@@ -5899,7 +5973,7 @@ if(typeof define === 'function' && define.amd){
         const pt = Math.round((screen.height - ph) / 2);
         googleImgPopup = window.open(url, 'googleImgSearch',
             `width=${pw},height=${ph},left=${pl},top=${pt},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`);
-        googlePasteStatus.textContent = '📋 Copiez une image → elle s\'ajoutera automatiquement.';
+        googlePasteStatus.textContent = "📋 Copiez l'image, revenez, puis cliquez dans la zone bleue.";
         startClipboardPoll();
     }
 
@@ -5916,60 +5990,43 @@ if(typeof define === 'function' && define.amd){
     googleSearchInput.addEventListener('keydown', e => { if (e.key === 'Enter') openGoogleImages(); });
 
     // ── Auto-collage presse-papiers ──
-    let clipboardBaseline = null;
     let clipboardReadBusy = false;
 
-    async function clipboardPermissionGranted() {
-        if (!navigator.permissions) return false;
-        try {
-            const perm = await navigator.permissions.query({ name: 'clipboard-read' });
-            return perm.state === 'granted';
-        } catch (_) { return false; }
-    }
-
-    async function tryAutoPaste() {
-        if (googleSearchPanel.style.display !== 'flex') return;
-        if (!navigator.clipboard?.read) return;
+    // Lecture du presse-papiers déclenchée par un GESTE UTILISATEUR (clic).
+    // Les navigateurs interdisent navigator.clipboard.read() sur un simple 'focus' :
+    // seul un vrai clic est accepté. C'est pourquoi le collage doit être manuel.
+    async function readClipboardImage() {
         if (clipboardReadBusy) return;
-        // Ne lire le presse-papiers QUE si la permission est déjà accordée
-        // → évite la boucle infinie permission → focus → permission
-        if (!(await clipboardPermissionGranted())) return;
+        if (!navigator.clipboard?.read) {
+            googlePasteStatus.textContent = 'Presse-papiers non supporté ici — utilisez Ctrl+V.';
+            return;
+        }
         clipboardReadBusy = true;
+        googlePasteStatus.textContent = 'Lecture du presse-papiers…';
         try {
             const items = await navigator.clipboard.read();
+            let found = false;
             for (const item of items) {
                 const imgType = item.types.find(t => t.startsWith('image/'));
                 if (imgType) {
                     const blob = await item.getType(imgType);
-                    const key  = `${imgType}:${blob.size}`;
-                    if (key !== clipboardBaseline) {
-                        clipboardBaseline = key;
-                        googlePasteStatus.textContent = "Ajout automatique de l'image…";
-                        const file = new File([blob], 'image-google.png', { type: imgType });
-                        handleImageData(file);
-                    }
+                    const file = new File([blob], 'image-google.png', { type: imgType });
+                    googlePasteStatus.textContent = "Ajout de l'image…";
+                    handleImageData(file);
+                    found = true;
                     break;
                 }
             }
-        } catch (_) {}
+            if (!found) {
+                googlePasteStatus.textContent = "Aucune image dans le presse-papiers. Faites clic droit → Copier l'image sur Google.";
+            }
+        } catch (err) {
+            googlePasteStatus.textContent = 'Autorisation refusée. Utilisez Ctrl+V à la place.';
+        }
         clipboardReadBusy = false;
     }
 
-    window.addEventListener('focus', tryAutoPaste);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) tryAutoPaste(); });
-
-    // Bouton pour autoriser une fois manuellement (user gesture requis)
-    async function requestClipboardPermission() {
-        if (!navigator.clipboard?.read) return;
-        try {
-            await navigator.clipboard.read(); // déclenche la boîte UNE seule fois
-            googlePasteStatus.textContent = '✅ Autorisation accordée — collage automatique actif.';
-        } catch (_) {
-            googlePasteStatus.textContent = 'Permission refusée — utilisez Ctrl+V.';
-        }
-    }
-
-    function startClipboardPoll() { clipboardBaseline = null; }
+    function startClipboardPoll() { /* rien */ }
     function stopClipboardPoll()  { /* rien */ }
 
     async function handleImageData(file) {
@@ -6007,6 +6064,7 @@ if(typeof define === 'function' && define.amd){
     });
 
     // Glisser-déposer sur la zone
+    googlePasteZone.addEventListener('click', () => { readClipboardImage(); });
     googlePasteZone.addEventListener('dragover', e => {
         e.preventDefault();
         googlePasteZone.style.borderColor = '#3b82f6';
@@ -6237,6 +6295,22 @@ if(typeof define === 'function' && define.amd){
                 }
             };
             reader.readAsText(file);
+        } else if (extension === 'svg') {
+            reader.onload = function (event) {
+                try {
+                    const svgString = event.target.result;
+                    if (!svgString || svgString.indexOf('<svg') === -1) {
+                        throw new Error("Le fichier ne contient pas de balise SVG valide.");
+                    }
+                    addSvgObject(svgString);
+                    appendMessage(`Fichier SVG "${file.name}" ouvert et ajouté sur le plan de travail !`, 'ai');
+                } catch (err) {
+                    appendMessage(`Erreur SVG : ${err.message}`, 'ai');
+                }
+            };
+            reader.readAsText(file);
+        } else {
+            appendMessage(`Format non pris en charge : .${extension}`, 'ai');
         }
         fileImporter.value = '';
     });
